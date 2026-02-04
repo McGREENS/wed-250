@@ -39,14 +39,18 @@ export default function HomePage() {
     const controls = useAnimation();
 
     useEffect(() => {
+        let isMounted = true;
+
         const animateText = async () => {
             // Initial start
-            await controls.start("visible");
+            if (isMounted) await controls.start("visible");
 
             // Loop
-            while (true) {
+            while (isMounted) {
                 // Wait for 5 seconds reading time
                 await new Promise(resolve => setTimeout(resolve, 5000));
+
+                if (!isMounted) break;
 
                 // Fade out gently
                 await controls.start("hidden");
@@ -54,12 +58,19 @@ export default function HomePage() {
                 // Short pause before restart
                 await new Promise(resolve => setTimeout(resolve, 500));
 
+                if (!isMounted) break;
+
                 // Stagger reveal again
                 await controls.start("visible");
             }
         };
 
         animateText();
+
+        return () => {
+            isMounted = false;
+            controls.stop();
+        };
     }, [controls]);
 
     return (

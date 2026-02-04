@@ -1,9 +1,9 @@
-// app/layout.tsx
 import './globals.css';
 import { Heart, Menu, X } from 'lucide-react';
 import { Playfair_Display, Lato } from 'next/font/google';
 import Link from 'next/link';
 import Providers from '@/app/components/providers';
+import { auth } from "@/auth";
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -23,11 +23,13 @@ export const metadata = {
   description: 'All-in-one wedding planning platform',
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
+  const session = await auth();
+
   const navLinks = [
     { name: 'Home', href: '/' },
     { name: 'Venues', href: '/venues' },
@@ -43,7 +45,7 @@ export default function RootLayout({
       <head />
       <body className={`min-h-screen bg-cream ${playfair.variable} ${lato.variable} font-sans antialiased`}>
 
-        <Providers> {/* ← SessionProvider wrapper here */}
+        <Providers>
 
           {/* Navigation */}
           <nav className="bg-white/80 backdrop-blur-md border-b border-gray-100 sticky top-0 z-50">
@@ -68,12 +70,30 @@ export default function RootLayout({
                       {link.name}
                     </Link>
                   ))}
-                  <Link
-                    href="/dashboard"
-                    className="bg-burgundy text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-burgundy-light transition-colors"
-                  >
-                    Dashboard
-                  </Link>
+
+                  {session ? (
+                    <Link
+                      href="/dashboard"
+                      className="bg-burgundy text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-burgundy-light transition-colors"
+                    >
+                      Dashboard
+                    </Link>
+                  ) : (
+                    <div className="flex items-center gap-4">
+                      <Link
+                        href="/login"
+                        className="text-sm font-medium text-charcoal hover:text-burgundy transition-colors"
+                      >
+                        Log In
+                      </Link>
+                      <Link
+                        href="/signup"
+                        className="bg-burgundy text-white px-6 py-2.5 rounded-full text-sm font-medium hover:bg-burgundy-light transition-colors shadow-md hover:shadow-lg"
+                      >
+                        Sign Up
+                      </Link>
+                    </div>
+                  )}
                 </div>
 
                 {/* Mobile Menu Button */}
@@ -84,31 +104,55 @@ export default function RootLayout({
             </div>
           </nav>
 
-          {/* Main Content */}
-          <main>{children}</main>
+          <main className="min-h-screen">
+            {children}
+          </main>
 
-          {/* Footer */}
           <footer className="bg-white border-t border-gray-100 mt-20">
             <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
-              <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+              <div className="grid md:grid-cols-4 gap-12">
                 <div>
-                  <div className="flex items-center gap-2 mb-4">
-                    <div className="bg-gradient-to-r from-burgundy to-gold p-2 rounded-full">
+                  <Link href="/" className="flex items-center gap-2 mb-6">
+                    <div className="bg-gradient-to-r from-burgundy to-gold p-1.5 rounded-full">
                       <Heart className="w-4 h-4 text-white fill-white" />
                     </div>
                     <span className="text-xl font-bold text-charcoal">Weds360</span>
-                  </div>
-                  <p className="text-sm text-gray-600">
-                    Your complete wedding planning solution. Making dream weddings come true.
+                  </Link>
+                  <p className="text-gray-500 text-sm leading-relaxed">
+                    Making wedding planning simple, stress-free, and magical for couples in Rwanda.
                   </p>
                 </div>
 
-                {/* Quick Links, Company, Newsletter columns – same as your code */}
-                {/* ... (copy-paste your footer content here) */}
+                <div>
+                  <h4 className="font-serif text-lg text-charcoal mb-6">Platform</h4>
+                  <ul className="space-y-4 text-sm text-gray-500">
+                    <li><Link href="/venues" className="hover:text-burgundy">Browse Venues</Link></li>
+                    <li><Link href="/vendors" className="hover:text-burgundy">Find Vendors</Link></li>
+                    <li><Link href="/plan" className="hover:text-burgundy">Plan Your Wedding</Link></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-serif text-lg text-charcoal mb-6">Company</h4>
+                  <ul className="space-y-4 text-sm text-gray-500">
+                    <li><Link href="/about" className="hover:text-burgundy">About Us</Link></li>
+                    <li><Link href="/contact" className="hover:text-burgundy">Contact</Link></li>
+                    <li><Link href="/pricing" className="hover:text-burgundy">Pricing</Link></li>
+                  </ul>
+                </div>
+
+                <div>
+                  <h4 className="font-serif text-lg text-charcoal mb-6">Contact</h4>
+                  <ul className="space-y-4 text-sm text-gray-500">
+                    <li>support@weds360.rw</li>
+                    <li>+250 788 123 456</li>
+                    <li>Kigali, Rwanda</li>
+                  </ul>
+                </div>
               </div>
 
-              <div className="border-t border-gray-100 mt-8 pt-8 text-center text-sm text-gray-600">
-                © 2025 Weds360. All rights reserved. Made with ♡ for couples everywhere.
+              <div className="border-t border-gray-100 mt-12 pt-8 text-center text-sm text-gray-400">
+                © {new Date().getFullYear()} Weds360. All rights reserved.
               </div>
             </div>
           </footer>
