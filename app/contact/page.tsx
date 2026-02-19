@@ -50,26 +50,26 @@ export default function ContactPage() {
         {
             icon: Mail,
             title: 'Email Us',
-            value: 'hello@weds360.com',
+            value: 'support@weds360.rw',
             description: 'We\'ll respond within 24 hours'
         },
         {
             icon: Phone,
             title: 'Call Us',
             value: '(555) 123-4567',
-            description: 'Mon-Fri 9am-6pm EST'
+            description: 'Mon-Fri 9am-6pm EAT'
         },
         {
             icon: MapPin,
             title: 'Visit Us',
-            value: '123 Wedding Lane, Suite 100',
-            description: 'New York, NY 10001'
+            value: 'Norrsken House Kigali',
+            description: '1 KN 78 St, Kigali, Rwanda'
         },
         {
             icon: Clock,
             title: 'Office Hours',
             value: 'Monday - Friday',
-            description: '9:00 AM - 6:00 PM EST'
+            description: '9:00 AM - 6:00 PM EAT'
         }
     ];
 
@@ -265,14 +265,24 @@ export default function ContactPage() {
                 </div>
             </div>
 
-            {/* Map Section (Placeholder) */}
+            {/* Map Section */}
             <section className="bg-white py-12">
                 <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12">
-                    <div className="bg-gray-200 rounded-2xl h-96 flex items-center justify-center">
-                        <div className="text-center">
-                            <MapPin className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                            <p className="text-gray-600">Map integration would go here</p>
-                        </div>
+                    <div className="mb-8 text-center">
+                        <h2 className="text-3xl font-serif text-charcoal mb-2">Find Us</h2>
+                        <p className="text-gray-600">Norrsken House Kigali, 1 KN 78 St, Kigali, Rwanda</p>
+                    </div>
+                    <div className="rounded-2xl overflow-hidden shadow-lg h-96">
+                        <iframe
+                            src="https://www.google.com/maps/embed?pb=!1m18!1m12!1m3!1d3987.5088234567!2d30.060813!3d-1.953611!2m3!1f0!2f0!3f0!3m2!1i1024!2i768!4f13.1!3m3!1m2!1s0x19dca68f5a4c7b3d%3A0x5c3f3b3b3b3b3b3b!2sNorrsken%20House%20Kigali!5e0!3m2!1sen!2srw!4v1234567890123!5m2!1sen!2srw&q=Norrsken+House+Kigali,+KN+78+St,+Kigali"
+                            width="100%"
+                            height="100%"
+                            style={{ border: 0 }}
+                            allowFullScreen
+                            loading="lazy"
+                            referrerPolicy="no-referrer-when-downgrade"
+                            title="Norrsken House Kigali Location"
+                        />
                     </div>
                 </div>
             </section>

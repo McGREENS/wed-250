@@ -138,7 +138,7 @@ export default function VenueMarketplacePage() {
                     {/* Filters Sidebar */}
                     {showFilters && (
                         <div className="w-80 flex-shrink-0">
-                            <Card className="border-gray-100 shadow-sm sticky top-24">
+                            <Card className="border-gray-100 shadow-sm sticky top-24 max-h-[calc(100vh-120px)] overflow-y-auto">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-6">
                                         <div className="flex items-center gap-2">
@@ -238,7 +238,7 @@ export default function VenueMarketplacePage() {
                                             <label className="text-sm font-medium text-charcoal mb-3 block">
                                                 Amenities & Features
                                             </label>
-                                            <div className="space-y-2 max-h-60 overflow-y-auto">
+                                            <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
                                                 {allFeatures.map((feature) => (
                                                     <div key={feature} className="flex items-center gap-2">
                                                         <Checkbox

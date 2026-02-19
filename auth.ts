@@ -1,14 +1,22 @@
 import NextAuth from "next-auth";
-import { PrismaAdapter } from "@auth/prisma-adapter";
-import { prisma } from "@/lib/prisma";
 import { authConfig } from "@/auth.config";
 import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
+// Mock user for frontend development
+const mockUser = {
+    id: "1",
+    name: "Test User",
+    email: "test@example.com",
+    password: "$2a$10$K7L1OJ45/4Y2nIvhRVpCe.FSmhDdWoXehVzJptJ/op0lSsvqNu/1u", // "password"
+    role: "COUPLE",
+    emailVerified: null,
+    image: null,
+};
+
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
-    adapter: PrismaAdapter(prisma) as any,
     session: { strategy: "jwt" },
     providers: [
         Credentials({
@@ -24,12 +32,11 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
 
                 if (parsedCredentials.success) {
                     const { email, password } = parsedCredentials.data;
-                    const user = await prisma.user.findUnique({ where: { email } });
-                    if (!user) return null;
-                    if (!user.password) return null; // Ensure user has a password set
-                    const passwordsMatch = await bcrypt.compare(password, user.password);
-
-                    if (passwordsMatch) return user;
+                    
+                    // Mock authentication - accepts any email with password "password"
+                    if (password === "password") {
+                        return { ...mockUser, email };
+                    }
                 }
 
                 return null;

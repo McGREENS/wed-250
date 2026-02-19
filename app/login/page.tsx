@@ -11,7 +11,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { toast } from "sonner";
-import { Lock } from "lucide-react";
+import { Lock, Eye, EyeOff } from "lucide-react";
 
 const LoginSchema = z.object({
     email: z.string().email("Invalid email address"),
@@ -24,6 +24,7 @@ export default function LoginPage() {
     const router = useRouter();
     const [isPending, startTransition] = useTransition();
     const [error, setError] = useState<string | null>(null);
+    const [showPassword, setShowPassword] = useState(false);
 
     const form = useForm<LoginFormValues>({
         resolver: zodResolver(LoginSchema),
@@ -89,12 +90,21 @@ export default function LoginPage() {
                         </div>
 
                         <div className="space-y-2">
-                            <Input
-                                type="password"
-                                placeholder="Password"
-                                {...form.register("password")}
-                                className="bg-white/50 border-gray-200 focus:border-burgundy focus:ring-burgundy"
-                            />
+                            <div className="relative">
+                                <Input
+                                    type={showPassword ? "text" : "password"}
+                                    placeholder="Password"
+                                    {...form.register("password")}
+                                    className="bg-white/50 border-gray-200 focus:border-burgundy focus:ring-burgundy pr-10"
+                                />
+                                <button
+                                    type="button"
+                                    onClick={() => setShowPassword(!showPassword)}
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500 hover:text-gray-700"
+                                >
+                                    {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                            </div>
                             {form.formState.errors.password && (
                                 <p className="text-xs text-red-500">{form.formState.errors.password.message}</p>
                             )}

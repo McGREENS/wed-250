@@ -5,7 +5,7 @@ import { useQuery } from '@tanstack/react-query';
 import { base44 } from '@/api/base44Client';
 import Link from 'next/link';
 import { createPageUrl } from '@/app/utils';
-import { Calendar, Users, DollarSign, Heart, CheckCircle, Edit, Star } from 'lucide-react';
+import { Calendar, Users, DollarSign, Heart, CheckCircle, Edit, Star, LogOut, Settings, FileText, MessageSquare, ClipboardList } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
@@ -13,23 +13,34 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/ta
 import WeddingCountdown from '@/app/components/dashboard/WeddingCountDown';
 import BudgetTracker from '@/app/components/dashboard/BudgetTracker';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
+import { signOut } from 'next-auth/react';
 
 export default function DashboardPage() {
     const [activeTab, setActiveTab] = useState('overview');
+    const [tasks, setTasks] = useState([
+        { id: 1, title: 'Book venue', completed: true, category: 'Venue', dueDate: '2024-03-01' },
+        { id: 2, title: 'Hire photographer', completed: false, category: 'Photography', dueDate: '2024-04-15' },
+        { id: 3, title: 'Send invitations', completed: false, category: 'Planning', dueDate: '2024-05-01' },
+        { id: 4, title: 'Book caterer', completed: false, category: 'Catering', dueDate: '2024-04-01' },
+        { id: 5, title: 'Choose wedding dress', completed: false, category: 'Attire', dueDate: '2024-04-20' },
+    ]);
+    const [guests, setGuests] = useState([
+        { id: 1, name: 'John Doe', email: 'john@example.com', rsvp: 'confirmed', dietary: 'None', plusOne: true },
+        { id: 2, name: 'Jane Smith', email: 'jane@example.com', rsvp: 'pending', dietary: 'Vegetarian', plusOne: false },
+        { id: 3, name: 'Bob Johnson', email: 'bob@example.com', rsvp: 'confirmed', dietary: 'Gluten-free', plusOne: true },
+        { id: 4, name: 'Alice Williams', email: 'alice@example.com', rsvp: 'declined', dietary: 'None', plusOne: false },
+    ]);
 
-    // Fetch wedding plans
     const { data: weddingPlans = [], isLoading: plansLoading } = useQuery({
         queryKey: ['weddingPlans'],
         queryFn: () => base44.entities.WeddingPlan.list('-created_date', 10)
     });
 
-    // Fetch bookings
     const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
         queryKey: ['bookings'],
         queryFn: () => base44.entities.Booking.list('-created_date', 50)
     });
 
-    // Get the most recent wedding plan
     const currentPlan = weddingPlans[0];
 
     const statusColors: any = {
@@ -84,17 +95,32 @@ export default function DashboardPage() {
     return (
         <div className="min-h-screen bg-cream bg-noise py-12">
             <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12">
-                {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-4xl font-serif text-charcoal mb-2">
-                        Welcome Back, {currentPlan.couple_names}! 💕
-                    </h1>
-                    <p className="text-gray-600">
-                        {currentPlan.wedding_date && `Your big day is on ${new Date(currentPlan.wedding_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
-                    </p>
+                <div className="mb-8 flex items-start justify-between">
+                    <div>
+                        <h1 className="text-4xl font-serif text-charcoal mb-2">
+                            Welcome Back, {currentPlan.couple_names}! 
+                        </h1>
+                        <p className="text-gray-600">
+                            {currentPlan.wedding_date && `Your big day is on ${new Date(currentPlan.wedding_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
+                        </p>
+                    </div>
+                    <div className="flex gap-2">
+                        <Button variant="outline" size="sm" className="border-gray-200">
+                            <Settings className="w-4 h-4 mr-2" />
+                            Settings
+                        </Button>
+                        <Button 
+                            variant="outline" 
+                            size="sm" 
+                            className="border-burgundy text-burgundy hover:bg-burgundy hover:text-white"
+                            onClick={() => signOut({ callbackUrl: '/' })}
+                        >
+                            <LogOut className="w-4 h-4 mr-2" />
+                            Logout
+                        </Button>
+                    </div>
                 </div>
 
-                {/* Stats Cards */}
                 <div className="grid md:grid-cols-4 gap-6 mb-8">
                     <Card className="border-gray-100 shadow-sm">
                         <CardContent className="p-6">
@@ -161,30 +187,28 @@ export default function DashboardPage() {
                     </Card>
                 </div>
 
-                {/* Tabs */}
                 <Tabs value={activeTab} onValueChange={setActiveTab}>
                     <TabsList className="bg-white border border-gray-100 mb-6">
                         <TabsTrigger value="overview">Overview</TabsTrigger>
+                        <TabsTrigger value="checklist">Checklist</TabsTrigger>
+                        <TabsTrigger value="guests">Guests</TabsTrigger>
                         <TabsTrigger value="bookings">Bookings</TabsTrigger>
-                        <TabsTrigger value="vendors">Find Vendors</TabsTrigger>
+                        <TabsTrigger value="messages">Messages</TabsTrigger>
+                        <TabsTrigger value="documents">Documents</TabsTrigger>
                     </TabsList>
 
-                    {/* Overview Tab */}
                     <TabsContent value="overview" className="space-y-6">
-                        {/* Countdown */}
                         <WeddingCountdown
                             weddingDate={currentPlan.wedding_date}
                             coupleNames={currentPlan.couple_names}
                         />
 
                         <div className="grid lg:grid-cols-2 gap-6">
-                            {/* Budget Tracker */}
                             <BudgetTracker
                                 totalBudget={currentPlan.budget}
                                 bookings={bookings}
                             />
 
-                            {/* Wedding Plan Details */}
                             <Card className="border-gray-100 shadow-sm">
                                 <CardHeader className="border-b border-gray-100">
                                     <div className="flex items-center justify-between">
@@ -225,12 +249,6 @@ export default function DashboardPage() {
                                                 ))}
                                             </div>
                                         </div>
-                                        {currentPlan.notes && (
-                                            <div>
-                                                <p className="text-sm text-gray-600 mb-1">Notes</p>
-                                                <p className="text-sm text-gray-700">{currentPlan.notes}</p>
-                                            </div>
-                                        )}
                                     </div>
                                     <Button variant="outline" className="w-full mt-6 border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
                                         <Edit className="w-4 h-4 mr-2" />
@@ -240,42 +258,129 @@ export default function DashboardPage() {
                             </Card>
                         </div>
 
-                        <div className="grid lg:grid-cols-2 gap-6">
-                            {/* Quick Actions */}
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardHeader className="border-b border-gray-100">
-                                    <CardTitle className="text-xl">Quick Actions</CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="space-y-3">
-                                        <Link href={createPageUrl('Vendors')}>
-                                            <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white justify-start">
-                                                <Star className="w-4 h-4 mr-2" />
-                                                Browse Vendors
-                                            </Button>
-                                        </Link>
-                                        <Button variant="outline" className="w-full justify-start">
-                                            <Calendar className="w-4 h-4 mr-2" />
-                                            Schedule Consultation
+                        <Card className="border-gray-100 shadow-sm">
+                            <CardHeader className="border-b border-gray-100">
+                                <CardTitle className="text-xl">Quick Actions</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="grid md:grid-cols-3 gap-3">
+                                    <Link href={createPageUrl('Vendors')}>
+                                        <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white justify-start">
+                                            <Star className="w-4 h-4 mr-2" />
+                                            Browse Vendors
                                         </Button>
-                                        <Button variant="outline" className="w-full justify-start">
-                                            <DollarSign className="w-4 h-4 mr-2" />
-                                            Track Budget
-                                        </Button>
-                                    </div>
-
-                                    <div className="mt-6 p-4 bg-sand/20 rounded-xl">
-                                        <h4 className="font-semibold text-charcoal mb-2">💡 Planning Tip</h4>
-                                        <p className="text-sm text-gray-700">
-                                            Start booking your key vendors (venue, photographer, caterer) 12-18 months before your wedding date for the best availability!
-                                        </p>
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
+                                    </Link>
+                                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('checklist')}>
+                                        <ClipboardList className="w-4 h-4 mr-2" />
+                                        View Checklist
+                                    </Button>
+                                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('guests')}>
+                                        <Users className="w-4 h-4 mr-2" />
+                                        Manage Guests
+                                    </Button>
+                                </div>
+                            </CardContent>
+                        </Card>
                     </TabsContent>
 
-                    {/* Bookings Tab */}
+                    <TabsContent value="checklist">
+                        <Card className="border-gray-100 shadow-sm">
+                            <CardHeader className="border-b border-gray-100">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-xl">Wedding Planning Checklist</CardTitle>
+                                    <Badge className="bg-burgundy text-white">
+                                        {tasks.filter(t => t.completed).length}/{tasks.length} Complete
+                                    </Badge>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="space-y-3">
+                                    {tasks.map((task) => (
+                                        <div key={task.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                                            <input
+                                                type="checkbox"
+                                                checked={task.completed}
+                                                onChange={() => {
+                                                    setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
+                                                }}
+                                                className="w-5 h-5 text-burgundy rounded"
+                                            />
+                                            <div className="flex-1">
+                                                <p className={`font-medium ${task.completed ? 'line-through text-gray-400' : 'text-charcoal'}`}>
+                                                    {task.title}
+                                                </p>
+                                                <div className="flex gap-2 mt-1">
+                                                    <Badge variant="secondary" className="text-xs">{task.category}</Badge>
+                                                    <span className="text-xs text-gray-500">Due: {task.dueDate}</span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button className="w-full mt-4 border-burgundy text-burgundy" variant="outline">
+                                    <ClipboardList className="w-4 h-4 mr-2" />
+                                    Add New Task
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="guests">
+                        <Card className="border-gray-100 shadow-sm">
+                            <CardHeader className="border-b border-gray-100">
+                                <div className="flex items-center justify-between">
+                                    <CardTitle className="text-xl">Guest List Management</CardTitle>
+                                    <div className="flex gap-2">
+                                        <Badge className="bg-green-100 text-green-800">
+                                            {guests.filter(g => g.rsvp === 'confirmed').length} Confirmed
+                                        </Badge>
+                                        <Badge className="bg-yellow-100 text-yellow-800">
+                                            {guests.filter(g => g.rsvp === 'pending').length} Pending
+                                        </Badge>
+                                    </div>
+                                </div>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="overflow-x-auto">
+                                    <table className="w-full">
+                                        <thead>
+                                            <tr className="border-b border-gray-200">
+                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">Name</th>
+                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">Email</th>
+                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">RSVP</th>
+                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">Dietary</th>
+                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">+1</th>
+                                            </tr>
+                                        </thead>
+                                        <tbody>
+                                            {guests.map((guest) => (
+                                                <tr key={guest.id} className="border-b border-gray-100 hover:bg-sand/20">
+                                                    <td className="py-3 px-4 text-sm text-charcoal">{guest.name}</td>
+                                                    <td className="py-3 px-4 text-sm text-gray-600">{guest.email}</td>
+                                                    <td className="py-3 px-4">
+                                                        <Badge className={
+                                                            guest.rsvp === 'confirmed' ? 'bg-green-100 text-green-800' :
+                                                            guest.rsvp === 'pending' ? 'bg-yellow-100 text-yellow-800' :
+                                                            'bg-red-100 text-red-800'
+                                                        }>
+                                                            {guest.rsvp}
+                                                        </Badge>
+                                                    </td>
+                                                    <td className="py-3 px-4 text-sm text-gray-600">{guest.dietary}</td>
+                                                    <td className="py-3 px-4 text-sm">{guest.plusOne ? '✓' : '✗'}</td>
+                                                </tr>
+                                            ))}
+                                        </tbody>
+                                    </table>
+                                </div>
+                                <Button className="w-full mt-4 border-burgundy text-burgundy" variant="outline">
+                                    <Users className="w-4 h-4 mr-2" />
+                                    Add Guest
+                                </Button>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
                     <TabsContent value="bookings">
                         <Card className="border-gray-100 shadow-sm">
                             <CardHeader className="border-b border-gray-100">
@@ -335,29 +440,68 @@ export default function DashboardPage() {
                         </Card>
                     </TabsContent>
 
-                    {/* Find Vendors Tab */}
-                    <TabsContent value="vendors">
+                    <TabsContent value="messages">
                         <Card className="border-gray-100 shadow-sm">
                             <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-xl">Recommended Vendors</CardTitle>
+                                <CardTitle className="text-xl">Vendor Messages</CardTitle>
                             </CardHeader>
                             <CardContent className="p-6">
-                                <div className="text-center py-12">
-                                    <div className="w-16 h-16 bg-burgundy/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                        <Star className="w-8 h-8 text-burgundy" />
-                                    </div>
-                                    <h3 className="text-lg font-semibold text-charcoal mb-2">
-                                        Personalized Recommendations Coming Soon
-                                    </h3>
-                                    <p className="text-gray-600 mb-4">
-                                        Our team is curating the perfect vendor matches for your wedding
-                                    </p>
-                                    <Link href={createPageUrl('Vendors')}>
-                                        <Button className="bg-burgundy hover:bg-burgundy-light text-white">
-                                            Browse All Vendors
-                                        </Button>
-                                    </Link>
+                                <div className="space-y-4">
+                                    {[
+                                        { vendor: 'Kigali Serena Hotel', message: 'Your booking is confirmed for June 15th', time: '2 hours ago', unread: true },
+                                        { vendor: 'Pixel Perfect Photography', message: 'Can we schedule a consultation call?', time: '1 day ago', unread: true },
+                                        { vendor: 'Bloom & Bliss Decor', message: 'Here are the flower arrangement options', time: '3 days ago', unread: false },
+                                    ].map((msg, idx) => (
+                                        <div key={idx} className={`p-4 border rounded-lg ${msg.unread ? 'border-burgundy bg-burgundy/5' : 'border-gray-100'}`}>
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex items-center gap-2">
+                                                    <MessageSquare className="w-5 h-5 text-burgundy" />
+                                                    <h4 className="font-semibold text-charcoal">{msg.vendor}</h4>
+                                                </div>
+                                                <span className="text-xs text-gray-500">{msg.time}</span>
+                                            </div>
+                                            <p className="text-sm text-gray-700">{msg.message}</p>
+                                            <Button size="sm" variant="outline" className="mt-3 border-burgundy text-burgundy">
+                                                Reply
+                                            </Button>
+                                        </div>
+                                    ))}
                                 </div>
+                            </CardContent>
+                        </Card>
+                    </TabsContent>
+
+                    <TabsContent value="documents">
+                        <Card className="border-gray-100 shadow-sm">
+                            <CardHeader className="border-b border-gray-100">
+                                <CardTitle className="text-xl">Documents & Contracts</CardTitle>
+                            </CardHeader>
+                            <CardContent className="p-6">
+                                <div className="space-y-3">
+                                    {[
+                                        { name: 'Venue Contract - Kigali Serena', type: 'PDF', size: '2.4 MB', date: '2024-02-15' },
+                                        { name: 'Photography Agreement', type: 'PDF', size: '1.8 MB', date: '2024-02-20' },
+                                        { name: 'Catering Invoice', type: 'PDF', size: '856 KB', date: '2024-03-01' },
+                                        { name: 'Guest List Spreadsheet', type: 'XLSX', size: '124 KB', date: '2024-03-05' },
+                                    ].map((doc, idx) => (
+                                        <div key={idx} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
+                                            <div className="flex items-center gap-3">
+                                                <FileText className="w-8 h-8 text-burgundy" />
+                                                <div>
+                                                    <p className="font-medium text-charcoal">{doc.name}</p>
+                                                    <p className="text-xs text-gray-500">{doc.type} • {doc.size} • {doc.date}</p>
+                                                </div>
+                                            </div>
+                                            <Button size="sm" variant="outline">
+                                                Download
+                                            </Button>
+                                        </div>
+                                    ))}
+                                </div>
+                                <Button className="w-full mt-4 border-burgundy text-burgundy" variant="outline">
+                                    <FileText className="w-4 h-4 mr-2" />
+                                    Upload Document
+                                </Button>
                             </CardContent>
                         </Card>
                     </TabsContent>
