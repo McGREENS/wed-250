@@ -1,512 +1,203 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
-import Link from 'next/link';
-import { createPageUrl } from '@/app/utils';
-import { Calendar, Users, DollarSign, Heart, CheckCircle, Edit, Star, LogOut, Settings, FileText, MessageSquare, ClipboardList } from 'lucide-react';
-import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
-import { Badge } from "@/app/components/ui/badge";
+import UserPageLayout from '@/app/components/user/UserPageLayout';
+import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
-import WeddingCountdown from '@/app/components/dashboard/WeddingCountDown';
-import BudgetTracker from '@/app/components/dashboard/BudgetTracker';
-import LoadingSpinner from '@/app/components/common/LoadingSpinner';
-import { signOut } from 'next-auth/react';
+import { Progress } from "@/app/components/ui/progress";
+import { Calendar, Heart, DollarSign, CheckCircle, TrendingUp, Plus, MapPin, Star } from 'lucide-react';
+import Link from 'next/link';
 
 export default function DashboardPage() {
-    const [activeTab, setActiveTab] = useState('overview');
-    const [tasks, setTasks] = useState([
-        { id: 1, title: 'Book venue', completed: true, category: 'Venue', dueDate: '2024-03-01' },
-        { id: 2, title: 'Hire photographer', completed: false, category: 'Photography', dueDate: '2024-04-15' },
-        { id: 3, title: 'Send invitations', completed: false, category: 'Planning', dueDate: '2024-05-01' },
-        { id: 4, title: 'Book caterer', completed: false, category: 'Catering', dueDate: '2024-04-01' },
-        { id: 5, title: 'Choose wedding dress', completed: false, category: 'Attire', dueDate: '2024-04-20' },
-    ]);
-    const [guests, setGuests] = useState([
-        { id: 1, name: 'John Doe', email: 'john@example.com', rsvp: 'confirmed', dietary: 'None', plusOne: true },
-        { id: 2, name: 'Jane Smith', email: 'jane@example.com', rsvp: 'pending', dietary: 'Vegetarian', plusOne: false },
-        { id: 3, name: 'Bob Johnson', email: 'bob@example.com', rsvp: 'confirmed', dietary: 'Gluten-free', plusOne: true },
-        { id: 4, name: 'Alice Williams', email: 'alice@example.com', rsvp: 'declined', dietary: 'None', plusOne: false },
-    ]);
+    const weddingDate = new Date('2024-12-15');
+    const today = new Date();
+    const daysUntil = Math.max(0, Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
 
-    const { data: weddingPlans = [], isLoading: plansLoading } = useQuery({
-        queryKey: ['weddingPlans'],
-        queryFn: () => base44.entities.WeddingPlan.list('-created_date', 10)
-    });
+    const stats = [
+        { label: 'Days Until Wedding', value: daysUntil.toString(), icon: Calendar, color: 'text-burgundy' },
+        { label: 'Planning Progress', value: '65%', icon: TrendingUp, color: 'text-green-600' },
+        { label: 'Budget Used', value: '45%', icon: DollarSign, color: 'text-blue-600' },
+        { label: 'Tasks Complete', value: '12/24', icon: CheckCircle, color: 'text-purple-600' },
+    ];
 
-    const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
-        queryKey: ['bookings'],
-        queryFn: () => base44.entities.Booking.list('-created_date', 50)
-    });
+    const upcomingTasks = [
+        { task: 'Finalize guest list', dueDate: 'Oct 30', priority: 'high' },
+        { task: 'Book photographer', dueDate: 'Nov 5', priority: 'high' },
+        { task: 'Order wedding cake', dueDate: 'Nov 15', priority: 'medium' },
+        { task: 'Send invitations', dueDate: 'Nov 20', priority: 'medium' },
+    ];
 
-    const currentPlan = weddingPlans[0];
+    const recentBookings = [
+        { vendor: 'Kigali Serena Hotel', service: 'Venue', status: 'confirmed', amount: 'RWF 5,000,000' },
+        { vendor: 'Pixel Perfect Photography', service: 'Photography', status: 'pending', amount: 'RWF 800,000' },
+        { vendor: 'Bloom & Bliss Decor', service: 'Decoration', status: 'confirmed', amount: 'RWF 1,200,000' },
+    ];
 
-    const statusColors: any = {
-        pending: 'bg-yellow-100 text-yellow-800 border-yellow-200',
-        in_progress: 'bg-blue-100 text-blue-800 border-blue-200',
-        completed: 'bg-green-100 text-green-800 border-green-200'
-    };
-
-    const bookingStatusColors: any = {
-        pending: 'bg-yellow-100 text-yellow-800',
-        confirmed: 'bg-green-100 text-green-800',
-        cancelled: 'bg-red-100 text-red-800'
-    };
-
-    const paymentStatusColors: any = {
-        unpaid: 'bg-red-100 text-red-800',
-        deposit_paid: 'bg-yellow-100 text-yellow-800',
-        paid: 'bg-green-100 text-green-800'
-    };
-
-    if (plansLoading) {
-        return (
-            <div className="min-h-screen bg-cream flex items-center justify-center">
-                <LoadingSpinner size="xl" text="Loading your dashboard..." />
-            </div>
-        );
-    }
-
-    if (!currentPlan) {
-        return (
-            <div className="min-h-screen bg-cream flex items-center justify-center">
-                <div className="text-center max-w-md px-4">
-                    <div className="w-20 h-20 bg-burgundy/10 rounded-full flex items-center justify-center mx-auto mb-6">
-                        <Heart className="w-10 h-10 text-burgundy" />
-                    </div>
-                    <h2 className="text-2xl font-serif text-charcoal mb-4">
-                        Welcome to Your Dashboard!
-                    </h2>
-                    <p className="text-gray-600 mb-6">
-                        You haven't created a wedding plan yet. Let's get started on planning your dream wedding!
-                    </p>
-                    <Link href={createPageUrl('PlanBuilder')}>
-                        <Button className="bg-burgundy hover:bg-burgundy-light text-white">
-                            Create Your Wedding Plan
-                        </Button>
-                    </Link>
-                </div>
-            </div>
-        );
-    }
+    const quickActions = [
+        { title: 'Browse Venues', icon: MapPin, href: '/venues', color: 'bg-burgundy' },
+        { title: 'Find Vendors', icon: Star, href: '/vendors', color: 'bg-gold' },
+        { title: 'Add Task', icon: Plus, href: '/dashboard/checklist', color: 'bg-charcoal' },
+    ];
 
     return (
-        <div className="min-h-screen bg-cream bg-noise py-12">
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12">
-                <div className="mb-8 flex items-start justify-between">
-                    <div>
-                        <h1 className="text-4xl font-serif text-charcoal mb-2">
-                            Welcome Back, {currentPlan.couple_names}! 
-                        </h1>
-                        <p className="text-gray-600">
-                            {currentPlan.wedding_date && `Your big day is on ${new Date(currentPlan.wedding_date).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}`}
-                        </p>
-                    </div>
-                    <div className="flex gap-2">
-                        <Button variant="outline" size="sm" className="border-gray-200">
-                            <Settings className="w-4 h-4 mr-2" />
-                            Settings
-                        </Button>
-                        <Button 
-                            variant="outline" 
-                            size="sm" 
-                            className="border-burgundy text-burgundy hover:bg-burgundy hover:text-white"
-                            onClick={() => signOut({ callbackUrl: '/' })}
-                        >
-                            <LogOut className="w-4 h-4 mr-2" />
-                            Logout
-                        </Button>
-                    </div>
+        <UserPageLayout>
+            <div className="max-w-7xl mx-auto">
+                <div className="mb-8">
+                    <h1 className="text-3xl font-serif text-charcoal mb-2">Welcome Back, Sarah & Michael!</h1>
+                    <p className="text-gray-600">Your wedding is on December 15, 2024 - {daysUntil} days to go!</p>
                 </div>
 
-                <div className="grid md:grid-cols-4 gap-6 mb-8">
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Days Until Wedding</p>
-                                    <p className="text-3xl font-bold text-burgundy">
-                                        {Math.max(0, Math.ceil((new Date(currentPlan.wedding_date).getTime() - new Date().getTime()) / (1000 * 60 * 60 * 24)))}
-                                    </p>
-                                </div>
-                                <div className="w-12 h-12 bg-burgundy/10 rounded-full flex items-center justify-center">
-                                    <Calendar className="w-6 h-6 text-burgundy" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Guest Count</p>
-                                    <p className="text-3xl font-bold text-charcoal">
-                                        {currentPlan.guest_count}
-                                    </p>
-                                </div>
-                                <div className="w-12 h-12 bg-sand/20 rounded-full flex items-center justify-center">
-                                    <Users className="w-6 h-6 text-charcoal" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Budget</p>
-                                    <p className="text-3xl font-bold text-burgundy">
-                                        ${currentPlan.budget?.toLocaleString()}
-                                    </p>
-                                </div>
-                                <div className="w-12 h-12 bg-burgundy/10 rounded-full flex items-center justify-center">
-                                    <DollarSign className="w-6 h-6 text-burgundy" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-
-                    <Card className="border-gray-100 shadow-sm">
-                        <CardContent className="p-6">
-                            <div className="flex items-center justify-between">
-                                <div>
-                                    <p className="text-sm text-gray-600 mb-1">Bookings</p>
-                                    <p className="text-3xl font-bold text-charcoal">
-                                        {bookings.filter((b: any) => b.booking_status === 'confirmed').length}/{bookings.length}
-                                    </p>
-                                </div>
-                                <div className="w-12 h-12 bg-sand/20 rounded-full flex items-center justify-center">
-                                    <CheckCircle className="w-6 h-6 text-charcoal" />
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
-                </div>
-
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="bg-white border border-gray-100 mb-6">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="checklist">Checklist</TabsTrigger>
-                        <TabsTrigger value="guests">Guests</TabsTrigger>
-                        <TabsTrigger value="bookings">Bookings</TabsTrigger>
-                        <TabsTrigger value="messages">Messages</TabsTrigger>
-                        <TabsTrigger value="documents">Documents</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="overview" className="space-y-6">
-                        <WeddingCountdown
-                            weddingDate={currentPlan.wedding_date}
-                            coupleNames={currentPlan.couple_names}
-                        />
-
-                        <div className="grid lg:grid-cols-2 gap-6">
-                            <BudgetTracker
-                                totalBudget={currentPlan.budget}
-                                bookings={bookings}
-                            />
-
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardHeader className="border-b border-gray-100">
-                                    <div className="flex items-center justify-between">
-                                        <CardTitle className="text-xl">Your Wedding Plan</CardTitle>
-                                        <Badge className={statusColors[currentPlan.status]}>
-                                            {currentPlan.status}
-                                        </Badge>
-                                    </div>
-                                </CardHeader>
+                <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {stats.map((stat, index) => {
+                        const Icon = stat.icon;
+                        return (
+                            <Card key={index} className="border-gray-100 shadow-sm">
                                 <CardContent className="p-6">
-                                    <div className="space-y-4">
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Couple</p>
-                                            <p className="font-semibold text-charcoal">{currentPlan.couple_names}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Wedding Date</p>
-                                            <p className="font-semibold text-charcoal">
-                                                {new Date(currentPlan.wedding_date).toLocaleDateString('en-US', {
-                                                    weekday: 'long',
-                                                    month: 'long',
-                                                    day: 'numeric',
-                                                    year: 'numeric'
-                                                })}
-                                            </p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Venue Preference</p>
-                                            <p className="font-semibold text-charcoal">{currentPlan.venue_preference || 'Not specified'}</p>
-                                        </div>
-                                        <div>
-                                            <p className="text-sm text-gray-600 mb-1">Services Needed</p>
-                                            <div className="flex flex-wrap gap-2 mt-2">
-                                                {currentPlan.services_needed?.map((service: string, idx: number) => (
-                                                    <Badge key={idx} variant="secondary" className="bg-sand text-charcoal">
-                                                        {service}
-                                                    </Badge>
-                                                ))}
-                                            </div>
+                                    <div className="flex items-start justify-between mb-2">
+                                        <p className="text-sm text-gray-600">{stat.label}</p>
+                                        <div className={`w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center ${stat.color}`}>
+                                            <Icon className="w-5 h-5" />
                                         </div>
                                     </div>
-                                    <Button variant="outline" className="w-full mt-6 border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
-                                        <Edit className="w-4 h-4 mr-2" />
-                                        Edit Plan
-                                    </Button>
+                                    <p className="text-2xl font-bold text-charcoal">{stat.value}</p>
                                 </CardContent>
                             </Card>
-                        </div>
+                        );
+                    })}
+                </div>
 
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-xl">Quick Actions</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="grid md:grid-cols-3 gap-3">
-                                    <Link href={createPageUrl('Vendors')}>
-                                        <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white justify-start">
-                                            <Star className="w-4 h-4 mr-2" />
-                                            Browse Vendors
-                                        </Button>
-                                    </Link>
-                                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('checklist')}>
-                                        <ClipboardList className="w-4 h-4 mr-2" />
-                                        View Checklist
-                                    </Button>
-                                    <Button variant="outline" className="w-full justify-start" onClick={() => setActiveTab('guests')}>
-                                        <Users className="w-4 h-4 mr-2" />
-                                        Manage Guests
-                                    </Button>
+                <div className="grid lg:grid-cols-3 gap-6 mb-8">
+                    <Card className="lg:col-span-2 border-gray-100 shadow-sm">
+                        <CardContent className="p-6">
+                            <h3 className="text-lg font-semibold text-charcoal mb-4">Wedding Countdown</h3>
+                            <div className="text-center py-8 bg-gradient-to-br from-burgundy/10 to-gold/10 rounded-lg mb-6">
+                                <div className="text-6xl font-bold text-burgundy mb-2">{daysUntil}</div>
+                                <p className="text-gray-600">Days Until Your Big Day</p>
+                            </div>
+                            <div className="space-y-3">
+                                <div>
+                                    <div className="flex justify-between text-sm mb-2">
+                                        <span className="text-gray-600">Planning Progress</span>
+                                        <span className="font-semibold text-charcoal">65%</span>
+                                    </div>
+                                    <Progress value={65} className="h-2" />
                                 </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                                <p className="text-sm text-gray-600">You're making great progress! Keep up the momentum.</p>
+                            </div>
+                        </CardContent>
+                    </Card>
 
-                    <TabsContent value="checklist">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-xl">Wedding Planning Checklist</CardTitle>
-                                    <Badge className="bg-burgundy text-white">
-                                        {tasks.filter(t => t.completed).length}/{tasks.length} Complete
-                                    </Badge>
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardContent className="p-6">
+                            <h3 className="text-lg font-semibold text-charcoal mb-4">Budget Summary</h3>
+                            <div className="text-center mb-6">
+                                <div className="text-3xl font-bold text-burgundy mb-1">RWF 7M</div>
+                                <p className="text-sm text-gray-600">of RWF 15M spent</p>
+                            </div>
+                            <Progress value={45} className="mb-4" />
+                            <div className="space-y-2 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Venue</span>
+                                    <span className="font-semibold">RWF 5M</span>
                                 </div>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="space-y-3">
-                                    {tasks.map((task) => (
-                                        <div key={task.id} className="flex items-center gap-4 p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
-                                            <input
-                                                type="checkbox"
-                                                checked={task.completed}
-                                                onChange={() => {
-                                                    setTasks(tasks.map(t => t.id === task.id ? { ...t, completed: !t.completed } : t));
-                                                }}
-                                                className="w-5 h-5 text-burgundy rounded"
-                                            />
-                                            <div className="flex-1">
-                                                <p className={`font-medium ${task.completed ? 'line-through text-gray-400' : 'text-charcoal'}`}>
-                                                    {task.title}
-                                                </p>
-                                                <div className="flex gap-2 mt-1">
-                                                    <Badge variant="secondary" className="text-xs">{task.category}</Badge>
-                                                    <span className="text-xs text-gray-500">Due: {task.dueDate}</span>
-                                                </div>
-                                            </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Decoration</span>
+                                    <span className="font-semibold">RWF 1.2M</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-600">Photography</span>
+                                    <span className="font-semibold">RWF 800K</span>
+                                </div>
+                            </div>
+                            <Link href="/dashboard/budget">
+                                <Button variant="outline" className="w-full mt-4 border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
+                                    View Full Budget
+                                </Button>
+                            </Link>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                <div className="grid lg:grid-cols-2 gap-6">
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-charcoal">Upcoming Tasks</h3>
+                                <Link href="/dashboard/checklist">
+                                    <Button variant="ghost" size="sm" className="text-burgundy">View all</Button>
+                                </Link>
+                            </div>
+                            <div className="space-y-3">
+                                {upcomingTasks.map((task, i) => (
+                                    <div key={i} className="flex items-center gap-3 p-3 bg-sand/20 rounded-lg">
+                                        <input type="checkbox" className="w-5 h-5 text-burgundy rounded" />
+                                        <div className="flex-1">
+                                            <p className="font-medium text-charcoal text-sm">{task.task}</p>
+                                            <p className="text-xs text-gray-500">Due: {task.dueDate}</p>
                                         </div>
-                                    ))}
-                                </div>
-                                <Button className="w-full mt-4 border-burgundy text-burgundy" variant="outline">
-                                    <ClipboardList className="w-4 h-4 mr-2" />
+                                        <span className={`text-xs px-2 py-1 rounded ${task.priority === 'high' ? 'bg-red-100 text-red-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                            {task.priority}
+                                        </span>
+                                    </div>
+                                ))}
+                            </div>
+                            <Link href="/dashboard/checklist">
+                                <Button variant="outline" className="w-full mt-4">
+                                    <Plus className="w-4 h-4 mr-2" />
                                     Add New Task
                                 </Button>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                            </Link>
+                        </CardContent>
+                    </Card>
 
-                    <TabsContent value="guests">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-xl">Guest List Management</CardTitle>
-                                    <div className="flex gap-2">
-                                        <Badge className="bg-green-100 text-green-800">
-                                            {guests.filter(g => g.rsvp === 'confirmed').length} Confirmed
-                                        </Badge>
-                                        <Badge className="bg-yellow-100 text-yellow-800">
-                                            {guests.filter(g => g.rsvp === 'pending').length} Pending
-                                        </Badge>
-                                    </div>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="overflow-x-auto">
-                                    <table className="w-full">
-                                        <thead>
-                                            <tr className="border-b border-gray-200">
-                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">Name</th>
-                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">Email</th>
-                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">RSVP</th>
-                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">Dietary</th>
-                                                <th className="text-left py-3 px-4 text-sm font-semibold text-charcoal">+1</th>
-                                            </tr>
-                                        </thead>
-                                        <tbody>
-                                            {guests.map((guest) => (
-                                                <tr key={guest.id} className="border-b border-gray-100 hover:bg-sand/20">
-                                                    <td className="py-3 px-4 text-sm text-charcoal">{guest.name}</td>
-                                                    <td className="py-3 px-4 text-sm text-gray-600">{guest.email}</td>
-                                                    <td className="py-3 px-4">
-                                                        <Badge className={
-                                                            guest.rsvp === 'confirmed' ? 'bg-green-100 text-green-800' :
-                                                            guest.rsvp === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                                                            'bg-red-100 text-red-800'
-                                                        }>
-                                                            {guest.rsvp}
-                                                        </Badge>
-                                                    </td>
-                                                    <td className="py-3 px-4 text-sm text-gray-600">{guest.dietary}</td>
-                                                    <td className="py-3 px-4 text-sm">{guest.plusOne ? '✓' : '✗'}</td>
-                                                </tr>
-                                            ))}
-                                        </tbody>
-                                    </table>
-                                </div>
-                                <Button className="w-full mt-4 border-burgundy text-burgundy" variant="outline">
-                                    <Users className="w-4 h-4 mr-2" />
-                                    Add Guest
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="bookings">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-xl">Your Bookings</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                {bookings.length === 0 ? (
-                                    <div className="text-center py-12">
-                                        <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <Heart className="w-8 h-8 text-gray-400" />
-                                        </div>
-                                        <h3 className="text-lg font-semibold text-charcoal mb-2">
-                                            No bookings yet
-                                        </h3>
-                                        <p className="text-gray-600 mb-4">
-                                            Start browsing vendors and create your first booking
-                                        </p>
-                                        <Link href={createPageUrl('Vendors')}>
-                                            <Button className="bg-burgundy hover:bg-burgundy-light text-white">
-                                                Browse Vendors
-                                            </Button>
-                                        </Link>
-                                    </div>
-                                ) : (
-                                    <div className="space-y-4">
-                                        {bookings.map((booking: any) => (
-                                            <div
-                                                key={booking.id}
-                                                className="border border-gray-100 rounded-xl p-4 hover:shadow-md transition-shadow"
-                                            >
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <div>
-                                                        <h4 className="font-semibold text-charcoal mb-1">
-                                                            {booking.vendor_name}
-                                                        </h4>
-                                                        <p className="text-sm text-gray-600">{booking.service_category}</p>
-                                                    </div>
-                                                    <div className="text-right">
-                                                        <p className="font-semibold text-burgundy">
-                                                            ${booking.quote_amount?.toLocaleString()}
-                                                        </p>
-                                                    </div>
-                                                </div>
-                                                <div className="flex flex-wrap gap-2">
-                                                    <Badge className={bookingStatusColors[booking.booking_status]}>
-                                                        {booking.booking_status}
-                                                    </Badge>
-                                                    <Badge className={paymentStatusColors[booking.payment_status]}>
-                                                        {booking.payment_status.replace('_', ' ')}
-                                                    </Badge>
-                                                </div>
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardContent className="p-6">
+                            <div className="flex items-center justify-between mb-4">
+                                <h3 className="text-lg font-semibold text-charcoal">Recent Bookings</h3>
+                                <Link href="/dashboard/bookings">
+                                    <Button variant="ghost" size="sm" className="text-burgundy">View all</Button>
+                                </Link>
+                            </div>
+                            <div className="space-y-3">
+                                {recentBookings.map((booking, i) => (
+                                    <div key={i} className="p-3 border border-gray-100 rounded-lg">
+                                        <div className="flex items-start justify-between mb-2">
+                                            <div>
+                                                <p className="font-semibold text-charcoal text-sm">{booking.vendor}</p>
+                                                <p className="text-xs text-gray-600">{booking.service}</p>
                                             </div>
-                                        ))}
+                                            <span className={`text-xs px-2 py-1 rounded ${booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 'bg-yellow-100 text-yellow-700'}`}>
+                                                {booking.status}
+                                            </span>
+                                        </div>
+                                        <p className="text-sm font-semibold text-burgundy">{booking.amount}</p>
                                     </div>
-                                )}
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
+                                ))}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
 
-                    <TabsContent value="messages">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-xl">Vendor Messages</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="space-y-4">
-                                    {[
-                                        { vendor: 'Kigali Serena Hotel', message: 'Your booking is confirmed for June 15th', time: '2 hours ago', unread: true },
-                                        { vendor: 'Pixel Perfect Photography', message: 'Can we schedule a consultation call?', time: '1 day ago', unread: true },
-                                        { vendor: 'Bloom & Bliss Decor', message: 'Here are the flower arrangement options', time: '3 days ago', unread: false },
-                                    ].map((msg, idx) => (
-                                        <div key={idx} className={`p-4 border rounded-lg ${msg.unread ? 'border-burgundy bg-burgundy/5' : 'border-gray-100'}`}>
-                                            <div className="flex items-start justify-between mb-2">
-                                                <div className="flex items-center gap-2">
-                                                    <MessageSquare className="w-5 h-5 text-burgundy" />
-                                                    <h4 className="font-semibold text-charcoal">{msg.vendor}</h4>
-                                                </div>
-                                                <span className="text-xs text-gray-500">{msg.time}</span>
+                <Card className="border-gray-100 shadow-sm mt-6">
+                    <CardContent className="p-6">
+                        <h3 className="text-lg font-semibold text-charcoal mb-4">Quick Actions</h3>
+                        <div className="grid md:grid-cols-3 gap-3">
+                            {quickActions.map((action, i) => {
+                                const Icon = action.icon;
+                                return (
+                                    <Link key={i} href={action.href}>
+                                        <button className="w-full flex items-center gap-3 p-4 bg-sand/20 rounded-lg hover:bg-sand/40 transition-colors text-left">
+                                            <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center`}>
+                                                <Icon className="w-6 h-6 text-white" />
                                             </div>
-                                            <p className="text-sm text-gray-700">{msg.message}</p>
-                                            <Button size="sm" variant="outline" className="mt-3 border-burgundy text-burgundy">
-                                                Reply
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="documents">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-xl">Documents & Contracts</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="space-y-3">
-                                    {[
-                                        { name: 'Venue Contract - Kigali Serena', type: 'PDF', size: '2.4 MB', date: '2024-02-15' },
-                                        { name: 'Photography Agreement', type: 'PDF', size: '1.8 MB', date: '2024-02-20' },
-                                        { name: 'Catering Invoice', type: 'PDF', size: '856 KB', date: '2024-03-01' },
-                                        { name: 'Guest List Spreadsheet', type: 'XLSX', size: '124 KB', date: '2024-03-05' },
-                                    ].map((doc, idx) => (
-                                        <div key={idx} className="flex items-center justify-between p-4 border border-gray-100 rounded-lg hover:shadow-md transition-shadow">
-                                            <div className="flex items-center gap-3">
-                                                <FileText className="w-8 h-8 text-burgundy" />
-                                                <div>
-                                                    <p className="font-medium text-charcoal">{doc.name}</p>
-                                                    <p className="text-xs text-gray-500">{doc.type} • {doc.size} • {doc.date}</p>
-                                                </div>
-                                            </div>
-                                            <Button size="sm" variant="outline">
-                                                Download
-                                            </Button>
-                                        </div>
-                                    ))}
-                                </div>
-                                <Button className="w-full mt-4 border-burgundy text-burgundy" variant="outline">
-                                    <FileText className="w-4 h-4 mr-2" />
-                                    Upload Document
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                                            <span className="font-medium text-charcoal">{action.title}</span>
+                                        </button>
+                                    </Link>
+                                );
+                            })}
+                        </div>
+                    </CardContent>
+                </Card>
             </div>
-        </div>
+        </UserPageLayout>
     );
 }

@@ -4,16 +4,27 @@ import Credentials from "next-auth/providers/credentials";
 import bcrypt from "bcryptjs";
 import { z } from "zod";
 
-// Mock user for frontend development
-const mockUser = {
-    id: "1",
-    name: "Test User",
-    email: "test@example.com",
-    password: "$2a$10$K7L1OJ45/4Y2nIvhRVpCe.FSmhDdWoXehVzJptJ/op0lSsvqNu/1u", // "password"
-    role: "COUPLE",
-    emailVerified: null,
-    image: null,
-};
+// Hardcoded users for frontend development
+const mockUsers = [
+    {
+        id: "1",
+        name: "John Doe",
+        email: "user@andiza.rw",
+        password: "password",
+        role: "COUPLE",
+        emailVerified: null,
+        image: null,
+    },
+    {
+        id: "2",
+        name: "Vendor Admin",
+        email: "vendor@andiza.rw",
+        password: "password",
+        role: "VENDOR",
+        emailVerified: null,
+        image: null,
+    },
+];
 
 export const { handlers, auth, signIn, signOut } = NextAuth({
     ...authConfig,
@@ -27,15 +38,22 @@ export const { handlers, auth, signIn, signOut } = NextAuth({
             },
             authorize: async (credentials) => {
                 const parsedCredentials = z
-                    .object({ email: z.string().email(), password: z.string().min(6) })
+                    .object({ email: z.string().email(), password: z.string().min(1) })
                     .safeParse(credentials);
 
                 if (parsedCredentials.success) {
                     const { email, password } = parsedCredentials.data;
                     
-                    // Mock authentication - accepts any email with password "password"
-                    if (password === "password") {
-                        return { ...mockUser, email };
+                    // Find user by email
+                    const user = mockUsers.find(u => u.email === email);
+                    
+                    if (user && user.password === password) {
+                        return {
+                            id: user.id,
+                            name: user.name,
+                            email: user.email,
+                            role: user.role,
+                        };
                     }
                 }
 
