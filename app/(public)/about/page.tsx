@@ -1,6 +1,6 @@
 import React from 'react';
 import Link from 'next/link';
-import { createPageUrl } from '../utils';
+import { createPageUrl } from '@/app/utils';
 import { Heart, Users, Award, Sparkles, CheckCircle } from 'lucide-react';
 import { Button } from "@/app/components/ui/button";
 
