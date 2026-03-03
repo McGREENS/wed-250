@@ -13,7 +13,6 @@ export default function VendorSidebar() {
     const navItems = [
         { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
         { name: 'Bookings', href: '/vendor/bookings', icon: Briefcase },
-        { name: 'Messages', href: '/vendor/messages', icon: MessageSquare },
         { name: 'Calendar', href: '/vendor/calendar', icon: Calendar },
         { name: 'Services', href: '/vendor/services', icon: Briefcase },
         { name: 'Portfolio', href: '/vendor/portfolio', icon: Image },

@@ -10,9 +10,6 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/bookings', label: 'My Bookings', icon: Calendar },
   { href: '/dashboard/favorites', label: 'Favorites', icon: Heart },
-  { href: '/dashboard/checklist', label: 'Checklist', icon: CheckSquare },
-  { href: '/dashboard/budget', label: 'Budget', icon: DollarSign },
-  { href: '/dashboard/guests', label: 'Guest List', icon: Users },
   { href: '/dashboard/settings', label: 'Settings', icon: Settings },
 ];
 

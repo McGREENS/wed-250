@@ -55,18 +55,21 @@ export default function HomePage() {
 
                             <div className="flex flex-col sm:flex-row gap-5">
                                 <Link
-                                    href={createPageUrl("PlanBuilder")}
+                                    href="/signup"
                                     className="bg-burgundy text-white px-10 py-5 rounded-full font-medium hover:bg-burgundy-light transition-all shadow-xl hover:shadow-2xl hover:-translate-y-1 text-sm tracking-widest uppercase text-center relative overflow-hidden group"
                                 >
-                                    <span className="relative z-10">Start Planning</span>
+                                    <span className="relative z-10 flex items-center justify-center gap-2">
+                                        <Heart className="w-4 h-4" />
+                                        For Couples
+                                    </span>
                                     <div className="absolute inset-0 bg-white/20 translate-y-full group-hover:translate-y-0 transition-transform duration-300"></div>
                                 </Link>
                                 <Link
-                                    href={createPageUrl("Venues")}
+                                    href="/signup"
                                     className="group bg-white border border-gray-200 text-charcoal px-10 py-5 rounded-full font-medium hover:border-burgundy/30 transition-all shadow-sm hover:shadow-md text-sm tracking-widest uppercase text-center flex items-center justify-center gap-3 relative overflow-hidden"
                                 >
-                                    <Search className="w-4 h-4 text-gray-400 group-hover:text-burgundy transition-colors relative z-10" />
-                                    <span className="relative z-10">Browse Venues</span>
+                                    <LayoutDashboard className="w-4 h-4 text-gray-400 group-hover:text-burgundy transition-colors relative z-10" />
+                                    <span className="relative z-10">For Vendors</span>
                                 </Link>
                             </div>
                         </div>
@@ -299,14 +302,14 @@ export default function HomePage() {
                         Ready to Start Your Journey?
                     </h2>
                     <p className="text-white/80 mb-10 font-light text-lg">
-                        Join thousands of couples who have planned their perfect Rwandan wedding with Weds360.
+                        Join thousands of couples who have planned their perfect Rwandan wedding with Andiza.
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
                         <Link
-                            href={createPageUrl("PlanBuilder")}
+                            href="/signup"
                             className="bg-white text-burgundy px-10 py-4 rounded-md font-medium hover:bg-gray-100 transition-all shadow-xl hover:shadow-2xl text-sm tracking-widest uppercase inline-block hover:scale-105 active:scale-95 duration-300"
                         >
-                            Create Your Plan
+                            Get Started
                         </Link>
                         <Link
                             href={createPageUrl("Venues")}

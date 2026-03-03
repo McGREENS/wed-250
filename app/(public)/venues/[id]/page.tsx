@@ -69,9 +69,16 @@ export default function VenueDetailPage() {
     const totalFormatted = estimatedTotalRwf.toLocaleString('en-US') + ' RWF';
     const rentalFormatted = venueRentalRwf.toLocaleString('en-US') + ' RWF';
 
-    // Sample booked dates for availability calendar (December 2024)
-    const bookedDates = [new Date(2024, 11, 4), new Date(2024, 11, 5), new Date(2024, 11, 11), new Date(2024, 11, 12), new Date(2024, 11, 18), new Date(2024, 11, 25), new Date(2024, 11, 26)];
-    const calendarMonth = new Date(2024, 11, 1);
+    // Sample booked dates for availability calendar
+    const today = new Date();
+    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
+    const bookedDates = [
+        new Date(today.getFullYear(), today.getMonth() + 1, 4),
+        new Date(today.getFullYear(), today.getMonth() + 1, 5),
+        new Date(today.getFullYear(), today.getMonth() + 1, 11),
+        new Date(today.getFullYear(), today.getMonth() + 1, 18),
+        new Date(today.getFullYear(), today.getMonth() + 1, 25),
+    ];
 
     if (isLoading) {
         return (
@@ -225,27 +232,28 @@ export default function VenueDetailPage() {
                         {/* Availability Calendar */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-4">
-                                <h2 className="text-xl font-bold text-charcoal">Availability – December 2024</h2>
+                                <h2 className="text-xl font-bold text-charcoal">Availability Calendar</h2>
                                 <div className="flex items-center gap-4 text-sm">
                                     <span className="flex items-center gap-2">
-                                        <span className="w-4 h-4 rounded bg-emerald-200" aria-hidden />
+                                        <span className="w-4 h-4 rounded bg-emerald-100 border border-emerald-300" />
                                         Available
                                     </span>
                                     <span className="flex items-center gap-2">
-                                        <span className="w-4 h-4 rounded bg-gray-300" aria-hidden />
+                                        <span className="w-4 h-4 rounded bg-red-100 border border-red-300" />
                                         Booked
                                     </span>
                                 </div>
                             </div>
-                            <CalendarComponent
-                                mode="single"
-                                month={calendarMonth}
-                                defaultMonth={calendarMonth}
-                                className="rounded-lg border-0"
-                                modifiers={{ booked: bookedDates }}
-                                modifiersClassNames={{ booked: "bg-gray-300 text-gray-600 line-through" }}
-                                disabled={{ before: new Date(2024, 10, 30), after: new Date(2024, 11, 31) }}
-                            />
+                            <div className="flex justify-center">
+                                <CalendarComponent
+                                    mode="single"
+                                    defaultMonth={nextMonth}
+                                    className="rounded-lg border border-gray-200 p-3"
+                                    modifiers={{ booked: bookedDates }}
+                                    modifiersClassNames={{ booked: "bg-red-100 text-red-900 hover:bg-red-200" }}
+                                    disabled={(date) => date < today || bookedDates.some(d => d.toDateString() === date.toDateString())}
+                                />
+                            </div>
                         </div>
 
                         {/* Venue Layouts */}
@@ -379,7 +387,8 @@ export default function VenueDetailPage() {
                     {/* Sidebar - Right */}
                     <div className="lg:col-span-1 space-y-6">
                         {/* Check Availability */}
-                        <Card className="border-gray-100 shadow-sm bg-white sticky top-24">
+                        <div className="lg:sticky lg:top-24 space-y-6">
+                        <Card className="border-gray-100 shadow-sm bg-white">
                             <CardContent className="p-6">
                                 <h3 className="text-xl font-bold text-charcoal mb-1">Check Availability</h3>
                                 <p className="text-sm text-gray-600 mb-6">Select your dates and get a quick quote</p>
@@ -488,6 +497,7 @@ export default function VenueDetailPage() {
                                 </Accordion>
                             </CardContent>
                         </Card>
+                        </div>
                     </div>
                 </div>
             </div>
