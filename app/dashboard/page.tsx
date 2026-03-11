@@ -1,13 +1,20 @@
-"use client";
-
 import UserPageLayout from '@/app/components/user/UserPageLayout';
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
 import { Calendar, Heart, DollarSign, CheckCircle, TrendingUp, Plus, MapPin, Star } from 'lucide-react';
 import Link from 'next/link';
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 
-export default function DashboardPage() {
+export default async function DashboardPage() {
+    const session = await auth();
+    
+    if (!session?.user) {
+        redirect('/login');
+    }
+
+    const userName = session.user.name || 'Guest';
     const weddingDate = new Date('2024-12-15');
     const today = new Date();
     const daysUntil = Math.max(0, Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
@@ -42,7 +49,7 @@ export default function DashboardPage() {
         <UserPageLayout>
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
-                    <h1 className="text-3xl font-serif text-charcoal mb-2">Welcome Back, Sarah & Michael!</h1>
+                    <h1 className="text-3xl font-serif text-charcoal mb-2">Welcome Back, {userName}!</h1>
                     <p className="text-gray-600">Your wedding is on December 15, 2024 - {daysUntil} days to go!</p>
                 </div>
 

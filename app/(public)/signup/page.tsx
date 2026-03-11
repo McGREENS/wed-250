@@ -62,7 +62,16 @@ export default function SignupPage() {
         setError(null);
         startTransition(async () => {
             try {
-                // Mock signup - in production, call your API
+                const res = await fetch("/api/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ type: "couple", ...values }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    setError(data.error || "Failed to create account");
+                    return;
+                }
                 toast.success("Account created successfully!");
                 router.push("/dashboard");
             } catch (err) {
@@ -75,7 +84,16 @@ export default function SignupPage() {
         setError(null);
         startTransition(async () => {
             try {
-                // Mock signup - in production, call your API
+                const res = await fetch("/api/signup", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ type: "vendor", ...values }),
+                });
+                const data = await res.json();
+                if (!res.ok) {
+                    setError(data.error || "Failed to create account");
+                    return;
+                }
                 toast.success("Vendor account created successfully!");
                 router.push("/vendor/dashboard");
             } catch (err) {

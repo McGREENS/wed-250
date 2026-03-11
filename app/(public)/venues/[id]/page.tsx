@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createPageUrl } from '@/app/utils';
 import { MapPin, Users, Heart, ArrowLeft, Star, Calendar, DollarSign, Car, Wifi, UtensilsCrossed, Music, Shield, MessageCircle, CalendarDays, Download, Info } from 'lucide-react';
@@ -39,30 +37,44 @@ export default function VenueDetailPage() {
     const params = useParams();
     const venueId = params.id as string;
 
-    // Fetch venue data
-    const { data: venues = [], isLoading } = useQuery({
-        queryKey: ['venue', venueId],
-        queryFn: () => base44.entities.Vendor.filter({ category: 'Venues' }, '-created_date', 100)
-    });
+    const [venue, setVenue] = useState<any>(null);
+    const [similarVenues, setSimilarVenues] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
 
-    const venue = venues.find((v: any) => v.id === venueId) || venues[0];
+    useEffect(() => {
+        const fetchVenue = async () => {
+            try {
+                const res = await fetch(`/api/venues/${venueId}`);
+                const data = await res.json();
+                setVenue(data.venue);
+                setSimilarVenues(data.similarVenues || []);
+            } catch (error) {
+                console.error('Error fetching venue:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        if (venueId) fetchVenue();
+    }, [venueId]);
 
-    // Ensure venue has all required properties with fallbacks
-    const venueWithDefaults = {
+    const venueWithDefaults = venue ? {
         ...venue,
-        venue_type: (venue as any)?.venue_type || 'Indoor',
-        capacity: (venue as any)?.capacity || 200,
-        max_capacity: (venue as any)?.max_capacity || 500,
-        contact_email: (venue as any)?.contact_email || 'info@venue.rw',
-        contact_phone: (venue as any)?.contact_phone || '+250 788 123 456',
-        availability: (venue as any)?.availability || 'Available for bookings',
-        features: (venue as any)?.features || [],
-        starting_price_rwf: (venue as any)?.starting_price_rwf ?? VENUE_RENTAL_RWF,
-    };
+        name: venue.businessName,
+        venue_type: venue.category || 'Venue',
+        capacity: 200,
+        max_capacity: 500,
+        contact_email: venue.email || 'info@venue.rw',
+        contact_phone: venue.phone || '+250 788 123 456',
+        availability: 'Available for bookings',
+        features: [],
+        starting_price_rwf: VENUE_RENTAL_RWF,
+        images: venue.images ? JSON.parse(venue.images) : [],
+        portfolio: venue.portfolio ? JSON.parse(venue.portfolio) : [],
+    } : null;
 
-    const capacityRange = `${venueWithDefaults.capacity || 200} - ${venueWithDefaults.max_capacity || 500} Guests`;
-    const startingPriceFormatted = (venueWithDefaults as any).price_range || '1,500,000 RWF';
-    const venueRentalRwf = venueWithDefaults.starting_price_rwf ?? VENUE_RENTAL_RWF;
+    const capacityRange = venueWithDefaults ? `${venueWithDefaults.capacity || 200} - ${venueWithDefaults.max_capacity || 500} Guests` : '';
+    const startingPriceFormatted = venueWithDefaults?.priceRange || '1,500,000 RWF';
+    const venueRentalRwf = venueWithDefaults?.starting_price_rwf ?? VENUE_RENTAL_RWF;
     const serviceTaxRwf = Math.round(venueRentalRwf * SERVICE_TAX_RATE);
     const estimatedTotalRwf = venueRentalRwf + serviceTaxRwf;
     const serviceTaxFormatted = serviceTaxRwf.toLocaleString('en-US') + ' RWF';
@@ -343,13 +355,13 @@ export default function VenueDetailPage() {
                         </div>
 
                         {/* Similar Venues */}
+                        {similarVenues.length > 0 && (
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h2 className="text-xl font-bold text-charcoal mb-6">Similar Venues You Might Like</h2>
                             <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                                {venues
-                                    .filter((v: any) => v.id !== venueId)
-                                    .slice(0, 3)
-                                    .map((similarVenue: any) => (
+                                {similarVenues.map((similarVenue: any) => {
+                                    const images = similarVenue.images ? JSON.parse(similarVenue.images) : [];
+                                    return (
                                         <Link
                                             key={similarVenue.id}
                                             href={`/venues/${similarVenue.id}`}
@@ -358,30 +370,32 @@ export default function VenueDetailPage() {
                                             <Card className="border-gray-100 overflow-hidden hover:shadow-lg transition-all">
                                                 <div className="relative h-48 overflow-hidden">
                                                     <img
-                                                        src={similarVenue.images?.[0] || 'https://images.unsplash.com/photo-1519167758481-83f29da8c525?w=400&h=300&fit=crop'}
-                                                        alt={similarVenue.name}
+                                                        src={images[0] || 'https://images.unsplash.com/photo-1519167758481-83f29da8c525?w=400&h=300&fit=crop'}
+                                                        alt={similarVenue.businessName}
                                                         className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
                                                     />
                                                     <div className="absolute top-3 right-3 bg-black/60 backdrop-blur-sm px-3 py-1 rounded-md">
                                                         <span className="text-white font-semibold text-sm">
-                                                            {similarVenue.price_range || '1.2M RWF'}
+                                                            {similarVenue.priceRange || '1.2M RWF'}
                                                         </span>
                                                     </div>
                                                 </div>
                                                 <CardContent className="p-4">
                                                     <h3 className="font-semibold text-charcoal mb-1 group-hover:text-burgundy transition-colors">
-                                                        {similarVenue.name}
+                                                        {similarVenue.businessName}
                                                     </h3>
                                                     <div className="flex items-center gap-1 text-sm text-gray-600">
                                                         <MapPin className="w-4 h-4" />
-                                                        <span>• {similarVenue.location || 'Kigali'}</span>
+                                                        <span>{similarVenue.location || 'Kigali'}</span>
                                                     </div>
                                                 </CardContent>
                                             </Card>
                                         </Link>
-                                    ))}
+                                    );
+                                })}
                             </div>
                         </div>
+                        )}
                     </div>
 
                     {/* Sidebar - Right */}

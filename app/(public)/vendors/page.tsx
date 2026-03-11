@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, Star, MapPin, ChevronDown, ChevronUp, Grid, List, Map } from 'lucide-react';
 import { Input } from "@/app/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
@@ -27,11 +25,23 @@ export default function VendorsPage() {
         availability: true
     });
 
-    // Fetch vendors from backend
-    const { data: vendors = [], isLoading } = useQuery({
-        queryKey: ['vendors'],
-        queryFn: () => base44.entities.Vendor.list('-created_date', 100)
-    });
+    const [vendors, setVendors] = useState<any[]>([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchVendors = async () => {
+            try {
+                const res = await fetch('/api/vendors');
+                const data = await res.json();
+                setVendors(data.vendors || []);
+            } catch (error) {
+                console.error('Error fetching vendors:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchVendors();
+    }, []);
 
     // Sample vendor data for fallback
     const sampleVendors = vendors.length > 0 ? vendors : [
@@ -139,7 +149,21 @@ export default function VendorsPage() {
         { id: 'busy', name: 'Busy' }
     ];
 
-    const allVendors = vendors.length > 0 ? vendors : sampleVendors;
+    const allVendors = vendors.length > 0 ? vendors.map((v: any) => {
+        const images = v.images ? JSON.parse(v.images) : [];
+        return {
+            id: v.id,
+            name: v.businessName,
+            category: v.category,
+            location: v.location,
+            price_range: v.priceRange || 'Contact for pricing',
+            rating: 4.5,
+            description: v.description || '',
+            images: images,
+            featured: v.featured || false,
+            available: true
+        };
+    }) : sampleVendors;
 
     const filteredVendors = allVendors.filter((vendor: any) => {
         const matchesSearch = vendor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||

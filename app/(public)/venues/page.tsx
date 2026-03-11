@@ -1,8 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect } from 'react';
 import { Search, Filter, MapPin, ChevronDown, ChevronUp, Grid, List, Map, Users } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import VenueCard from '@/app/components/venues/VenueCard';
@@ -26,10 +24,23 @@ export default function VenuesPage() {
         features: true
     });
 
-    const { data: venues = [], isLoading } = useQuery({
-        queryKey: ['venues'],
-        queryFn: () => base44.entities.Vendor.filter({ category: 'Venues' }, '-featured', 100)
-    });
+    const [venues, setVenues] = useState([]);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchVenues = async () => {
+            try {
+                const res = await fetch('/api/venues?category=Venues');
+                const data = await res.json();
+                setVenues(data.venues || []);
+            } catch (error) {
+                console.error('Error fetching venues:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        fetchVenues();
+    }, []);
 
     const venueTypes = [
         { id: 'hotel', name: 'Hotel' },

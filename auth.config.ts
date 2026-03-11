@@ -2,7 +2,6 @@ import type { NextAuthConfig } from "next-auth";
 import Credentials from "next-auth/providers/credentials";
 import { z } from "zod";
 import bcrypt from "bcryptjs";
-import { prisma } from "@/lib/prisma";
 
 // Notice: In the config suitable for Edge, we cannot use the Prisma Client directly inside the authorize function easily if it relies on non-edge features.
 // BUT, for middleware, we mainly need the session callback logic and the pages config.

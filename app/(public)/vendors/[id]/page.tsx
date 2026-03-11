@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createPageUrl } from '@/app/utils';
 import { MapPin, Heart, Mail, Phone, CheckCircle, ArrowLeft, Star, Calendar, Images, Save, ChevronDown, ChevronUp, MessageCircle, Award, Users, Camera } from 'lucide-react';
@@ -14,54 +14,85 @@ export default function VendorDetail() {
     const [expandedService, setExpandedService] = useState<number | null>(null);
     const [selectedDate, setSelectedDate] = useState<number | null>(null);
     const params = useParams();
-    const vendorId = params.id;
+    const vendorId = params.id as string;
+
+    const [vendor, setVendor] = useState<any>(null);
+    const [isLoading, setIsLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchVendor = async () => {
+            try {
+                const res = await fetch(`/api/vendors/${vendorId}`);
+                const data = await res.json();
+                setVendor(data.vendor);
+            } catch (error) {
+                console.error('Error fetching vendor:', error);
+            } finally {
+                setIsLoading(false);
+            }
+        };
+        if (vendorId) fetchVendor();
+    }, [vendorId]);
+
+    if (isLoading) {
+        return (
+            <div className="min-h-screen bg-cream flex items-center justify-center">
+                <div className="text-center">
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-burgundy mx-auto mb-4"></div>
+                    <p className="text-gray-600">Loading vendor details...</p>
+                </div>
+            </div>
+        );
+    }
+
+    if (!vendor) {
+        return (
+            <div className="min-h-screen bg-cream flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-2xl font-bold text-charcoal mb-4">Vendor not found</h2>
+                    <Link href="/vendors">
+                        <Button className="bg-burgundy hover:bg-burgundy-light text-white">
+                            Back to Vendors
+                        </Button>
+                    </Link>
+                </div>
+            </div>
+        );
+    }
+
+    const images = vendor.images ? JSON.parse(vendor.images) : [];
+    const portfolio = vendor.portfolio ? JSON.parse(vendor.portfolio) : [];
+    const services = vendor.services ? JSON.parse(vendor.services) : [];
 
     // Sample vendor data - replace with real data from backend using vendorId
-    const vendor = {
+    const vendorData = {
         id: 1,
-        name: 'Illume Photography Kigali',
-        category: 'Photography & Cinematography',
-        location: 'Nyarutarama, Kigali',
-        price_range: '850,000 RWF',
+        name: vendor.businessName,
+        category: vendor.category,
+        location: vendor.location,
+        price_range: vendor.priceRange || '850,000 RWF',
         rating: 4.9,
         reviews: 128,
-        description: 'At Illume Photography Kigali, we specialize in capturing the magic of your wedding day through our lens. Our team of 12 professional photographers and videographers are dedicated to telling your unique love story with artistic excellence and attention to detail. We use state-of-the-art 4K equipment to ensure every moment is preserved in stunning clarity.',
-        images: [
-            'https://images.unsplash.com/photo-1519228621490-a633b619bd3b?w=1200&h=800&fit=crop',
-            'https://images.unsplash.com/photo-1469374946526-7d52a8f7a8c1?w=1200&h=800&fit=crop',
-            'https://images.unsplash.com/photo-1519741497674-611481863552?w=1200&h=800&fit=crop',
-            'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=1200&h=800&fit=crop',
-            'https://images.unsplash.com/photo-1474551326746-e5e327584661?w=1200&h=800&fit=crop'
+        description: vendor.description || 'Professional wedding services provider in Rwanda.',
+        images: images.length > 0 ? images : [
+            'https://images.unsplash.com/photo-1519228621490-a633b619bd3b?w=1200&h=800&fit=crop'
         ],
-        contact_email: 'info@illumephotography.rw',
-        contact_phone: '+250 788 123 456',
-        availability: 'Available for 2024-2025 weddings',
-        featured: true,
+        contact_email: vendor.email || 'info@vendor.rw',
+        contact_phone: vendor.phone || '+250 788 123 456',
+        availability: vendor.availability || 'Available for bookings',
+        featured: vendor.featured || false,
         premium_partner: true,
         years_experience: 8,
         weddings_done: 450,
         staff_members: 12,
         awards_won: 4,
-        services: [
+        services: services.length > 0 ? services : [
             {
-                title: 'Full-Day Wedding Photography',
-                description: 'Complete wedding day coverage from preparation to reception. Includes 8+ hours of photography, professional editing, and online gallery delivery.'
-            },
-            {
-                title: 'Cinematic Videography & Film',
-                description: 'Professional 4K videography services with cinematic editing. Includes drone footage, highlight reels, and full ceremony coverage.'
-            },
-            {
-                title: 'Pre-Wedding & Engagement Shoots',
-                description: 'Beautiful engagement sessions and pre-wedding photoshoots at locations of your choice. Includes props and styling assistance.'
+                title: 'Wedding Services',
+                description: 'Professional wedding services tailored to your needs.'
             }
         ],
-        portfolio_images: [
-            'https://images.unsplash.com/photo-1519741497674-611481863552?w=400&h=300&fit=crop',
-            'https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=400&h=300&fit=crop',
-            'https://images.unsplash.com/photo-1469374946526-7d52a8f7a8c1?w=400&h=300&fit=crop',
-            'https://images.unsplash.com/photo-1511285560929-80b456fea0bc?w=400&h=300&fit=crop'
-        ],
+        portfolio_images: portfolio.length > 0 ? portfolio : images.slice(0, 4),
         pricing_tiers: [
             {
                 name: 'Essential Memories',
@@ -118,8 +149,8 @@ export default function VendorDetail() {
             <div className="relative h-96 md:h-[500px]">
                 <div className="absolute inset-0">
                     <img
-                        src={vendor.images[activeImage]}
-                        alt={vendor.name}
+                        src={vendorData.images[activeImage]}
+                        alt={vendorData.name}
                         className="w-full h-full object-cover"
                     />
                     <div className="absolute inset-0 bg-black/40" />
@@ -130,25 +161,25 @@ export default function VendorDetail() {
                     <div className="max-w-7xl mx-auto">
                         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
                             <div className="space-y-3">
-                                {vendor.premium_partner && (
+                                {vendorData.premium_partner && (
                                     <Badge className="bg-burgundy text-white border-none w-fit">
                                         Premium Partner
                                     </Badge>
                                 )}
                                 <h1 className="text-3xl md:text-5xl font-bold text-white">
-                                    {vendor.name}
+                                    {vendorData.name}
                                 </h1>
                                 <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm md:text-base">
                                     <div className="flex items-center gap-1">
                                         <Star className="w-4 h-4 md:w-5 md:h-5 fill-yellow-400 text-yellow-400" />
-                                        <span>{vendor.rating} ({vendor.reviews} Reviews)</span>
+                                        <span>{vendorData.rating} ({vendorData.reviews} Reviews)</span>
                                     </div>
                                     <div className="flex items-center gap-1">
                                         <MapPin className="w-4 h-4 md:w-5 md:h-5" />
-                                        <span>{vendor.location}</span>
+                                        <span>{vendorData.location}</span>
                                     </div>
                                     <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur">
-                                        {vendor.category}
+                                        {vendorData.category}
                                     </Badge>
                                 </div>
                             </div>
@@ -196,31 +227,31 @@ export default function VendorDetail() {
                         <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
                             <div className="flex flex-col items-center justify-center p-4 text-center border-r border-gray-100 last:border-r-0">
                                 <Calendar className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendor.years_experience}+</span>
+                                <span className="text-xl font-bold text-charcoal">{vendorData.years_experience}+</span>
                                 <span className="text-sm text-gray-500">Years Experience</span>
                             </div>
                             <div className="flex flex-col items-center justify-center p-4 text-center border-r border-gray-100 last:border-r-0">
                                 <Heart className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendor.weddings_done}+</span>
+                                <span className="text-xl font-bold text-charcoal">{vendorData.weddings_done}+</span>
                                 <span className="text-sm text-gray-500">Weddings Done</span>
                             </div>
                             <div className="flex flex-col items-center justify-center p-4 text-center border-r border-gray-100 last:border-r-0">
                                 <Users className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendor.staff_members}</span>
+                                <span className="text-xl font-bold text-charcoal">{vendorData.staff_members}</span>
                                 <span className="text-sm text-gray-500">Staff Members</span>
                             </div>
                             <div className="flex flex-col items-center justify-center p-4 text-center">
                                 <Award className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendor.awards_won}</span>
+                                <span className="text-xl font-bold text-charcoal">{vendorData.awards_won}</span>
                                 <span className="text-sm text-gray-500">Awards Won</span>
                             </div>
                         </div>
 
                         {/* About Section */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-2xl font-bold text-charcoal mb-4">About Illume Photography</h2>
+                            <h2 className="text-2xl font-bold text-charcoal mb-4">About {vendorData.name}</h2>
                             <p className="text-gray-600 leading-relaxed">
-                                {vendor.description}
+                                {vendorData.description}
                             </p>
                         </div>
 
@@ -228,7 +259,7 @@ export default function VendorDetail() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h2 className="text-2xl font-bold text-charcoal mb-6">Our Services</h2>
                             <div className="space-y-4">
-                                {vendor.services.map((service, index) => (
+                                {vendorData.services.map((service: any, index: number) => (
                                     <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
                                         <button
                                             onClick={() => setExpandedService(expandedService === index ? null : index)}
@@ -256,32 +287,27 @@ export default function VendorDetail() {
                             <div className="flex items-center justify-between mb-6">
                                 <h2 className="text-2xl font-bold text-charcoal">Portfolio Gallery</h2>
                                 <Link href="#" className="text-burgundy hover:text-burgundy-light font-medium flex items-center gap-1">
-                                    View All {vendor.portfolio_images.length + 138} Images
+                                    View All {vendorData.portfolio_images.length} Images
                                     <ArrowLeft className="w-4 h-4 rotate-180" />
                                 </Link>
                             </div>
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="md:col-span-2">
                                     <img
-                                        src={vendor.portfolio_images[0]}
+                                        src={vendorData.portfolio_images[0]}
                                         alt="Portfolio 1"
                                         className="w-full h-64 md:h-80 object-cover rounded-lg"
                                     />
                                 </div>
-                                <div>
-                                    <img
-                                        src={vendor.portfolio_images[1]}
-                                        alt="Portfolio 2"
-                                        className="w-full h-40 object-cover rounded-lg"
-                                    />
-                                </div>
-                                <div>
-                                    <img
-                                        src={vendor.portfolio_images[2]}
-                                        alt="Portfolio 3"
-                                        className="w-full h-40 object-cover rounded-lg"
-                                    />
-                                </div>
+                                {vendorData.portfolio_images.slice(1, 3).map((img: string, idx: number) => (
+                                    <div key={idx}>
+                                        <img
+                                            src={img}
+                                            alt={`Portfolio ${idx + 2}`}
+                                            className="w-full h-40 object-cover rounded-lg"
+                                        />
+                                    </div>
+                                ))}
                             </div>
                         </div>
 
@@ -289,7 +315,7 @@ export default function VendorDetail() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h2 className="text-2xl font-bold text-charcoal mb-6">Pricing Tiers</h2>
                             <div className="grid md:grid-cols-3 gap-6">
-                                {vendor.pricing_tiers.map((tier, index) => (
+                                {vendorData.pricing_tiers.map((tier: any, index: number) => (
                                     <div key={index} className={`border rounded-2xl p-6 ${tier.popular ? 'border-burgundy bg-burgundy/5' : 'border-gray-200'}`}>
                                         {tier.popular && (
                                             <div className="bg-burgundy text-white text-sm font-medium py-1 px-3 rounded-full text-center mb-4">
@@ -328,7 +354,7 @@ export default function VendorDetail() {
                                             <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
                                         ))}
                                     </div>
-                                    <span className="text-xl font-semibold text-charcoal">{vendor.rating}</span>
+                                    <span className="text-xl font-semibold text-charcoal">{vendorData.rating}</span>
                                     <span className="text-gray-600">Average Rating</span>
                                 </div>
                                 <Button variant="outline" className="border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
@@ -337,7 +363,7 @@ export default function VendorDetail() {
                             </div>
 
                             <div className="space-y-6">
-                                {vendor.customer_reviews.map((review) => (
+                                {vendorData.customer_reviews.map((review: any) => (
                                     <div key={review.id} className="border-b border-gray-100 last:border-b-0 pb-6 last:pb-0">
                                         <div className="flex items-start justify-between mb-3">
                                             <div>
@@ -353,7 +379,7 @@ export default function VendorDetail() {
                                         <p className="text-gray-700 mb-4">{review.comment}</p>
                                         {review.vendor_response && (
                                             <div className="bg-sand/50 rounded-lg p-4 border-l-4 border-burgundy">
-                                                <div className="text-sm font-semibold text-burgundy mb-1">Illume Photography Response</div>
+                                                <div className="text-sm font-semibold text-burgundy mb-1">{vendorData.name} Response</div>
                                                 <p className="text-gray-700 text-sm">{review.vendor_response}</p>
                                             </div>
                                         )}
@@ -369,10 +395,10 @@ export default function VendorDetail() {
                             {/* Pricing & Availability */}
                             <div className="mb-6">
                                 <div className="text-2xl font-bold text-charcoal mb-2">
-                                    Starting from {vendor.price_range}
+                                    Starting from {vendorData.price_range}
                                 </div>
                                 <div className="text-sm text-orange-600 font-medium mb-4">
-                                    Availability is filling up fast for Dec 2024!
+                                    {vendorData.availability}
                                 </div>
                             </div>
 
@@ -440,7 +466,7 @@ export default function VendorDetail() {
                                     <MessageCircle className="w-8 h-8 text-burgundy mx-auto mb-2" />
                                     <h3 className="text-lg font-semibold text-charcoal mb-2">Have Questions?</h3>
                                     <p className="text-sm text-gray-600">
-                                        Chat directly with Illume team about your specific needs.
+                                        Chat directly with {vendorData.name} about your specific needs.
                                     </p>
                                 </div>
                                 <Button 

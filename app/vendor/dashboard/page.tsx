@@ -1,12 +1,23 @@
-"use client";
-
 import VendorPageLayout from '@/app/components/vendor/VendorPageLayout';
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
 import { DollarSign, Calendar, MessageSquare, Star, Eye, Plus, TrendingUp, Image as ImageIcon, FileText, CheckCircle } from 'lucide-react';
+import { auth } from '@/auth';
+import { redirect } from 'next/navigation';
 
-export default function VendorDashboardPage() {
+export default async function VendorDashboardPage() {
+    const session = await auth();
+    
+    if (!session?.user) {
+        redirect('/login');
+    }
+    
+    if (session.user.role !== 'VENDOR') {
+        redirect('/dashboard');
+    }
+
+    const businessName = session.user.name || 'Vendor';
     const stats = [
         { label: 'Total Revenue', value: 'RWF 12,450,000', change: '+12.5%', icon: DollarSign, color: 'text-green-600' },
         { label: 'Pending Bookings', value: '8', change: '+2 new', icon: Calendar, color: 'text-burgundy' },
@@ -38,7 +49,7 @@ export default function VendorDashboardPage() {
                     {/* Header */}
                     <div className="mb-8 flex items-center justify-between">
                         <div>
-                            <h1 className="text-3xl font-bold text-charcoal mb-2">Good morning, Elegance Weddings!</h1>
+                            <h1 className="text-3xl font-bold text-charcoal mb-2">Good morning, {businessName}!</h1>
                             <p className="text-gray-600">Here's what's happening with your business today.</p>
                         </div>
                         <div className="flex items-center gap-3">

@@ -76,11 +76,6 @@ export default function LoginPage() {
                     <CardDescription>
                         Enter your credentials to access your dashboard
                     </CardDescription>
-                    <div className="mt-4 p-3 bg-sand/30 rounded-lg text-xs space-y-1">
-                        <p className="font-semibold text-charcoal">Test Accounts:</p>
-                        <p className="text-gray-600">User: user@andiza.rw / password</p>
-                        <p className="text-gray-600">Vendor: vendor@andiza.rw / password</p>
-                    </div>
                 </CardHeader>
                 <CardContent>
                     <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">

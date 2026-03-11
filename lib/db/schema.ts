@@ -1,29 +1,28 @@
-import { pgTable, text, timestamp, integer, real, pgEnum } from "drizzle-orm/pg-core";
+import { sqliteTable, text, integer, real } from "drizzle-orm/sqlite-core";
 import { relations } from "drizzle-orm";
-
-// Enums
-export const roleEnum = pgEnum("role", ["COUPLE", "VENDOR", "ADMIN"]);
+import { sql } from "drizzle-orm";
 
 // Users table
-export const users = pgTable("User", {
+export const users = sqliteTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   name: text("name"),
-  email: text("email").unique(),
-  emailVerified: timestamp("emailVerified", { mode: "date" }),
+  email: text("email").unique().notNull(),
+  emailVerified: integer("email_verified", { mode: "timestamp" }),
   image: text("image"),
   password: text("password"),
-  role: roleEnum("role").default("COUPLE").notNull(),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
+  role: text("role", { enum: ["COUPLE", "VENDOR", "ADMIN"] }).default("COUPLE").notNull(),
+  phone: text("phone"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-// Accounts table (for OAuth)
-export const accounts = pgTable("Account", {
+// Accounts table (OAuth)
+export const accounts = sqliteTable("accounts", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   type: text("type").notNull(),
   provider: text("provider").notNull(),
-  providerAccountId: text("providerAccountId").notNull(),
+  providerAccountId: text("provider_account_id").notNull(),
   refresh_token: text("refresh_token"),
   access_token: text("access_token"),
   expires_at: integer("expires_at"),
@@ -34,31 +33,133 @@ export const accounts = pgTable("Account", {
 });
 
 // Sessions table
-export const sessions = pgTable("Session", {
+export const sessions = sqliteTable("sessions", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  sessionToken: text("sessionToken").notNull().unique(),
-  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
+  sessionToken: text("session_token").notNull().unique(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  expires: integer("expires", { mode: "timestamp" }).notNull(),
 });
 
 // Verification tokens
-export const verificationTokens = pgTable("VerificationToken", {
+export const verificationTokens = sqliteTable("verification_tokens", {
   identifier: text("identifier").notNull(),
   token: text("token").notNull().unique(),
-  expires: timestamp("expires", { mode: "date" }).notNull(),
+  expires: integer("expires", { mode: "timestamp" }).notNull(),
+});
+
+// Vendors table
+export const vendors = sqliteTable("vendors", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  businessName: text("business_name").notNull(),
+  category: text("category").notNull(), // venue, photography, catering, decoration, music, planning
+  description: text("description"),
+  location: text("location"),
+  priceRange: text("price_range"),
+  rating: real("rating").default(0),
+  reviewCount: integer("review_count").default(0),
+  featured: integer("featured", { mode: "boolean" }).default(false),
+  verified: integer("verified", { mode: "boolean" }).default(false),
+  images: text("images"), // JSON array
+  portfolio: text("portfolio"), // JSON array
+  services: text("services"), // JSON array
+  availability: text("availability"), // JSON object
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Venues table
+export const venues = sqliteTable("venues", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  location: text("location").notNull(),
+  capacity: integer("capacity").notNull(),
+  maxCapacity: integer("max_capacity"),
+  venueType: text("venue_type"), // indoor, outdoor, garden, ballroom
+  pricePerDay: real("price_per_day"),
+  amenities: text("amenities"), // JSON array
+  images: text("images"), // JSON array
+  featured: integer("featured", { mode: "boolean" }).default(false),
+  rating: real("rating").default(0),
+  reviewCount: integer("review_count").default(0),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 // Weddings table
-export const weddings = pgTable("Wedding", {
+export const weddings = sqliteTable("weddings", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  userId: text("userId").notNull().references(() => users.id, { onDelete: "cascade" }),
-  title: text("title").notNull(),
-  date: timestamp("date", { mode: "date" }),
-  budget: real("budget").default(0).notNull(),
-  guestCount: integer("guestCount").default(0).notNull(),
-  status: text("status").default("PLANNING").notNull(),
-  createdAt: timestamp("createdAt", { mode: "date" }).defaultNow().notNull(),
-  updatedAt: timestamp("updatedAt", { mode: "date" }).defaultNow().notNull(),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  coupleNames: text("couple_names").notNull(),
+  weddingDate: integer("wedding_date", { mode: "timestamp" }),
+  venueId: text("venue_id").references(() => venues.id),
+  budget: real("budget").default(0),
+  guestCount: integer("guest_count").default(0),
+  status: text("status", { enum: ["PLANNING", "CONFIRMED", "COMPLETED", "CANCELLED"] }).default("PLANNING"),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Bookings table
+export const bookings = sqliteTable("bookings", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  weddingId: text("wedding_id").references(() => weddings.id, { onDelete: "cascade" }),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+  clientName: text("client_name"),
+  clientEmail: text("client_email"),
+  clientPhone: text("client_phone"),
+  eventType: text("event_type"),
+  servicePackage: text("service_package"),
+  serviceType: text("service_type"),
+  bookingDate: integer("booking_date", { mode: "timestamp" }),
+  eventDate: integer("event_date", { mode: "timestamp" }),
+  status: text("status").default("pending"),
+  totalAmount: real("total_amount"),
+  amount: real("amount"),
+  depositAmount: real("deposit_amount"),
+  paymentStatus: text("payment_status", { enum: ["UNPAID", "DEPOSIT_PAID", "PAID"] }).default("UNPAID"),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Reviews table
+export const reviews = sqliteTable("reviews", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  vendorId: text("vendor_id").references(() => vendors.id, { onDelete: "cascade" }),
+  venueId: text("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  rating: integer("rating").notNull(), // 1-5
+  comment: text("comment"),
+  images: text("images"), // JSON array
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Favorites table
+export const favorites = sqliteTable("favorites", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  vendorId: text("vendor_id").references(() => vendors.id, { onDelete: "cascade" }),
+  venueId: text("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Service Packages table
+export const servicePackages = sqliteTable("service_packages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  description: text("description"),
+  price: real("price").notNull(),
+  features: text("features"), // JSON array
+  active: integer("active", { mode: "boolean" }).default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 // Relations
@@ -66,25 +167,50 @@ export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
   sessions: many(sessions),
   weddings: many(weddings),
+  bookings: many(bookings),
+  reviews: many(reviews),
+  favorites: many(favorites),
+  vendor: many(vendors),
 }));
 
-export const accountsRelations = relations(accounts, ({ one }) => ({
-  user: one(users, {
-    fields: [accounts.userId],
-    references: [users.id],
-  }),
+export const vendorsRelations = relations(vendors, ({ one, many }) => ({
+  user: one(users, { fields: [vendors.userId], references: [users.id] }),
+  venues: many(venues),
+  bookings: many(bookings),
+  reviews: many(reviews),
+  servicePackages: many(servicePackages),
 }));
 
-export const sessionsRelations = relations(sessions, ({ one }) => ({
-  user: one(users, {
-    fields: [sessions.userId],
-    references: [users.id],
-  }),
+export const venuesRelations = relations(venues, ({ one, many }) => ({
+  vendor: one(vendors, { fields: [venues.vendorId], references: [vendors.id] }),
+  weddings: many(weddings),
+  reviews: many(reviews),
 }));
 
-export const weddingsRelations = relations(weddings, ({ one }) => ({
-  user: one(users, {
-    fields: [weddings.userId],
-    references: [users.id],
-  }),
+export const weddingsRelations = relations(weddings, ({ one, many }) => ({
+  user: one(users, { fields: [weddings.userId], references: [users.id] }),
+  venue: one(venues, { fields: [weddings.venueId], references: [venues.id] }),
+  bookings: many(bookings),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one }) => ({
+  wedding: one(weddings, { fields: [bookings.weddingId], references: [weddings.id] }),
+  vendor: one(vendors, { fields: [bookings.vendorId], references: [vendors.id] }),
+  user: one(users, { fields: [bookings.userId], references: [users.id] }),
+}));
+
+export const reviewsRelations = relations(reviews, ({ one }) => ({
+  user: one(users, { fields: [reviews.userId], references: [users.id] }),
+  vendor: one(vendors, { fields: [reviews.vendorId], references: [vendors.id] }),
+  venue: one(venues, { fields: [reviews.venueId], references: [venues.id] }),
+}));
+
+export const favoritesRelations = relations(favorites, ({ one }) => ({
+  user: one(users, { fields: [favorites.userId], references: [users.id] }),
+  vendor: one(vendors, { fields: [favorites.vendorId], references: [vendors.id] }),
+  venue: one(venues, { fields: [favorites.venueId], references: [venues.id] }),
+}));
+
+export const servicePackagesRelations = relations(servicePackages, ({ one }) => ({
+  vendor: one(vendors, { fields: [servicePackages.vendorId], references: [vendors.id] }),
 }));
