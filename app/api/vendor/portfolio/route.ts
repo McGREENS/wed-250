@@ -82,7 +82,7 @@ export async function POST(req: NextRequest) {
   await db.update(vendors).set({
     portfolio: JSON.stringify(portfolio),
     updatedAt: new Date(),
-  }).where(eq(vendors.userId, session.user.id));
+  } as any).where(eq(vendors.userId, session.user.id));
 
   return NextResponse.json({ success: true, item: newItem });
 }
@@ -109,7 +109,7 @@ export async function DELETE(req: NextRequest) {
   await db.update(vendors).set({
     portfolio: JSON.stringify(updatedPortfolio),
     updatedAt: new Date(),
-  }).where(eq(vendors.userId, session.user.id));
+  } as any).where(eq(vendors.userId, session.user.id));
 
   return NextResponse.json({ success: true });
 }
@@ -143,7 +143,7 @@ export async function PUT(req: NextRequest) {
   await db.update(vendors).set({
     portfolio: JSON.stringify(updatedPortfolio),
     updatedAt: new Date(),
-  }).where(eq(vendors.userId, session.user.id));
+  } as any).where(eq(vendors.userId, session.user.id));
 
   return NextResponse.json({ success: true });
 }

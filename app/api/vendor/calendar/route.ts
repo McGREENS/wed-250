@@ -52,7 +52,7 @@ export async function PUT(req: NextRequest) {
   await db.update(vendors).set({
     availability: JSON.stringify(availability),
     updatedAt: new Date(),
-  }).where(eq(vendors.userId, session.user.id));
+  } as any).where(eq(vendors.userId, session.user.id));
 
   return NextResponse.json({ success: true, availability });
 }

@@ -8,18 +8,18 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url);
     const search = searchParams.get('search');
 
-    let query = db.select().from(vendors).where(ne(vendors.category, 'Venues'));
+    let allVendors;
 
     if (search) {
-      query = query.where(
+      allVendors = await db.select().from(vendors).where(
         or(
           like(vendors.businessName, `%${search}%`),
           like(vendors.description, `%${search}%`)
         )
-      ) as any;
+      );
+    } else {
+      allVendors = await db.select().from(vendors).where(ne(vendors.category, 'Venues'));
     }
-
-    const allVendors = await query;
 
     return NextResponse.json({ vendors: allVendors });
   } catch (error) {

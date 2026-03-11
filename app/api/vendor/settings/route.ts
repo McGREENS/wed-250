@@ -34,7 +34,7 @@ export async function PUT(req: NextRequest) {
         phone: data.phone,
         image: data.image || null,
         updatedAt: new Date(),
-      }).where(eq(users.id, session.user.id));
+      } as any).where(eq(users.id, session.user.id));
 
       await db.update(vendors).set({
         businessName: data.businessName,
@@ -43,7 +43,7 @@ export async function PUT(req: NextRequest) {
         location: data.location,
         priceRange: data.priceRange,
         updatedAt: new Date(),
-      }).where(eq(vendors.userId, session.user.id));
+      } as any).where(eq(vendors.userId, session.user.id));
     } else if (type === "password") {
       const [user] = await db.select().from(users).where(eq(users.id, session.user.id)).limit(1);
       
@@ -62,7 +62,7 @@ export async function PUT(req: NextRequest) {
       await db.update(users).set({
         password: hashedPassword,
         updatedAt: new Date(),
-      }).where(eq(users.id, session.user.id));
+      } as any).where(eq(users.id, session.user.id));
     }
 
     return NextResponse.json({ success: true });

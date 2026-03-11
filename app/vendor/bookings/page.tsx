@@ -26,5 +26,5 @@ export default async function VendorBookingsPage() {
     .where(eq(bookings.vendorId, vendor[0].id))
     .orderBy(desc(bookings.eventDate));
 
-  return <BookingsClient initialBookings={vendorBookings} />;
+  return <BookingsClient initialBookings={vendorBookings as any} />;
 }

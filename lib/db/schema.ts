@@ -5,11 +5,11 @@ import { sql } from "drizzle-orm";
 // Users table
 export const users = sqliteTable("users", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  name: text("name"),
+  name: text("name").notNull(),
   email: text("email").unique().notNull(),
   emailVerified: integer("email_verified", { mode: "timestamp" }),
   image: text("image"),
-  password: text("password"),
+  password: text("password").notNull(),
   role: text("role", { enum: ["COUPLE", "VENDOR", "ADMIN"] }).default("COUPLE").notNull(),
   phone: text("phone"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),

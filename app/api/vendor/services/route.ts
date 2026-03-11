@@ -45,7 +45,7 @@ export async function POST(req: NextRequest) {
     image: image || null,
     features: JSON.stringify({ duration, items: features }),
     active: true,
-  }).returning();
+  } as any).returning();
 
   return NextResponse.json({ success: true, service });
 }
@@ -62,7 +62,7 @@ export async function PUT(req: NextRequest) {
 
   if (action === "toggleActive") {
     const [service] = await db.select().from(servicePackages).where(eq(servicePackages.id, id)).limit(1);
-    await db.update(servicePackages).set({ active: !service.active }).where(eq(servicePackages.id, id));
+    await db.update(servicePackages).set({ active: !service.active } as any).where(eq(servicePackages.id, id));
   } else if (action === "edit") {
     await db.update(servicePackages).set({
       name: data.name,
@@ -71,7 +71,7 @@ export async function PUT(req: NextRequest) {
       image: data.image || null,
       features: JSON.stringify({ duration: data.duration, items: data.features }),
       updatedAt: new Date(),
-    }).where(eq(servicePackages.id, id));
+    } as any).where(eq(servicePackages.id, id));
   }
 
   return NextResponse.json({ success: true });

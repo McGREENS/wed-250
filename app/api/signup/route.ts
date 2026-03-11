@@ -4,6 +4,9 @@ import { users, vendors, weddings } from "@/lib/db/schema";
 import bcrypt from "bcryptjs";
 import { eq } from "drizzle-orm";
 import { sendWelcomeEmail } from "@/lib/email";
+import type { InferInsertModel } from "drizzle-orm";
+
+type NewUser = InferInsertModel<typeof users>;
 
 export async function POST(req: NextRequest) {
   try {
@@ -23,20 +26,23 @@ export async function POST(req: NextRequest) {
       const { name, weddingDate } = body;
 
       // Create user
-      const [user] = await db.insert(users).values({
+      await db.insert(users).values({
         name,
         email,
         password: hashedPassword,
         role: "COUPLE",
-      }).returning();
+      } as any);
+
+      // Get the created user
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
       // Create wedding if date provided
-      if (weddingDate) {
+      if (weddingDate && user) {
         await db.insert(weddings).values({
           userId: user.id,
           coupleNames: name,
           weddingDate: new Date(weddingDate),
-        });
+        } as any);
       }
 
       // Send welcome email
@@ -47,25 +53,30 @@ export async function POST(req: NextRequest) {
         // Don't fail signup if email fails
       }
 
-      return NextResponse.json({ success: true, user: { id: user.id, email: user.email, role: user.role } });
+      return NextResponse.json({ success: true, user: { id: user?.id, email, role: "COUPLE" } });
     } else if (type === "vendor") {
       const { businessName, phone, serviceCategory } = body;
 
       // Create user
-      const [user] = await db.insert(users).values({
+      await db.insert(users).values({
         name: businessName,
         email,
         password: hashedPassword,
         role: "VENDOR",
         phone,
-      }).returning();
+      } as any);
+
+      // Get the created user
+      const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
       // Create vendor profile
-      await db.insert(vendors).values({
-        userId: user.id,
-        businessName,
-        category: serviceCategory,
-      });
+      if (user) {
+        await db.insert(vendors).values({
+          userId: user.id,
+          businessName,
+          category: serviceCategory,
+        } as any);
+      }
 
       // Send welcome email
       try {
@@ -75,7 +86,7 @@ export async function POST(req: NextRequest) {
         // Don't fail signup if email fails
       }
 
-      return NextResponse.json({ success: true, user: { id: user.id, email: user.email, role: user.role } });
+      return NextResponse.json({ success: true, user: { id: user?.id, email, role: "VENDOR" } });
     }
 
     return NextResponse.json({ error: "Invalid signup type" }, { status: 400 });
