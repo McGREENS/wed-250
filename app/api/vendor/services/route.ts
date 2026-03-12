@@ -5,49 +5,72 @@ import { vendors, servicePackages } from "@/lib/db/schema";
 import { eq } from "drizzle-orm";
 
 export async function GET() {
-  const session = await auth();
-  
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
-  }
+  try {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
 
-  const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
-  
-  if (!vendor) {
-    return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
-  }
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
+    
+    if (!vendor) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
 
-  const services = await db.select().from(servicePackages).where(eq(servicePackages.vendorId, vendor.id));
-  return NextResponse.json({ services });
+    const services = await db.select().from(servicePackages).where(eq(servicePackages.vendorId, vendor.id));
+    return NextResponse.json({ services });
+  } catch (error) {
+    console.error("GET /api/vendor/services error:", error);
+    return NextResponse.json({ error: "Internal server error" }, { status: 500 });
+  }
 }
 
 export async function POST(req: NextRequest) {
-  const session = await auth();
-  
-  if (!session?.user?.id) {
-    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  try {
+    const session = await auth();
+    
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: "Unauthorized", message: "Please log in to create services" }, { status: 401 });
+    }
+
+    const body = await req.json();
+    const { serviceType, name, description, price, duration, features, amenities, image, ...otherFields } = body;
+
+    const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
+    
+    if (!vendor) {
+      return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
+    }
+
+    // Build metadata from all other fields
+    const metadata = { ...otherFields };
+
+    // Build features array from features or amenities (for venues)
+    let featuresArray = [];
+    if (features) {
+      featuresArray = features.split(',').map((f: string) => f.trim());
+    } else if (amenities) {
+      featuresArray = amenities.split(',').map((f: string) => f.trim());
+    }
+
+    const [service] = await db.insert(servicePackages).values({
+      vendorId: vendor.id,
+      serviceType: serviceType || "General",
+      name,
+      description,
+      price: parseFloat(price),
+      image: image || null,
+      features: JSON.stringify({ duration: duration || null, items: featuresArray }),
+      metadata: JSON.stringify(metadata),
+      active: true,
+    } as any).returning();
+
+    return NextResponse.json({ success: true, service });
+  } catch (error) {
+    console.error("POST /api/vendor/services error:", error);
+    return NextResponse.json({ error: "Failed to create service", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
   }
-
-  const body = await req.json();
-  const { name, description, price, duration, features, image } = body;
-
-  const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
-  
-  if (!vendor) {
-    return NextResponse.json({ error: "Vendor not found" }, { status: 404 });
-  }
-
-  const [service] = await db.insert(servicePackages).values({
-    vendorId: vendor.id,
-    name,
-    description,
-    price: parseFloat(price),
-    image: image || null,
-    features: JSON.stringify({ duration, items: features }),
-    active: true,
-  } as any).returning();
-
-  return NextResponse.json({ success: true, service });
 }
 
 export async function PUT(req: NextRequest) {
@@ -64,12 +87,27 @@ export async function PUT(req: NextRequest) {
     const [service] = await db.select().from(servicePackages).where(eq(servicePackages.id, id)).limit(1);
     await db.update(servicePackages).set({ active: !service.active } as any).where(eq(servicePackages.id, id));
   } else if (action === "edit") {
+    const { serviceType, name, description, price, duration, features, amenities, image, ...otherFields } = data;
+    
+    // Build metadata from all other fields
+    const metadata = { ...otherFields };
+
+    // Build features array from features or amenities (for venues)
+    let featuresArray = [];
+    if (features) {
+      featuresArray = features.split(',').map((f: string) => f.trim());
+    } else if (amenities) {
+      featuresArray = amenities.split(',').map((f: string) => f.trim());
+    }
+
     await db.update(servicePackages).set({
-      name: data.name,
-      description: data.description,
-      price: parseFloat(data.price),
-      image: data.image || null,
-      features: JSON.stringify({ duration: data.duration, items: data.features }),
+      serviceType: serviceType || "General",
+      name: name,
+      description: description,
+      price: parseFloat(price),
+      image: image || null,
+      features: JSON.stringify({ duration: duration || null, items: featuresArray }),
+      metadata: JSON.stringify(metadata),
       updatedAt: new Date(),
     } as any).where(eq(servicePackages.id, id));
   }

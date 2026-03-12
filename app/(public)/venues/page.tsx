@@ -32,7 +32,15 @@ export default function VenuesPage() {
             try {
                 const res = await fetch('/api/venues?category=Venues');
                 const data = await res.json();
-                setVenues(data.venues || []);
+                const parsedVenues = (data.venues || []).map((venue: any) => ({
+                    ...venue,
+                    name: venue.businessName,
+                    images: venue.images ? JSON.parse(venue.images) : [],
+                    price_range: venue.priceRange,
+                    venue_type: venue.venueType,
+                    features: venue.amenities ? venue.amenities.split(',').map((a: string) => a.trim()) : [],
+                }));
+                setVenues(parsedVenues);
             } catch (error) {
                 console.error('Error fetching venues:', error);
             } finally {

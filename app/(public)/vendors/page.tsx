@@ -151,15 +151,19 @@ export default function VendorsPage() {
 
     const allVendors = vendors.length > 0 ? vendors.map((v: any) => {
         const images = v.images ? JSON.parse(v.images) : [];
+        const categories = v.categories ? JSON.parse(v.categories) : [];
+        const portfolioImages = v.portfolioImages || [];
         return {
             id: v.id,
             name: v.businessName,
-            category: v.category,
+            category: categories.join(', ') || 'General',
+            categories: categories,
             location: v.location,
             price_range: v.priceRange || 'Contact for pricing',
             rating: 4.5,
             description: v.description || '',
             images: images,
+            portfolioImages: portfolioImages,
             featured: v.featured || false,
             available: true
         };

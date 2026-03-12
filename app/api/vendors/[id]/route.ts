@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { vendors } from '@/lib/db/schema';
+import { vendors, servicePackages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -13,7 +13,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
     }
 
-    return NextResponse.json({ vendor });
+    // Fetch all service packages for this vendor
+    const services = await db.select().from(servicePackages).where(eq(servicePackages.vendorId, id));
+
+    return NextResponse.json({ vendor, services });
   } catch (error) {
     console.error('Error fetching vendor:', error);
     return NextResponse.json({ error: 'Failed to fetch vendor' }, { status: 500 });

@@ -39,7 +39,7 @@ export async function PUT(req: NextRequest) {
       await db.update(vendors).set({
         businessName: data.businessName,
         description: data.bio,
-        category: data.category,
+        categories: JSON.stringify(data.categories || [data.category]),
         location: data.location,
         priceRange: data.priceRange,
         updatedAt: new Date(),

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createPageUrl } from '@/app/utils';
-import { MapPin, Users, Heart, ArrowLeft, Star, Calendar, DollarSign, Car, Wifi, UtensilsCrossed, Music, Shield, MessageCircle, CalendarDays, Download, Info } from 'lucide-react';
+import { MapPin, Users, Heart, ArrowLeft, Star, Calendar, DollarSign, Car, Wifi, UtensilsCrossed, Music, Shield, MessageCircle, CalendarDays, Download, Info, Clock } from 'lucide-react';
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -13,10 +13,12 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/pop
 import { Calendar as CalendarComponent } from "@/app/components/ui/calendar";
 import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/app/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/app/components/ui/dialog";
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
 import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
+import { toast } from "sonner";
 
 const DEFAULT_AMENITIES = [
     { label: 'Up to 500 Guests', icon: Users },
@@ -34,6 +36,16 @@ export default function VenueDetailPage() {
     const [activeImage, setActiveImage] = useState(0);
     const [preferredDate, setPreferredDate] = useState<Date | undefined>();
     const [guestCount, setGuestCount] = useState<string>('');
+    const [isRequestingQuote, setIsRequestingQuote] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
+    const [isSaved, setIsSaved] = useState(false);
+    const [showTourDialog, setShowTourDialog] = useState(false);
+    const [tourDate, setTourDate] = useState<Date | undefined>();
+    const [tourTime, setTourTime] = useState<string>('');
+    const [tourName, setTourName] = useState<string>('');
+    const [tourEmail, setTourEmail] = useState<string>('');
+    const [tourPhone, setTourPhone] = useState<string>('');
+    const [isSchedulingTour, setIsSchedulingTour] = useState(false);
     const params = useParams();
     const venueId = params.id as string;
 
@@ -57,19 +69,79 @@ export default function VenueDetailPage() {
         if (venueId) fetchVenue();
     }, [venueId]);
 
+    const handleSaveVenue = async () => {
+        setIsSaving(true);
+        try {
+            // Here you would save to favorites in your API
+            await new Promise(resolve => setTimeout(resolve, 500));
+            setIsSaved(!isSaved);
+            toast.success(isSaved ? "Venue removed from favorites" : "Venue saved to favorites!");
+        } catch (error) {
+            toast.error("Failed to save venue");
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const handleScheduleTour = async () => {
+        if (!tourDate || !tourTime || !tourName || !tourEmail || !tourPhone) {
+            toast.error("Please fill in all tour details");
+            return;
+        }
+
+        setIsSchedulingTour(true);
+        try {
+            // Here you would send the tour request to your API
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            toast.success("Tour scheduled! The venue will contact you to confirm.");
+            setShowTourDialog(false);
+            setTourDate(undefined);
+            setTourTime('');
+            setTourName('');
+            setTourEmail('');
+            setTourPhone('');
+        } catch (error) {
+            toast.error("Failed to schedule tour");
+        } finally {
+            setIsSchedulingTour(false);
+        }
+    };
+
+    const handleRequestQuote = async () => {
+        if (!preferredDate || !guestCount) {
+            toast.error("Please select a date and enter guest count");
+            return;
+        }
+
+        setIsRequestingQuote(true);
+        try {
+            // Here you would send the quote request to your API
+            // For now, just show success message
+            await new Promise(resolve => setTimeout(resolve, 1000));
+            toast.success("Quote request sent! The venue will contact you shortly.");
+            setPreferredDate(undefined);
+            setGuestCount('');
+        } catch (error) {
+            toast.error("Failed to send quote request");
+        } finally {
+            setIsRequestingQuote(false);
+        }
+    };
+
     const venueWithDefaults = venue ? {
         ...venue,
-        name: venue.businessName,
-        venue_type: venue.category || 'Venue',
-        capacity: 200,
-        max_capacity: 500,
+        name: venue.name || venue.businessName,
+        venue_type: venue.venueType || venue.category || 'Venue',
+        capacity: venue.minCapacity || 200,
+        max_capacity: venue.maxCapacity || 500,
         contact_email: venue.email || 'info@venue.rw',
         contact_phone: venue.phone || '+250 788 123 456',
         availability: 'Available for bookings',
         features: [],
-        starting_price_rwf: VENUE_RENTAL_RWF,
-        images: venue.images ? JSON.parse(venue.images) : [],
+        starting_price_rwf: venue.price || VENUE_RENTAL_RWF,
+        images: venue.image ? [venue.image] : [],
         portfolio: venue.portfolio ? JSON.parse(venue.portfolio) : [],
+        amenities: venue.amenities ? venue.amenities.split(',').map((a: string) => a.trim()) : [],
     } : null;
 
     const capacityRange = venueWithDefaults ? `${venueWithDefaults.capacity || 200} - ${venueWithDefaults.max_capacity || 500} Guests` : '';
@@ -176,11 +248,23 @@ export default function VenueDetailPage() {
 
                                 {/* Hero Actions */}
                                 <div className="flex flex-col sm:flex-row gap-3">
-                                    <Button className="bg-burgundy hover:bg-burgundy-light text-white px-6 py-3">
-                                        <Heart className="w-4 h-4 mr-2" />
-                                        Save Venue
+                                    <Button 
+                                        onClick={handleSaveVenue}
+                                        disabled={isSaving}
+                                        className="bg-burgundy hover:bg-burgundy-light text-white px-6 py-3 disabled:opacity-50"
+                                    >
+                                        {isSaving ? (
+                                            <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                        ) : (
+                                            <Heart className={`w-4 h-4 mr-2 ${isSaved ? 'fill-current' : ''}`} />
+                                        )}
+                                        {isSaved ? 'Saved' : 'Save Venue'}
                                     </Button>
-                                    <Button variant="outline" className="bg-white/20 backdrop-blur-sm border-white text-white hover:bg-white hover:text-charcoal px-6 py-3">
+                                    <Button 
+                                        onClick={() => setShowTourDialog(true)}
+                                        variant="outline" 
+                                        className="bg-white/20 backdrop-blur-sm border-white text-white hover:bg-white hover:text-charcoal px-6 py-3"
+                                    >
                                         <Calendar className="w-4 h-4 mr-2" />
                                         Schedule Tour
                                     </Button>
@@ -232,12 +316,16 @@ export default function VenueDetailPage() {
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <h2 className="text-xl font-bold text-charcoal mb-4">Key Amenities</h2>
                             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                {DEFAULT_AMENITIES.map(({ label, icon: Icon }, index) => (
-                                    <div key={index} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
-                                        <Icon className="w-5 h-5 text-burgundy flex-shrink-0" />
-                                        <span className="text-sm font-medium text-charcoal">{label}</span>
-                                    </div>
-                                ))}
+                                {(venueWithDefaults.amenities && venueWithDefaults.amenities.length > 0 ? venueWithDefaults.amenities : DEFAULT_AMENITIES.map(a => a.label)).map((amenity: string, index: number) => {
+                                    const defaultAmenity = DEFAULT_AMENITIES.find(a => a.label === amenity);
+                                    const Icon = defaultAmenity?.icon || Shield;
+                                    return (
+                                        <div key={index} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                            <Icon className="w-5 h-5 text-burgundy flex-shrink-0" />
+                                            <span className="text-sm font-medium text-charcoal">{amenity}</span>
+                                        </div>
+                                    );
+                                })}
                             </div>
                         </div>
 
@@ -292,67 +380,22 @@ export default function VenueDetailPage() {
                             </Card>
                         </div>
 
-                        {/* Guest Reviews */}
+                        {/* Guest Reviews - Hidden until real reviews exist */}
+                        {venue.reviewCount > 0 && (
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
                             <div className="flex flex-wrap items-center justify-between gap-4 mb-6">
                                 <h2 className="text-xl font-bold text-charcoal">Guest Reviews</h2>
                                 <div className="flex items-center gap-2">
                                     <Star className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                    <span className="font-semibold text-charcoal">4.8</span>
-                                    <span className="text-gray-600">(124 reviews)</span>
+                                    <span className="font-semibold text-charcoal">{venue.rating || 0}</span>
+                                    <span className="text-gray-600">({venue.reviewCount} reviews)</span>
                                 </div>
                             </div>
-
-                            <div className="space-y-6">
-                                {/* Review 1 */}
-                                <div className="flex gap-4">
-                                    <Avatar className="h-12 w-12 flex-shrink-0">
-                                        <AvatarImage src="https://images.unsplash.com/photo-1494790108377-be9c29b29330?w=100&h=100&fit=crop&crop=face" alt="Marie Uwase" />
-                                        <AvatarFallback className="bg-emerald-100 text-emerald-700 font-medium">MU</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                                            <div>
-                                                <div className="font-semibold text-charcoal">Marie Uwase</div>
-                                                <div className="text-sm text-gray-500">October 12, 2024</div>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                                <span className="text-sm font-medium text-charcoal">5.0</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 leading-relaxed">Absolutely breathtaking! The staff at Akagera went above and beyond to make our dream wedding a reality. The views of the city at sunset are unbeatable.</p>
-                                    </div>
-                                </div>
-
-                                {/* Review 2 */}
-                                <div className="flex gap-4">
-                                    <Avatar className="h-12 w-12 flex-shrink-0">
-                                        <AvatarImage src="https://images.unsplash.com/photo-1507003211169-0a1dd7228f2d?w=100&h=100&fit=crop&crop=face" alt="Jean Claude" />
-                                        <AvatarFallback className="bg-blue-100 text-blue-700 font-medium">JC</AvatarFallback>
-                                    </Avatar>
-                                    <div className="flex-1 min-w-0">
-                                        <div className="flex flex-wrap items-start justify-between gap-2 mb-2">
-                                            <div>
-                                                <div className="font-semibold text-charcoal">Jean Claude</div>
-                                                <div className="text-sm text-gray-500">August 28, 2024</div>
-                                            </div>
-                                            <div className="flex items-center gap-1">
-                                                <Star className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-                                                <span className="text-sm font-medium text-charcoal">4.5</span>
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 leading-relaxed">Stunning venue. The acoustics in the ballroom are perfect for live music. Only suggestion is to book early as they fill up fast!</p>
-                                    </div>
-                                </div>
-                            </div>
-
-                            <div className="text-center mt-6 pt-6 border-t border-gray-100">
-                                <Button variant="link" className="text-burgundy hover:text-burgundy-light font-medium">
-                                    View All Reviews
-                                </Button>
+                            <div className="text-center py-8 text-gray-500">
+                                <p>Reviews will appear here once customers leave feedback</p>
                             </div>
                         </div>
+                        )}
 
                         {/* Similar Venues */}
                         {similarVenues.length > 0 && (
@@ -415,18 +458,24 @@ export default function VenueDetailPage() {
                                                 <Button
                                                     id="wedding-date"
                                                     variant="outline"
-                                                    className={cn("w-full justify-start text-left font-normal h-10 mt-1.5", !preferredDate && "text-muted-foreground")}
+                                                    className={cn("w-full justify-start text-left font-normal h-10 mt-1.5 border-gray-300", !preferredDate && "text-muted-foreground")}
                                                 >
                                                     <CalendarDays className="mr-2 h-4 w-4" />
                                                     {preferredDate ? format(preferredDate, 'PPP') : 'Select Date'}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0" align="start">
+                                            <PopoverContent className="w-auto p-0 bg-white shadow-xl border-2 border-gray-200 rounded-xl" align="start" sideOffset={8}>
                                                 <CalendarComponent
                                                     mode="single"
                                                     selected={preferredDate}
                                                     onSelect={setPreferredDate}
+                                                    disabled={(date) => date < today}
                                                     initialFocus
+                                                    className="rounded-xl p-4"
+                                                    classNames={{
+                                                        day_button: "hover:bg-burgundy/10 data-[selected-single=true]:bg-burgundy data-[selected-single=true]:text-white",
+                                                        today: "bg-sand text-charcoal font-semibold",
+                                                    }}
                                                 />
                                             </PopoverContent>
                                         </Popover>
@@ -462,8 +511,19 @@ export default function VenueDetailPage() {
                                     </div>
                                 </div>
 
-                                <Button className="w-full mt-6 bg-burgundy hover:bg-burgundy-light text-white h-11">
-                                    Request Formal Quote
+                                <Button 
+                                    onClick={handleRequestQuote}
+                                    disabled={isRequestingQuote || !preferredDate || !guestCount}
+                                    className="w-full mt-6 bg-burgundy hover:bg-burgundy-light text-white h-11 disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
+                                    {isRequestingQuote ? (
+                                        <>
+                                            <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                            Sending Request...
+                                        </>
+                                    ) : (
+                                        "Request Formal Quote"
+                                    )}
                                 </Button>
                                 <p className="text-xs text-gray-500 text-center mt-3">Requesting a quote does not commit you to a booking.</p>
                             </CardContent>
@@ -474,11 +534,13 @@ export default function VenueDetailPage() {
                             <CardContent className="p-4">
                                 <div className="flex items-center gap-4">
                                     <Avatar className="h-12 w-12">
-                                        <AvatarImage src="https://images.unsplash.com/photo-1472099645785-5658abf4ff4e?w=100&h=100&fit=crop&crop=face" alt="David Munyaneza" />
-                                        <AvatarFallback className="bg-burgundy/10 text-burgundy font-medium">DM</AvatarFallback>
+                                        {venue.vendorImage && <AvatarImage src={venue.vendorImage} alt={venue.vendorName} />}
+                                        <AvatarFallback className="bg-burgundy/10 text-burgundy font-medium">
+                                            {venue.vendorName.split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
+                                        </AvatarFallback>
                                     </Avatar>
                                     <div className="flex-1 min-w-0">
-                                        <div className="font-semibold text-charcoal">David Munyaneza</div>
+                                        <div className="font-semibold text-charcoal">{venue.vendorName}</div>
                                         <div className="text-sm text-gray-600">Venue Manager</div>
                                     </div>
                                     <Button variant="outline" size="icon" className="rounded-full shrink-0" aria-label="Message venue manager">
@@ -515,6 +577,117 @@ export default function VenueDetailPage() {
                     </div>
                 </div>
             </div>
+
+            {/* Schedule Tour Dialog */}
+            <Dialog open={showTourDialog} onOpenChange={setShowTourDialog}>
+                <DialogContent className="sm:max-w-md bg-white max-h-[90vh] overflow-y-auto">
+                    <DialogHeader>
+                        <DialogTitle className="text-charcoal">Schedule a Venue Tour</DialogTitle>
+                        <DialogDescription className="text-gray-600">
+                            Fill in your details and we'll arrange a tour of {venueWithDefaults?.name}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <div className="space-y-4 py-4">
+                        <div>
+                            <Label htmlFor="tour-name" className="text-sm font-medium text-charcoal">Full Name *</Label>
+                            <Input
+                                id="tour-name"
+                                value={tourName}
+                                onChange={(e) => setTourName(e.target.value)}
+                                placeholder="Your name"
+                                className="mt-1.5"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="tour-email" className="text-sm font-medium text-charcoal">Email *</Label>
+                            <Input
+                                id="tour-email"
+                                type="email"
+                                value={tourEmail}
+                                onChange={(e) => setTourEmail(e.target.value)}
+                                placeholder="your@email.com"
+                                className="mt-1.5"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="tour-phone" className="text-sm font-medium text-charcoal">Phone Number *</Label>
+                            <Input
+                                id="tour-phone"
+                                type="tel"
+                                value={tourPhone}
+                                onChange={(e) => setTourPhone(e.target.value)}
+                                placeholder="+250 788 123 456"
+                                className="mt-1.5"
+                            />
+                        </div>
+                        <div>
+                            <Label htmlFor="tour-date" className="text-sm font-medium text-charcoal">Preferred Tour Date *</Label>
+                            <Popover>
+                                <PopoverTrigger asChild>
+                                    <Button
+                                        id="tour-date"
+                                        variant="outline"
+                                        className={cn("w-full justify-start text-left font-normal h-10 mt-1.5 border-gray-300", !tourDate && "text-muted-foreground")}
+                                    >
+                                        <CalendarDays className="mr-2 h-4 w-4" />
+                                        {tourDate ? format(tourDate, 'PPP') : 'Select Date'}
+                                    </Button>
+                                </PopoverTrigger>
+                                <PopoverContent className="w-auto p-0 bg-white shadow-xl border-2 border-gray-200 rounded-xl" align="start" sideOffset={8}>
+                                    <CalendarComponent
+                                        mode="single"
+                                        selected={tourDate}
+                                        onSelect={setTourDate}
+                                        disabled={(date) => date < today}
+                                        initialFocus
+                                        className="rounded-xl p-4"
+                                        classNames={{
+                                            day_button: "hover:bg-burgundy/10 data-[selected-single=true]:bg-burgundy data-[selected-single=true]:text-white",
+                                            today: "bg-sand text-charcoal font-semibold",
+                                        }}
+                                    />
+                                </PopoverContent>
+                            </Popover>
+                        </div>
+                        <div>
+                            <Label htmlFor="tour-time" className="text-sm font-medium text-charcoal">Preferred Time *</Label>
+                            <div className="relative mt-1.5">
+                                <Clock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
+                                <Input
+                                    id="tour-time"
+                                    type="time"
+                                    value={tourTime}
+                                    onChange={(e) => setTourTime(e.target.value)}
+                                    className="pl-9"
+                                />
+                            </div>
+                        </div>
+                    </div>
+                    <DialogFooter>
+                        <Button
+                            variant="outline"
+                            onClick={() => setShowTourDialog(false)}
+                            disabled={isSchedulingTour}
+                        >
+                            Cancel
+                        </Button>
+                        <Button
+                            onClick={handleScheduleTour}
+                            disabled={isSchedulingTour || !tourDate || !tourTime || !tourName || !tourEmail || !tourPhone}
+                            className="bg-burgundy hover:bg-burgundy-light text-white disabled:opacity-50"
+                        >
+                            {isSchedulingTour ? (
+                                <>
+                                    <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                                    Scheduling...
+                                </>
+                            ) : (
+                                'Schedule Tour'
+                            )}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
         </div>
     );
 }

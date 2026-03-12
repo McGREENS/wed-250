@@ -17,6 +17,7 @@ export default function VendorDetail() {
     const vendorId = params.id as string;
 
     const [vendor, setVendor] = useState<any>(null);
+    const [services, setServices] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
 
     useEffect(() => {
@@ -25,6 +26,7 @@ export default function VendorDetail() {
                 const res = await fetch(`/api/vendors/${vendorId}`);
                 const data = await res.json();
                 setVendor(data.vendor);
+                setServices(data.services || []);
             } catch (error) {
                 console.error('Error fetching vendor:', error);
             } finally {
@@ -62,13 +64,24 @@ export default function VendorDetail() {
 
     const images = vendor.images ? JSON.parse(vendor.images) : [];
     const portfolio = vendor.portfolio ? JSON.parse(vendor.portfolio) : [];
-    const services = vendor.services ? JSON.parse(vendor.services) : [];
+    const categories = vendor.categories ? JSON.parse(vendor.categories) : [];
+
+    // Get hero image - prioritize latest portfolio image
+    const getHeroImage = () => {
+        if (portfolio.length > 0) {
+            const latestPortfolio = portfolio[portfolio.length - 1];
+            return latestPortfolio?.url || latestPortfolio;
+        }
+        return images[0] || 'https://images.unsplash.com/photo-1519228621490-a633b619bd3b?w=1200&h=800&fit=crop';
+    };
+
+    const heroImage = getHeroImage();
 
     // Sample vendor data - replace with real data from backend using vendorId
     const vendorData = {
         id: 1,
         name: vendor.businessName,
-        category: vendor.category,
+        category: categories.join(', ') || 'General',
         location: vendor.location,
         price_range: vendor.priceRange || '850,000 RWF',
         rating: 4.9,
@@ -86,13 +99,16 @@ export default function VendorDetail() {
         weddings_done: 450,
         staff_members: 12,
         awards_won: 4,
-        services: services.length > 0 ? services : [
-            {
-                title: 'Wedding Services',
-                description: 'Professional wedding services tailored to your needs.'
-            }
-        ],
-        portfolio_images: portfolio.length > 0 ? portfolio : images.slice(0, 4),
+        services: services.map((s: any) => ({
+            id: s.id,
+            title: `${s.serviceType} - ${s.name}`,
+            description: s.description,
+            price: s.price,
+            features: s.features ? JSON.parse(s.features) : [],
+            metadata: s.metadata ? JSON.parse(s.metadata) : {},
+            image: s.image
+        })),
+        portfolio_images: portfolio.length > 0 ? portfolio.map((p: any) => p?.url || p) : images.slice(0, 4),
         pricing_tiers: [
             {
                 name: 'Essential Memories',
@@ -149,7 +165,7 @@ export default function VendorDetail() {
             <div className="relative h-96 md:h-[500px]">
                 <div className="absolute inset-0">
                     <img
-                        src={vendorData.images[activeImage]}
+                        src={heroImage}
                         alt={vendorData.name}
                         className="w-full h-full object-cover"
                     />
@@ -256,31 +272,49 @@ export default function VendorDetail() {
                         </div>
 
                         {/* Services Section */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-2xl font-bold text-charcoal mb-6">Our Services</h2>
-                            <div className="space-y-4">
-                                {vendorData.services.map((service: any, index: number) => (
-                                    <div key={index} className="border border-gray-200 rounded-lg overflow-hidden">
-                                        <button
-                                            onClick={() => setExpandedService(expandedService === index ? null : index)}
-                                            className="w-full px-4 py-3 flex items-center justify-between bg-gray-50 hover:bg-gray-100 transition-colors"
-                                        >
-                                            <span className="font-medium text-charcoal">{service.title}</span>
-                                            {expandedService === index ? (
-                                                <ChevronUp className="w-5 h-5 text-gray-500" />
-                                            ) : (
-                                                <ChevronDown className="w-5 h-5 text-gray-500" />
+                        {vendorData.services.length > 0 && (
+                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                                <h2 className="text-2xl font-bold text-charcoal mb-6">Our Services</h2>
+                                <div className="grid md:grid-cols-2 gap-6">
+                                    {vendorData.services.map((service: any) => (
+                                        <div key={service.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
+                                            {service.image && (
+                                                <img
+                                                    src={service.image}
+                                                    alt={service.title}
+                                                    className="w-full h-48 object-cover"
+                                                />
                                             )}
-                                        </button>
-                                        {expandedService === index && (
-                                            <div className="px-4 py-3 bg-white border-t border-gray-200">
-                                                <p className="text-gray-600">{service.description}</p>
+                                            <div className="p-5">
+                                                <div className="flex items-start justify-between mb-3">
+                                                    <h3 className="font-semibold text-charcoal text-lg flex-1">{service.title}</h3>
+                                                    <Badge className="bg-burgundy text-white border-0 text-sm ml-2">
+                                                        {service.price.toLocaleString()} RWF
+                                                    </Badge>
+                                                </div>
+                                                <p className="text-gray-600 text-sm mb-4">{service.description}</p>
+                                                {service.features.length > 0 && (
+                                                    <div>
+                                                        <h4 className="font-semibold text-charcoal text-sm mb-2">Features:</h4>
+                                                        <ul className="space-y-2">
+                                                            {service.features.map((feature: string, idx: number) => (
+                                                                <li key={idx} className="flex items-start gap-2">
+                                                                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
+                                                                    <span className="text-sm text-gray-700">{feature}</span>
+                                                                </li>
+                                                            ))}
+                                                        </ul>
+                                                    </div>
+                                                )}
+                                                <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white mt-4">
+                                                    Select Package
+                                                </Button>
                                             </div>
-                                        )}
-                                    </div>
-                                ))}
+                                        </div>
+                                    ))}
+                                </div>
                             </div>
-                        </div>
+                        )}
 
                         {/* Portfolio Gallery */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">

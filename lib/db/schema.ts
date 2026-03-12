@@ -52,7 +52,7 @@ export const vendors = sqliteTable("vendors", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   businessName: text("business_name").notNull(),
-  category: text("category").notNull(), // venue, photography, catering, decoration, music, planning
+  categories: text("categories").notNull(), // JSON array: ["Photography", "Catering", "Venues"]
   description: text("description"),
   location: text("location"),
   priceRange: text("price_range"),
@@ -62,7 +62,7 @@ export const vendors = sqliteTable("vendors", {
   verified: integer("verified", { mode: "boolean" }).default(false),
   images: text("images"), // JSON array
   portfolio: text("portfolio"), // JSON array
-  services: text("services"), // JSON array
+  services: text("services"), // JSON array - DEPRECATED, use servicePackages table
   availability: text("availability"), // JSON object
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
@@ -153,10 +153,13 @@ export const favorites = sqliteTable("favorites", {
 export const servicePackages = sqliteTable("service_packages", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  serviceType: text("service_type").notNull(), // "Photography", "Catering", "Venue", "Decoration", "Music", "Planning", etc.
   name: text("name").notNull(),
   description: text("description"),
   price: real("price").notNull(),
   features: text("features"), // JSON array
+  metadata: text("metadata"), // JSON object for service-specific fields
+  image: text("image"),
   active: integer("active", { mode: "boolean" }).default(true),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),

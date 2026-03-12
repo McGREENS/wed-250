@@ -99,7 +99,7 @@ export default function VenueCard({ venue, viewMode = 'grid' }) {
       className="group block"
     >
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1">
-        <div className="relative h-56 overflow-hidden">
+        <div className="relative h-48 overflow-hidden">
           <img
             src={venue.images?.[0] || 'https://images.unsplash.com/photo-1519167758481-83f29da8c525?w=800&h=600&fit=crop'}
             alt={venue.name}
@@ -122,46 +122,46 @@ export default function VenueCard({ venue, viewMode = 'grid' }) {
           </button>
         </div>
 
-        <div className="p-5">
-          <div className="flex items-start justify-between mb-3">
+        <div className="p-4">
+          <div className="flex items-start justify-between mb-2">
             <div className="flex-1">
-              <h3 className="font-semibold text-charcoal text-lg group-hover:text-burgundy transition-colors mb-2">
+              <h3 className="font-semibold text-charcoal text-base group-hover:text-burgundy transition-colors mb-1.5 line-clamp-1">
                 {venue.name}
               </h3>
-              <div className="flex items-center gap-1 text-sm text-gray-600 mb-2">
-                <MapPin className="w-4 h-4" />
+              <div className="flex items-center gap-1 text-xs text-gray-600 mb-1">
+                <MapPin className="w-3.5 h-3.5" />
                 {venue.location}
               </div>
               {venue.capacity && (
-                <div className="flex items-center gap-1 text-sm text-gray-600">
-                  <Users className="w-4 h-4" />
+                <div className="flex items-center gap-1 text-xs text-gray-600">
+                  <Users className="w-3.5 h-3.5" />
                   Up to {venue.capacity} guests
                 </div>
               )}
             </div>
             <div className="text-right">
-              <span className="text-2xl font-bold text-burgundy">{venue.price_range}</span>
+              <span className="text-lg font-bold text-burgundy">{venue.price_range}</span>
             </div>
           </div>
 
-          <p className="text-sm text-gray-600 mb-4 line-clamp-2">
+          <p className="text-xs text-gray-600 mb-3 line-clamp-2">
             {venue.description}
           </p>
 
-          <div className="flex flex-wrap gap-2 mb-4">
+          <div className="flex flex-wrap gap-1.5 mb-3">
             {venue.venue_type && (
-              <Badge variant="secondary" className="bg-sand text-charcoal border-0">
+              <Badge variant="secondary" className="bg-sand text-charcoal border-0 text-xs py-0 px-2">
                 {venue.venue_type}
               </Badge>
             )}
             {venue.features?.slice(0, 2).map((feature, idx) => (
-              <Badge key={idx} variant="outline" className="text-xs text-gray-600">
+              <Badge key={idx} variant="outline" className="text-xs text-gray-600 py-0 px-2">
                 {feature}
               </Badge>
             ))}
           </div>
 
-          <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white">
+          <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white text-sm py-2">
             View Details
           </Button>
         </div>
