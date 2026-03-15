@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { bookings, vendors } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
+import { sendQuoteAcceptedEmail, sendQuoteDeclinedEmail } from '@/lib/email';
 
 export async function GET(req: NextRequest) {
   try {
@@ -70,7 +71,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date(),
     };
 
-    await db.insert(bookings).values(newBooking);
+    await db.insert(bookings).values(newBooking as any);
 
     return NextResponse.json({ success: true, booking: newBooking });
   } catch (error) {
@@ -92,14 +93,73 @@ export async function PUT(req: NextRequest) {
     }
 
     const body = await req.json();
-    const { id, status, ...updateData } = body;
+    const { id, status, quoteAction, totalAmount: rawTotal, depositAmount: rawDeposit, declineReason, ...updateData } = body;
 
     if (!id) {
       return NextResponse.json({ error: 'Booking ID required' }, { status: 400 });
     }
 
+    // ── Quote accept / decline flow ──────────────────────────────────────
+    if (quoteAction === 'accept' || quoteAction === 'decline') {
+      const [booking] = await db.select().from(bookings)
+        .where(and(eq(bookings.id, id), eq(bookings.vendorId, vendor[0].id))).limit(1);
+      if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+
+      if (quoteAction === 'accept') {
+        if (!rawTotal) return NextResponse.json({ error: 'Total amount is required' }, { status: 400 });
+        await db.update(bookings).set({
+          status: 'confirmed',
+          totalAmount: Number(rawTotal),
+          depositAmount: rawDeposit ? Number(rawDeposit) : null,
+          servicePackage: updateData.servicePackage ?? booking.servicePackage,
+          updatedAt: new Date(),
+        } as any).where(eq(bookings.id, id));
+
+        if (booking.clientEmail) {
+          try {
+            await sendQuoteAcceptedEmail({
+              clientEmail: booking.clientEmail,
+              clientName: booking.clientName || 'Client',
+              venueName: booking.servicePackage || 'the venue',
+              eventDate: new Date(booking.eventDate!).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+              totalAmount: Number(rawTotal),
+              depositAmount: rawDeposit ? Number(rawDeposit) : null,
+              servicePackage: updateData.servicePackage ?? booking.servicePackage,
+              dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard/bookings`,
+            });
+          } catch (e) { console.error('Quote accepted email failed:', e); }
+        }
+        return NextResponse.json({ success: true, status: 'confirmed' });
+      }
+
+      if (quoteAction === 'decline') {
+        if (!declineReason) return NextResponse.json({ error: 'Decline reason is required' }, { status: 400 });
+        await db.update(bookings).set({
+          status: 'cancelled',
+          notes: booking.notes ? `${booking.notes}\n\nDecline reason: ${declineReason}` : `Decline reason: ${declineReason}`,
+          updatedAt: new Date(),
+        } as any).where(eq(bookings.id, id));
+
+        if (booking.clientEmail) {
+          try {
+            await sendQuoteDeclinedEmail({
+              clientEmail: booking.clientEmail,
+              clientName: booking.clientName || 'Client',
+              venueName: booking.servicePackage || 'the venue',
+              eventDate: new Date(booking.eventDate!).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+              reason: declineReason,
+            });
+          } catch (e) { console.error('Quote declined email failed:', e); }
+        }
+        return NextResponse.json({ success: true, status: 'cancelled' });
+      }
+    }
+
+    // ── Regular booking update ────────────────────────────────────────────
     const updates: any = { ...updateData, updatedAt: new Date() };
     if (status) updates.status = status;
+    if (rawTotal !== undefined) updates.totalAmount = rawTotal;
+    if (rawDeposit !== undefined) updates.depositAmount = rawDeposit;
     if (updateData.eventDate) updates.eventDate = new Date(updateData.eventDate);
 
     await db.update(bookings)

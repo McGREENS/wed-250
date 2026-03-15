@@ -145,8 +145,24 @@ export const favorites = sqliteTable("favorites", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   vendorId: text("vendor_id").references(() => vendors.id, { onDelete: "cascade" }),
-  venueId: text("venue_id").references(() => venues.id, { onDelete: "cascade" }),
+  venueId: text("venue_id"), // Can reference venues.id OR servicePackages.id for venue services
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Venue Tours table
+export const venueTours = sqliteTable("venue_tours", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  venueId: text("venue_id").notNull(), // servicePackage ID for venues
+  userId: text("user_id").references(() => users.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  tourDate: integer("tour_date", { mode: "timestamp" }).notNull(),
+  tourTime: text("tour_time").notNull(),
+  status: text("status", { enum: ["PENDING", "CONFIRMED", "CANCELLED", "COMPLETED"] }).default("PENDING"),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 // Service Packages table
@@ -165,6 +181,18 @@ export const servicePackages = sqliteTable("service_packages", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Tasks table
+export const tasks = sqliteTable("tasks", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  title: text("title").notNull(),
+  timeline: text("timeline").notNull(),
+  completed: integer("completed", { mode: "boolean" }).default(false),
+  custom: integer("custom", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),
@@ -174,6 +202,8 @@ export const usersRelations = relations(users, ({ many }) => ({
   reviews: many(reviews),
   favorites: many(favorites),
   vendor: many(vendors),
+  venueTours: many(venueTours),
+  tasks: many(tasks),
 }));
 
 export const vendorsRelations = relations(vendors, ({ one, many }) => ({
@@ -214,6 +244,14 @@ export const favoritesRelations = relations(favorites, ({ one }) => ({
   venue: one(venues, { fields: [favorites.venueId], references: [venues.id] }),
 }));
 
+export const venueToursRelations = relations(venueTours, ({ one }) => ({
+  user: one(users, { fields: [venueTours.userId], references: [users.id] }),
+}));
+
 export const servicePackagesRelations = relations(servicePackages, ({ one }) => ({
   vendor: one(vendors, { fields: [servicePackages.vendorId], references: [vendors.id] }),
+}));
+
+export const tasksRelations = relations(tasks, ({ one }) => ({
+  user: one(users, { fields: [tasks.userId], references: [users.id] }),
 }));

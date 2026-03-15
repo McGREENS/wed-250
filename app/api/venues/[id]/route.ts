@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { vendors, servicePackages, users } from '@/lib/db/schema';
+import { vendors, servicePackages, users, bookings } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(req: NextRequest, { params }: { params: Promise<{ id: string }> }) {
@@ -27,6 +27,10 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     if (!user) {
       return NextResponse.json({ error: 'User not found' }, { status: 404 });
     }
+
+    // Expose vendorId and vendorEmail for quote requests
+    const vendorId = vendor.id;
+    const vendorEmail = user.email;
 
     // Get similar venues (same service type, different id)
     const similarVenues = await db.select()
@@ -81,9 +85,27 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
       cancellationPolicy: metadata.cancellationPolicy,
       restrictions: metadata.restrictions,
       insuranceRequired: metadata.insuranceRequired,
+      portfolio: (() => {
+        try {
+          const all = vendor.portfolio ? JSON.parse(vendor.portfolio) : [];
+          if (!Array.isArray(all)) return [];
+          const forThis = all.filter((i: any) => i.serviceId === venueService.id);
+          return forThis.length > 0 ? forThis : all.filter((i: any) => i.category === 'Venue');
+        } catch { return []; }
+      })(),
     };
 
-    return NextResponse.json({ venue, similarVenues: filteredSimilar });
+    // Get availability (blocked dates) and bookings for this vendor
+    const availability = vendor.availability ? JSON.parse(vendor.availability) : { blocked: [] };
+    const vendorBookings = await db.select({ eventDate: bookings.eventDate })
+      .from(bookings)
+      .where(eq(bookings.vendorId, vendor.id));
+
+    const bookedDates = vendorBookings
+      .filter(b => b.eventDate)
+      .map(b => new Date(b.eventDate!).toISOString().split('T')[0]);
+
+    return NextResponse.json({ venue, similarVenues: filteredSimilar, blockedDates: availability.blocked || [], bookedDates, vendorId, vendorEmail });
   } catch (error) {
     console.error('Error fetching venue:', error);
     return NextResponse.json({ error: 'Failed to fetch venue' }, { status: 500 });

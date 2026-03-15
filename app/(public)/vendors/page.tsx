@@ -7,8 +7,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import VendorCard from '@/app/components/vendors/VendorCard';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
 import EmptyState from '@/app/components/common/EmptyState';
+import { useSession } from 'next-auth/react';
 
 export default function VendorsPage() {
+    const { data: session } = useSession();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedCategory, setSelectedCategory] = useState('all');
     const [selectedPriceRange, setSelectedPriceRange] = useState('all');
@@ -27,6 +29,7 @@ export default function VendorsPage() {
 
     const [vendors, setVendors] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [favoriteVendorIds, setFavoriteVendorIds] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchVendors = async () => {
@@ -42,6 +45,35 @@ export default function VendorsPage() {
         };
         fetchVendors();
     }, []);
+
+    useEffect(() => {
+        const fetchFavorites = async () => {
+            if (!session?.user) return;
+            try {
+                const res = await fetch('/api/favorites');
+                if (res.ok) {
+                    const data = await res.json();
+                    setFavoriteVendorIds(data.vendors.map((v: any) => v.vendorId));
+                }
+            } catch (error) {
+                console.error('Error fetching favorites:', error);
+            }
+        };
+        fetchFavorites();
+    }, [session]);
+
+    const handleFavoriteToggle = async () => {
+        if (!session?.user) return;
+        try {
+            const res = await fetch('/api/favorites');
+            if (res.ok) {
+                const data = await res.json();
+                setFavoriteVendorIds(data.vendors.map((v: any) => v.vendorId));
+            }
+        } catch (error) {
+            console.error('Error refreshing favorites:', error);
+        }
+    };
 
     // Sample vendor data for fallback
     const sampleVendors = vendors.length > 0 ? vendors : [
@@ -478,7 +510,13 @@ export default function VendorsPage() {
                             <>
                                 <div className={`${viewMode === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'} gap-6`}>
                                     {paginatedVendors.map((vendor: any) => (
-                                        <VendorCard key={vendor.id} vendor={vendor} viewMode={viewMode} />
+                                        <VendorCard 
+                                            key={vendor.id} 
+                                            vendor={vendor} 
+                                            viewMode={viewMode}
+                                            isFavorite={favoriteVendorIds.includes(vendor.id)}
+                                            onFavoriteToggle={handleFavoriteToggle}
+                                        />
                                     ))}
                                 </div>
 

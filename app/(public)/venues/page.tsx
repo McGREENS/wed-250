@@ -6,8 +6,10 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@
 import VenueCard from '@/app/components/venues/VenueCard';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
 import EmptyState from '@/app/components/common/EmptyState';
+import { useSession } from 'next-auth/react';
 
 export default function VenuesPage() {
+    const { data: session } = useSession();
     const [searchQuery, setSearchQuery] = useState('');
     const [selectedVenueType, setSelectedVenueType] = useState('all');
     const [selectedPriceRange, setSelectedPriceRange] = useState('all');
@@ -26,6 +28,7 @@ export default function VenuesPage() {
 
     const [venues, setVenues] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [favoriteVenueIds, setFavoriteVenueIds] = useState<string[]>([]);
 
     useEffect(() => {
         const fetchVenues = async () => {
@@ -49,6 +52,35 @@ export default function VenuesPage() {
         };
         fetchVenues();
     }, []);
+
+    useEffect(() => {
+        const fetchFavorites = async () => {
+            if (!session?.user) return;
+            try {
+                const res = await fetch('/api/favorites');
+                if (res.ok) {
+                    const data = await res.json();
+                    setFavoriteVenueIds(data.venues.map((v: any) => v.venueId));
+                }
+            } catch (error) {
+                console.error('Error fetching favorites:', error);
+            }
+        };
+        fetchFavorites();
+    }, [session]);
+
+    const handleFavoriteToggle = async () => {
+        if (!session?.user) return;
+        try {
+            const res = await fetch('/api/favorites');
+            if (res.ok) {
+                const data = await res.json();
+                setFavoriteVenueIds(data.venues.map((v: any) => v.venueId));
+            }
+        } catch (error) {
+            console.error('Error refreshing favorites:', error);
+        }
+    };
 
     const venueTypes = [
         { id: 'hotel', name: 'Hotel' },
@@ -404,7 +436,13 @@ export default function VenuesPage() {
                             <>
                                 <div className={`${viewMode === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3' : 'space-y-4'} gap-6`}>
                                     {paginatedVenues.map((venue: any) => (
-                                        <VenueCard key={venue.id} venue={venue} viewMode={viewMode} />
+                                        <VenueCard 
+                                            key={venue.id} 
+                                            venue={venue} 
+                                            viewMode={viewMode}
+                                            isFavorite={favoriteVenueIds.includes(venue.id)}
+                                            onFavoriteToggle={handleFavoriteToggle}
+                                        />
                                     ))}
                                 </div>
 

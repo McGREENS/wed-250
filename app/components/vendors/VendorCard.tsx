@@ -1,30 +1,56 @@
+"use client";
+
 import Link from 'next/link';
-// import { createPageUrl } from '../../utils';
-import { MapPin, Star, Heart, ExternalLink } from 'lucide-react';
+import { MapPin, Star, Heart } from 'lucide-react';
 import { Badge } from "@/app/components/ui/badge";
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-const renderStars = (rating: number) => {
-    const fullStars = Math.floor(rating);
-    const hasHalfStar = rating % 1 !== 0;
-    const emptyStars = 5 - Math.ceil(rating);
+export default function VendorCard({ vendor, viewMode = 'grid', isFavorite = false, onFavoriteToggle }: { vendor: any; viewMode?: string; isFavorite?: boolean; onFavoriteToggle?: () => void }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [favorite, setFavorite] = useState(isFavorite);
 
-    return (
-        <div className="flex items-center gap-0.5">
-            {[...Array(fullStars)].map((_, i) => (
-                <Star key={`full-${i}`} className="w-4 h-4 fill-yellow-400 text-yellow-400" />
-            ))}
-            {hasHalfStar && (
-                <Star className="w-4 h-4 fill-yellow-400/50 text-yellow-400" />
-            )}
-            {[...Array(emptyStars)].map((_, i) => (
-                <Star key={`empty-${i}`} className="w-4 h-4 text-gray-300" />
-            ))}
-            <span className="text-sm text-gray-600 ml-1">({rating})</span>
-        </div>
-    );
-};
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsLoading(true);
+    try {
+      const method = favorite ? 'DELETE' : 'POST';
+      const url = favorite 
+        ? `/api/favorites?vendorId=${vendor.id}`
+        : '/api/favorites';
+      
+      console.log('Favorite action:', { method, url, vendorId: vendor.id, favorite });
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: method === 'POST' ? JSON.stringify({ vendorId: vendor.id }) : undefined,
+      });
 
-export default function VendorCard({ vendor, viewMode = 'grid' }: { vendor: any; viewMode?: string }) {
+      const data = await res.json();
+      console.log('Response:', { status: res.status, data });
+
+      if (res.ok) {
+        setFavorite(!favorite);
+        toast.success(favorite ? 'Removed from favorites' : 'Added to favorites');
+        onFavoriteToggle?.();
+      } else {
+        if (res.status === 401) {
+          toast.error('Please login to save favorites');
+        } else {
+          toast.error(data.error || 'Failed to update favorite');
+        }
+      }
+    } catch (error) {
+      console.error('Favorite error:', error);
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (viewMode === 'list') {
     return (
       <Link
@@ -56,7 +82,18 @@ export default function VendorCard({ vendor, viewMode = 'grid' }: { vendor: any;
                     {vendor.category}
                   </Badge>
                 </div>
-                <span className="text-burgundy font-bold text-sm ml-3">{vendor.price_range}</span>
+                <div className="flex items-center gap-2">
+                  <span className="text-burgundy font-bold text-sm">{vendor.price_range}</span>
+                  <button
+                    onClick={handleFavoriteClick}
+                    disabled={isLoading}
+                    className={`w-8 h-8 backdrop-blur rounded-full flex items-center justify-center transition-colors ${
+                      favorite ? 'bg-burgundy text-white' : 'bg-white/90 hover:bg-white text-burgundy border border-gray-200'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
+                  </button>
+                </div>
               </div>
 
               <div className="flex items-center gap-1 text-xs text-gray-600 mb-2">
@@ -119,13 +156,13 @@ export default function VendorCard({ vendor, viewMode = 'grid' }: { vendor: any;
             </Badge>
           )}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className="absolute top-3 right-3 w-8 h-8 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-colors"
+            onClick={handleFavoriteClick}
+            disabled={isLoading}
+            className={`absolute top-3 right-3 w-8 h-8 backdrop-blur rounded-full flex items-center justify-center transition-colors ${
+              favorite ? 'bg-burgundy text-white' : 'bg-white/90 hover:bg-white text-burgundy'
+            }`}
           >
-            <Heart className="w-4 h-4 text-burgundy" />
+            <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
           </button>
         </div>
 

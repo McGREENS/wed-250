@@ -19,10 +19,11 @@ export default async function VendorServicesPage() {
 
     const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
     const services = vendor ? await db.select().from(servicePackages).where(eq(servicePackages.vendorId, vendor.id)) : [];
+    const portfolio = vendor?.portfolio ? JSON.parse(vendor.portfolio) : [];
 
     return (
         <VendorPageLayout>
-            <ServicesClient initialServices={services} />
+            <ServicesClient initialServices={services} initialPortfolio={portfolio} />
         </VendorPageLayout>
     );
 }

@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { createPageUrl } from '@/app/utils';
-import { MapPin, Users, Heart, ArrowLeft, Star, Calendar, DollarSign, Car, Wifi, UtensilsCrossed, Music, Shield, MessageCircle, CalendarDays, Download, Info, Clock } from 'lucide-react';
+import { MapPin, Users, Heart, ArrowLeft, Star, Calendar, DollarSign, Car, Wifi, UtensilsCrossed, Music, Shield, MessageCircle, CalendarDays, Clock, Info } from 'lucide-react';
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { Card, CardContent } from "@/app/components/ui/card";
@@ -11,7 +11,6 @@ import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Popover, PopoverContent, PopoverTrigger } from "@/app/components/ui/popover";
 import { Calendar as CalendarComponent } from "@/app/components/ui/calendar";
-import { Accordion, AccordionContent, AccordionItem, AccordionTrigger } from "@/app/components/ui/accordion";
 import { Avatar, AvatarFallback, AvatarImage } from "@/app/components/ui/avatar";
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/app/components/ui/dialog";
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
@@ -19,20 +18,15 @@ import { useParams } from 'next/navigation';
 import { format } from 'date-fns';
 import { cn } from '@/lib/utils';
 import { toast } from "sonner";
+import { useSession } from 'next-auth/react';
 
-const DEFAULT_AMENITIES = [
-    { label: 'Up to 500 Guests', icon: Users },
-    { label: 'Ample On-site Parking', icon: Car },
-    { label: 'Complimentary Fiber Wifi', icon: Wifi },
-    { label: 'Professional In-house Catering', icon: UtensilsCrossed },
-    { label: 'Premium Sound System', icon: Music },
-    { label: '24/7 Secure Venue', icon: Shield },
-];
+
 
 const VENUE_RENTAL_RWF = 1500000;
 const SERVICE_TAX_RATE = 0.05;
 
 export default function VenueDetailPage() {
+    const { data: session } = useSession();
     const [activeImage, setActiveImage] = useState(0);
     const [preferredDate, setPreferredDate] = useState<Date | undefined>();
     const [guestCount, setGuestCount] = useState<string>('');
@@ -51,7 +45,20 @@ export default function VenueDetailPage() {
 
     const [venue, setVenue] = useState<any>(null);
     const [similarVenues, setSimilarVenues] = useState<any[]>([]);
+    const [bookedDates, setBookedDates] = useState<Date[]>([]);
+    const [blockedDates, setBlockedDates] = useState<Date[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [vendorId, setVendorId] = useState<string>('');
+
+    // Quote modal state
+    const [showQuoteDialog, setShowQuoteDialog] = useState(false);
+    const [quoteName, setQuoteName] = useState('');
+    const [quoteEmail, setQuoteEmail] = useState('');
+    const [quotePhone, setQuotePhone] = useState('');
+    const [quoteMessage, setQuoteMessage] = useState('');
+    const [quoteContactMethod, setQuoteContactMethod] = useState('email');
+    const [isSubmittingQuote, setIsSubmittingQuote] = useState(false);
+    const [quoteSubmitted, setQuoteSubmitted] = useState(false);
 
     useEffect(() => {
         const fetchVenue = async () => {
@@ -60,6 +67,9 @@ export default function VenueDetailPage() {
                 const data = await res.json();
                 setVenue(data.venue);
                 setSimilarVenues(data.similarVenues || []);
+                setBookedDates((data.bookedDates || []).map((d: string) => new Date(d + 'T00:00:00')));
+                setBlockedDates((data.blockedDates || []).map((d: string) => new Date(d + 'T00:00:00')));
+                setVendorId(data.vendorId || '');
             } catch (error) {
                 console.error('Error fetching venue:', error);
             } finally {
@@ -69,15 +79,50 @@ export default function VenueDetailPage() {
         if (venueId) fetchVenue();
     }, [venueId]);
 
+    useEffect(() => {
+        const checkFavorite = async () => {
+            if (!session?.user || !venueId) return;
+            try {
+                const res = await fetch('/api/favorites');
+                if (res.ok) {
+                    const data = await res.json();
+                    setIsSaved(data.venues.some((v: any) => v.venueId === venueId));
+                }
+            } catch (error) {
+                console.error('Error checking favorite:', error);
+            }
+        };
+        checkFavorite();
+    }, [session, venueId]);
+
     const handleSaveVenue = async () => {
+        if (!session?.user) {
+            toast.error('Please login to save favorites');
+            return;
+        }
+
         setIsSaving(true);
         try {
-            // Here you would save to favorites in your API
-            await new Promise(resolve => setTimeout(resolve, 500));
-            setIsSaved(!isSaved);
-            toast.success(isSaved ? "Venue removed from favorites" : "Venue saved to favorites!");
+            const method = isSaved ? 'DELETE' : 'POST';
+            const url = isSaved 
+                ? `/api/favorites?venueId=${venueId}`
+                : '/api/favorites';
+            
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: method === 'POST' ? JSON.stringify({ venueId }) : undefined,
+            });
+
+            if (res.ok) {
+                setIsSaved(!isSaved);
+                toast.success(isSaved ? 'Removed from favorites' : 'Added to favorites');
+            } else {
+                const data = await res.json();
+                toast.error(data.error || 'Failed to update favorite');
+            }
         } catch (error) {
-            toast.error("Failed to save venue");
+            toast.error('Something went wrong');
         } finally {
             setIsSaving(false);
         }
@@ -91,41 +136,84 @@ export default function VenueDetailPage() {
 
         setIsSchedulingTour(true);
         try {
-            // Here you would send the tour request to your API
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            toast.success("Tour scheduled! The venue will contact you to confirm.");
-            setShowTourDialog(false);
-            setTourDate(undefined);
-            setTourTime('');
-            setTourName('');
-            setTourEmail('');
-            setTourPhone('');
+            const res = await fetch('/api/venue-tours', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    venueId,
+                    name: tourName,
+                    email: tourEmail,
+                    phone: tourPhone,
+                    tourDate: tourDate.toISOString(),
+                    tourTime,
+                }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                toast.success("Tour scheduled! The venue will contact you to confirm.");
+                setShowTourDialog(false);
+                setTourDate(undefined);
+                setTourTime('');
+                setTourName('');
+                setTourEmail('');
+                setTourPhone('');
+            } else {
+                toast.error(data.error || "Failed to schedule tour");
+            }
         } catch (error) {
+            console.error('Tour scheduling error:', error);
             toast.error("Failed to schedule tour");
         } finally {
             setIsSchedulingTour(false);
         }
     };
 
-    const handleRequestQuote = async () => {
-        if (!preferredDate || !guestCount) {
-            toast.error("Please select a date and enter guest count");
+    const handleRequestQuote = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!preferredDate || !guestCount || !quoteName || !quoteEmail || !quotePhone || !quoteContactMethod) {
+            toast.error('Please fill in all required fields');
             return;
         }
-
-        setIsRequestingQuote(true);
+        setIsSubmittingQuote(true);
         try {
-            // Here you would send the quote request to your API
-            // For now, just show success message
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            toast.success("Quote request sent! The venue will contact you shortly.");
-            setPreferredDate(undefined);
-            setGuestCount('');
-        } catch (error) {
-            toast.error("Failed to send quote request");
+            const res = await fetch(`/api/venues/${venueId}/quote`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    clientName: quoteName,
+                    clientEmail: quoteEmail,
+                    clientPhone: quotePhone,
+                    eventDate: preferredDate.toISOString(),
+                    guestCount,
+                    message: quoteMessage,
+                    contactMethod: quoteContactMethod,
+                }),
+            });
+            const data = await res.json();
+            if (res.ok) {
+                setQuoteSubmitted(true);
+            } else {
+                toast.error(data.error || 'Failed to send quote request');
+            }
+        } catch {
+            toast.error('Something went wrong. Please try again.');
         } finally {
-            setIsRequestingQuote(false);
+            setIsSubmittingQuote(false);
         }
+    };
+
+    const resetQuoteDialog = () => {
+        setShowQuoteDialog(false);
+        setQuoteSubmitted(false);
+        setQuoteName('');
+        setQuoteEmail('');
+        setQuotePhone('');
+        setQuoteMessage('');
+        setQuoteContactMethod('email');
+        setPreferredDate(undefined);
+        setGuestCount('');
     };
 
     const venueWithDefaults = venue ? {
@@ -140,7 +228,7 @@ export default function VenueDetailPage() {
         features: [],
         starting_price_rwf: venue.price || VENUE_RENTAL_RWF,
         images: venue.image ? [venue.image] : [],
-        portfolio: venue.portfolio ? JSON.parse(venue.portfolio) : [],
+        portfolio: Array.isArray(venue.portfolio) ? venue.portfolio : [],
         amenities: venue.amenities ? venue.amenities.split(',').map((a: string) => a.trim()) : [],
     } : null;
 
@@ -155,14 +243,6 @@ export default function VenueDetailPage() {
 
     // Sample booked dates for availability calendar
     const today = new Date();
-    const nextMonth = new Date(today.getFullYear(), today.getMonth() + 1, 1);
-    const bookedDates = [
-        new Date(today.getFullYear(), today.getMonth() + 1, 4),
-        new Date(today.getFullYear(), today.getMonth() + 1, 5),
-        new Date(today.getFullYear(), today.getMonth() + 1, 11),
-        new Date(today.getFullYear(), today.getMonth() + 1, 18),
-        new Date(today.getFullYear(), today.getMonth() + 1, 25),
-    ];
 
     if (isLoading) {
         return (
@@ -237,10 +317,10 @@ export default function VenueDetailPage() {
                                             <MapPin className="w-5 h-5" />
                                             {venueWithDefaults.location}
                                         </span>
-                                        {venueWithDefaults.capacity && (
+                                        {venue.maxCapacity && (
                                             <span className="flex items-center gap-2">
                                                 <Users className="w-5 h-5" />
-                                                Up to {venueWithDefaults.capacity} guests
+                                                Up to {venue.maxCapacity} guests
                                             </span>
                                         )}
                                     </div>
@@ -312,22 +392,227 @@ export default function VenueDetailPage() {
                             </p>
                         </div>
 
-                        {/* Key Amenities */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-xl font-bold text-charcoal mb-4">Key Amenities</h2>
-                            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                                {(venueWithDefaults.amenities && venueWithDefaults.amenities.length > 0 ? venueWithDefaults.amenities : DEFAULT_AMENITIES.map(a => a.label)).map((amenity: string, index: number) => {
-                                    const defaultAmenity = DEFAULT_AMENITIES.find(a => a.label === amenity);
-                                    const Icon = defaultAmenity?.icon || Shield;
-                                    return (
-                                        <div key={index} className="flex items-center gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
-                                            <Icon className="w-5 h-5 text-burgundy flex-shrink-0" />
-                                            <span className="text-sm font-medium text-charcoal">{amenity}</span>
+                        {/* Capacity & Facilities */}
+                        {(venue.maxCapacity || venue.minCapacity || venue.indoorOutdoor || venue.spaceSize || venue.parkingCapacity || venue.accessibility) && (
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+                            <h2 className="text-xl font-bold text-charcoal">Capacity &amp; Facilities</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {venue.maxCapacity && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Users className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Max Capacity</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.maxCapacity} guests</div>
                                         </div>
-                                    );
-                                })}
+                                    </div>
+                                )}
+                                {venue.minCapacity && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Users className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Min Capacity</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.minCapacity} guests</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.indoorOutdoor && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <MapPin className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Indoor / Outdoor</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.indoorOutdoor}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.spaceSize && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Info className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Total Space</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.spaceSize}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.parkingCapacity && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Car className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Parking</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.parkingCapacity}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.accessibility && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Wifi className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Accessibility</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.accessibility}</div>
+                                        </div>
+                                    </div>
+                                )}
                             </div>
                         </div>
+                        )}
+
+                        {/* Services & Amenities */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-5">
+                            <h2 className="text-xl font-bold text-charcoal">Services &amp; Amenities</h2>
+
+                            {/* Structured fields */}
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {venue.cateringOptions && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <UtensilsCrossed className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Catering</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.cateringOptions}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.barService && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Shield className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Bar / Alcohol</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.barService}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.avEquipment && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Music className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Audio / Visual</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.avEquipment}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.lightingOptions && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Star className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Lighting</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.lightingOptions}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.furnitureIncluded && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Info className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Tables &amp; Chairs</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.furnitureIncluded}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.bridalSuite && venue.bridalSuite !== 'no' && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Heart className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Bridal Suite</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.bridalSuite}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.accommodation && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <MapPin className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Accommodation</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.accommodation}</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+
+                            {/* Additional amenities (comma-separated free text) */}
+                            {venue.amenities && venue.amenities.trim() && (
+                                <div>
+                                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-2">Additional Amenities</div>
+                                    <div className="flex flex-wrap gap-2">
+                                        {venue.amenities.split(',').map((a: string) => a.trim()).filter(Boolean).map((a: string, i: number) => (
+                                            <span key={i} className="px-3 py-1 bg-burgundy/10 text-burgundy text-sm rounded-full font-medium">{a}</span>
+                                        ))}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Pricing & Policies */}
+                        {(venue.pricingStructure || venue.rentalDuration || venue.setupTime || venue.depositRequired || venue.paymentSchedule || venue.cancellationPolicy || venue.restrictions || venue.insuranceRequired) && (
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 space-y-4">
+                            <h2 className="text-xl font-bold text-charcoal">Pricing &amp; Policies</h2>
+                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                {venue.pricingStructure && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <DollarSign className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Pricing Structure</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.pricingStructure}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.rentalDuration && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Clock className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Rental Duration</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.rentalDuration}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.setupTime && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Clock className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Setup / Cleanup Time</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.setupTime}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.depositRequired && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <DollarSign className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Deposit Required</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.depositRequired}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.paymentSchedule && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <DollarSign className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Payment Schedule</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.paymentSchedule}</div>
+                                        </div>
+                                    </div>
+                                )}
+                                {venue.insuranceRequired && venue.insuranceRequired !== 'no' && (
+                                    <div className="flex items-start gap-3 p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                        <Shield className="w-5 h-5 text-burgundy flex-shrink-0 mt-0.5" />
+                                        <div>
+                                            <div className="text-xs text-gray-500 font-medium uppercase tracking-wide">Insurance</div>
+                                            <div className="text-sm font-medium text-charcoal">{venue.insuranceRequired}</div>
+                                        </div>
+                                    </div>
+                                )}
+                            </div>
+                            {venue.cancellationPolicy && (
+                                <div className="p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Cancellation Policy</div>
+                                    <p className="text-sm text-charcoal leading-relaxed">{venue.cancellationPolicy}</p>
+                                </div>
+                            )}
+                            {venue.restrictions && (
+                                <div className="p-3 rounded-xl border border-gray-200 bg-gray-50/50">
+                                    <div className="text-xs text-gray-500 font-medium uppercase tracking-wide mb-1">Venue Rules &amp; Restrictions</div>
+                                    <p className="text-sm text-charcoal leading-relaxed">{venue.restrictions}</p>
+                                </div>
+                            )}
+                        </div>
+                        )}
 
                         {/* Availability Calendar */}
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
@@ -335,50 +620,85 @@ export default function VenueDetailPage() {
                                 <h2 className="text-xl font-bold text-charcoal">Availability Calendar</h2>
                                 <div className="flex items-center gap-4 text-sm">
                                     <span className="flex items-center gap-2">
-                                        <span className="w-4 h-4 rounded bg-emerald-100 border border-emerald-300" />
+                                        <span className="w-4 h-4 rounded-sm bg-white border border-gray-300 inline-block" />
                                         Available
                                     </span>
                                     <span className="flex items-center gap-2">
-                                        <span className="w-4 h-4 rounded bg-red-100 border border-red-300" />
+                                        <span className="w-4 h-4 rounded-sm bg-green-200 inline-block" />
                                         Booked
+                                    </span>
+                                    <span className="flex items-center gap-2">
+                                        <span className="w-4 h-4 rounded-sm bg-red-200 inline-block" />
+                                        Unavailable
                                     </span>
                                 </div>
                             </div>
                             <div className="flex justify-center">
                                 <CalendarComponent
                                     mode="single"
-                                    defaultMonth={nextMonth}
+                                    defaultMonth={new Date(today.getFullYear(), today.getMonth() + 1, 1)}
                                     className="rounded-lg border border-gray-200 p-3"
-                                    modifiers={{ booked: bookedDates }}
-                                    modifiersClassNames={{ booked: "bg-red-100 text-red-900 hover:bg-red-200" }}
-                                    disabled={(date) => date < today || bookedDates.some(d => d.toDateString() === date.toDateString())}
+                                    modifiers={{ booked: bookedDates, blocked: blockedDates }}
+                                    disabled={(date) =>
+                                        date < today ||
+                                        bookedDates.some(d => d.toDateString() === date.toDateString()) ||
+                                        blockedDates.some(d => d.toDateString() === date.toDateString())
+                                    }
+                                    components={{
+                                        DayButton: ({ day, modifiers, className, ...props }) => (
+                                            <button
+                                                {...props}
+                                                disabled={modifiers.disabled}
+                                                className={cn(
+                                                    "flex aspect-square w-full min-w-8 items-center justify-center rounded-md text-sm transition-colors",
+                                                    modifiers.booked && "!bg-green-200 !text-green-900 cursor-not-allowed",
+                                                    modifiers.blocked && "!bg-red-200 !text-red-900 cursor-not-allowed",
+                                                    !modifiers.booked && !modifiers.blocked && modifiers.disabled && "text-gray-300 cursor-not-allowed",
+                                                    !modifiers.booked && !modifiers.blocked && !modifiers.disabled && "hover:bg-burgundy/10 hover:text-burgundy cursor-pointer",
+                                                    modifiers.today && !modifiers.booked && !modifiers.blocked && "font-bold underline",
+                                                )}
+                                            >
+                                                {day.date.getDate()}
+                                            </button>
+                                        )
+                                    }}
                                 />
                             </div>
                         </div>
 
-                        {/* Venue Layouts */}
+                        {/* Venue Portfolio */}
+                        {venueWithDefaults.portfolio.length > 0 && (
                         <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-xl font-bold text-charcoal mb-4">Venue Layouts</h2>
-                            <Card className="border-gray-200">
-                                <CardContent className="p-4">
-                                    <div className="flex gap-4 items-start">
-                                        <div className="w-24 h-24 bg-sand/50 rounded-lg flex items-center justify-center flex-shrink-0">
-                                            <div className="w-12 h-12 bg-burgundy/20 rounded-full flex items-center justify-center">
-                                                <Info className="w-6 h-6 text-burgundy" />
+                            <h2 className="text-xl font-bold text-charcoal mb-4">Venue Gallery</h2>
+                            <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                {venueWithDefaults.portfolio.map((item: any, idx: number) => (
+                                    <div
+                                        key={item.id || idx}
+                                        className="relative rounded-xl overflow-hidden aspect-square bg-gray-100 cursor-pointer group"
+                                        onClick={() => setActiveImage(idx)}
+                                    >
+                                        {item.type === 'video' ? (
+                                            <>
+                                                <video src={item.url} className="w-full h-full object-cover" />
+                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                    <div className="w-10 h-10 rounded-full bg-white/80 flex items-center justify-center">
+                                                        <svg className="w-5 h-5 text-burgundy ml-0.5" fill="currentColor" viewBox="0 0 24 24"><path d="M8 5v14l11-7z" /></svg>
+                                                    </div>
+                                                </div>
+                                            </>
+                                        ) : (
+                                            <img src={item.url} alt={item.title || 'Venue photo'} className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" />
+                                        )}
+                                        {item.title && (
+                                            <div className="absolute bottom-0 left-0 right-0 bg-gradient-to-t from-black/60 to-transparent p-2 opacity-0 group-hover:opacity-100 transition-opacity">
+                                                <p className="text-white text-xs font-medium truncate">{item.title}</p>
                                             </div>
-                                        </div>
-                                        <div className="flex-1 min-w-0">
-                                            <h3 className="font-semibold text-charcoal mb-1">Ballroom Configuration A</h3>
-                                            <p className="text-sm text-gray-600 mb-3">Standard wedding banquet setup for 350 guests including dance floor and stage.</p>
-                                        </div>
-                                        <Button variant="outline" className="flex items-center gap-2 shrink-0">
-                                            <Download className="w-4 h-4" />
-                                            Download PDF
-                                        </Button>
+                                        )}
                                     </div>
-                                </CardContent>
-                            </Card>
+                                ))}
+                            </div>
                         </div>
+                        )}
 
                         {/* Guest Reviews - Hidden until real reviews exist */}
                         {venue.reviewCount > 0 && (
@@ -448,84 +768,79 @@ export default function VenueDetailPage() {
                         <Card className="border-gray-100 shadow-sm bg-white">
                             <CardContent className="p-6">
                                 <h3 className="text-xl font-bold text-charcoal mb-1">Check Availability</h3>
-                                <p className="text-sm text-gray-600 mb-6">Select your dates and get a quick quote</p>
+                                <p className="text-sm text-gray-500 mb-5">Select your date and request a quote</p>
 
                                 <div className="space-y-4">
                                     <div>
-                                        <Label htmlFor="wedding-date" className="text-sm font-medium text-charcoal">Preferred Wedding Date</Label>
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Preferred Wedding Date *</Label>
                                         <Popover>
                                             <PopoverTrigger asChild>
                                                 <Button
-                                                    id="wedding-date"
                                                     variant="outline"
-                                                    className={cn("w-full justify-start text-left font-normal h-10 mt-1.5 border-gray-300", !preferredDate && "text-muted-foreground")}
+                                                    className={cn("w-full justify-start text-left font-normal h-10 mt-1.5 border-gray-200", !preferredDate && "text-gray-400")}
                                                 >
-                                                    <CalendarDays className="mr-2 h-4 w-4" />
-                                                    {preferredDate ? format(preferredDate, 'PPP') : 'Select Date'}
+                                                    <CalendarDays className="mr-2 h-4 w-4 text-burgundy" />
+                                                    {preferredDate ? format(preferredDate, 'PPP') : 'Select your date'}
                                                 </Button>
                                             </PopoverTrigger>
-                                            <PopoverContent className="w-auto p-0 bg-white shadow-xl border-2 border-gray-200 rounded-xl" align="start" sideOffset={8}>
+                                            <PopoverContent className="w-auto p-0 bg-white shadow-xl border border-gray-200 rounded-xl" align="start" sideOffset={8}>
                                                 <CalendarComponent
                                                     mode="single"
                                                     selected={preferredDate}
                                                     onSelect={setPreferredDate}
                                                     disabled={(date) => date < today}
                                                     initialFocus
-                                                    className="rounded-xl p-4"
-                                                    classNames={{
-                                                        day_button: "hover:bg-burgundy/10 data-[selected-single=true]:bg-burgundy data-[selected-single=true]:text-white",
-                                                        today: "bg-sand text-charcoal font-semibold",
-                                                    }}
+                                                    className="rounded-xl p-3"
                                                 />
                                             </PopoverContent>
                                         </Popover>
                                     </div>
                                     <div>
-                                        <Label htmlFor="guest-count" className="text-sm font-medium text-charcoal">Estimated Guest Count</Label>
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Estimated Guest Count *</Label>
                                         <div className="relative mt-1.5">
                                             <Users className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-gray-400" />
                                             <Input
-                                                id="guest-count"
-                                                type="text"
+                                                type="number"
                                                 placeholder="e.g. 250"
                                                 value={guestCount}
                                                 onChange={(e) => setGuestCount(e.target.value)}
                                                 className="pl-9 h-10"
+                                                min="1"
                                             />
                                         </div>
                                     </div>
                                 </div>
 
-                                <div className="mt-6 pt-4 border-t border-gray-100 space-y-2">
+                                <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Venue Rental Fee</span>
+                                        <span className="text-gray-500">Venue Rental Fee</span>
                                         <span className="font-medium text-charcoal">{rentalFormatted}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
-                                        <span className="text-gray-600">Service Tax (5%)</span>
+                                        <span className="text-gray-500">Service Tax (5%)</span>
                                         <span className="font-medium text-charcoal">{serviceTaxFormatted}</span>
                                     </div>
-                                    <div className="flex justify-between items-baseline pt-2">
-                                        <span className="font-semibold text-charcoal">Estimated Total</span>
-                                        <span className="text-lg font-bold text-burgundy">{totalFormatted}</span>
+                                    <div className="flex justify-between items-baseline pt-2 border-t border-gray-100">
+                                        <span className="font-semibold text-charcoal text-sm">Estimated Total</span>
+                                        <span className="text-xl font-bold text-burgundy">{totalFormatted}</span>
                                     </div>
                                 </div>
 
-                                <Button 
-                                    onClick={handleRequestQuote}
-                                    disabled={isRequestingQuote || !preferredDate || !guestCount}
-                                    className="w-full mt-6 bg-burgundy hover:bg-burgundy-light text-white h-11 disabled:opacity-50 disabled:cursor-not-allowed"
+                                <Button
+                                    onClick={() => {
+                                        if (!preferredDate || !guestCount) {
+                                            toast.error('Please select a date and enter guest count first');
+                                            return;
+                                        }
+                                        setShowQuoteDialog(true);
+                                    }}
+                                    disabled={!preferredDate || !guestCount}
+                                    className="w-full mt-5 bg-burgundy hover:bg-burgundy/90 text-white h-11 font-semibold disabled:opacity-40"
                                 >
-                                    {isRequestingQuote ? (
-                                        <>
-                                            <div className="w-4 h-4 mr-2 border-2 border-white border-t-transparent rounded-full animate-spin" />
-                                            Sending Request...
-                                        </>
-                                    ) : (
-                                        "Request Formal Quote"
-                                    )}
+                                    <MessageCircle className="w-4 h-4 mr-2" />
+                                    Request a Quote
                                 </Button>
-                                <p className="text-xs text-gray-500 text-center mt-3">Requesting a quote does not commit you to a booking.</p>
+                                <p className="text-xs text-gray-400 text-center mt-2">No commitment — the vendor will contact you.</p>
                             </CardContent>
                         </Card>
 
@@ -550,33 +865,160 @@ export default function VenueDetailPage() {
                             </CardContent>
                         </Card>
 
-                        {/* Venue Policies */}
-                        <Card className="border-gray-100 shadow-sm bg-white">
-                            <CardContent className="p-0">
-                                <Accordion type="single" collapsible className="w-full">
-                                    <AccordionItem value="catering" className="border-b border-gray-100 px-4">
-                                        <AccordionTrigger className="text-left text-sm font-medium text-charcoal hover:no-underline py-4">
-                                            Outside catering allowed?
-                                        </AccordionTrigger>
-                                        <AccordionContent className="text-sm text-gray-600 pb-4">
-                                            Yes, outside caterers are welcome. A nominal fee may apply for use of kitchen facilities.
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                    <AccordionItem value="music" className="px-4">
-                                        <AccordionTrigger className="text-left text-sm font-medium text-charcoal hover:no-underline py-4">
-                                            Music & Sound restrictions?
-                                        </AccordionTrigger>
-                                        <AccordionContent className="text-sm text-gray-600 pb-4">
-                                            Live music and DJs are allowed. Sound must be kept at reasonable levels after 10 PM per local regulations.
-                                        </AccordionContent>
-                                    </AccordionItem>
-                                </Accordion>
-                            </CardContent>
-                        </Card>
+
                         </div>
                     </div>
                 </div>
             </div>
+
+            {/* Quote Request Dialog */}
+            <Dialog open={showQuoteDialog} onOpenChange={(open) => { if (!open) resetQuoteDialog(); }}>
+                <DialogContent className="sm:max-w-lg bg-white max-h-[90vh] overflow-y-auto">
+                    {quoteSubmitted ? (
+                        // ── Success state ──
+                        <div className="flex flex-col items-center justify-center py-8 text-center gap-4">
+                            <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center">
+                                <svg className="w-8 h-8 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor" strokeWidth={2.5}>
+                                    <path strokeLinecap="round" strokeLinejoin="round" d="M5 13l4 4L19 7" />
+                                </svg>
+                            </div>
+                            <div>
+                                <h3 className="text-xl font-bold text-charcoal mb-2">Quote Request Sent!</h3>
+                                <p className="text-sm text-gray-500 leading-relaxed max-w-sm">
+                                    Your request has been saved and the venue has been notified by email.
+                                    They will contact you at <strong>{quoteEmail}</strong> shortly.
+                                </p>
+                            </div>
+                            <div className="w-full bg-gray-50 rounded-xl p-4 text-left space-y-1.5 text-sm">
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Date</span>
+                                    <span className="font-medium text-charcoal">{preferredDate ? format(preferredDate, 'PPP') : ''}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Guests</span>
+                                    <span className="font-medium text-charcoal">{guestCount}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Venue</span>
+                                    <span className="font-medium text-charcoal">{venueWithDefaults?.name}</span>
+                                </div>
+                                <div className="flex justify-between">
+                                    <span className="text-gray-500">Contact via</span>
+                                    <span className="font-medium text-charcoal capitalize">{quoteContactMethod}</span>
+                                </div>
+                            </div>
+                            <Button onClick={resetQuoteDialog} className="w-full bg-burgundy hover:bg-burgundy/90 text-white h-10">
+                                Done
+                            </Button>
+                        </div>
+                    ) : (
+                        // ── Form state ──
+                        <>
+                            <DialogHeader>
+                                <DialogTitle className="text-charcoal text-lg">Request a Quote</DialogTitle>
+                                <DialogDescription className="text-gray-500">
+                                    Fill in your details and we&apos;ll notify <strong>{venueWithDefaults?.name}</strong> immediately.
+                                </DialogDescription>
+                            </DialogHeader>
+
+                            {/* Selected date + guests summary */}
+                            <div className="flex gap-3 my-1">
+                                <div className="flex-1 bg-burgundy/5 rounded-xl p-3 text-center">
+                                    <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold mb-0.5">Event Date</p>
+                                    <p className="text-sm font-bold text-burgundy">{preferredDate ? format(preferredDate, 'MMM d, yyyy') : '—'}</p>
+                                </div>
+                                <div className="flex-1 bg-burgundy/5 rounded-xl p-3 text-center">
+                                    <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold mb-0.5">Guests</p>
+                                    <p className="text-sm font-bold text-burgundy">{guestCount || '—'}</p>
+                                </div>
+                                <div className="flex-1 bg-burgundy/5 rounded-xl p-3 text-center">
+                                    <p className="text-[11px] text-gray-400 uppercase tracking-wider font-semibold mb-0.5">Est. Total</p>
+                                    <p className="text-sm font-bold text-burgundy">{totalFormatted}</p>
+                                </div>
+                            </div>
+
+                            <form onSubmit={handleRequestQuote} className="space-y-4">
+                                <div className="grid grid-cols-2 gap-3">
+                                    <div className="col-span-2">
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Full Name *</Label>
+                                        <Input
+                                            value={quoteName}
+                                            onChange={e => setQuoteName(e.target.value)}
+                                            placeholder="Your full name"
+                                            required className="mt-1.5 h-10"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Email *</Label>
+                                        <Input
+                                            type="email"
+                                            value={quoteEmail}
+                                            onChange={e => setQuoteEmail(e.target.value)}
+                                            placeholder="your@email.com"
+                                            required className="mt-1.5 h-10"
+                                        />
+                                    </div>
+                                    <div>
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Phone *</Label>
+                                        <Input
+                                            type="tel"
+                                            value={quotePhone}
+                                            onChange={e => setQuotePhone(e.target.value)}
+                                            placeholder="+250 788 000 000"
+                                            required className="mt-1.5 h-10"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Preferred Contact Method *</Label>
+                                        <select
+                                            value={quoteContactMethod}
+                                            onChange={e => setQuoteContactMethod(e.target.value)}
+                                            required
+                                            className="mt-1.5 w-full h-10 rounded-md border border-input bg-background px-3 text-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring"
+                                        >
+                                            <option value="email">Email</option>
+                                            <option value="phone">Phone Call</option>
+                                            <option value="whatsapp">WhatsApp</option>
+                                        </select>
+                                    </div>
+                                    <div className="col-span-2">
+                                        <Label className="text-xs font-semibold text-gray-500 uppercase tracking-wider">Message <span className="text-gray-300 normal-case font-normal">(optional)</span></Label>
+                                        <textarea
+                                            value={quoteMessage}
+                                            onChange={e => setQuoteMessage(e.target.value)}
+                                            placeholder="Tell the venue about your event, special requirements, or any questions..."
+                                            rows={3}
+                                            className="mt-1.5 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring resize-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                <p className="text-[11px] text-gray-400 flex items-start gap-1.5">
+                                    <svg className="w-3.5 h-3.5 text-gray-300 flex-shrink-0 mt-0.5" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                                    Submitting this request does not commit you to a booking. The vendor will reach out to confirm details.
+                                </p>
+
+                                <DialogFooter className="gap-2">
+                                    <Button type="button" variant="outline" onClick={resetQuoteDialog} disabled={isSubmittingQuote}>
+                                        Cancel
+                                    </Button>
+                                    <Button
+                                        type="submit"
+                                        disabled={isSubmittingQuote || !quoteName || !quoteEmail || !quotePhone || !quoteContactMethod}
+                                        className="bg-burgundy hover:bg-burgundy/90 text-white gap-2 disabled:opacity-50"
+                                    >
+                                        {isSubmittingQuote ? (
+                                            <><div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin" /> Sending...</>
+                                        ) : (
+                                            <><MessageCircle className="w-4 h-4" /> Send Quote Request</>
+                                        )}
+                                    </Button>
+                                </DialogFooter>
+                            </form>
+                        </>
+                    )}
+                </DialogContent>
+            </Dialog>
 
             {/* Schedule Tour Dialog */}
             <Dialog open={showTourDialog} onOpenChange={setShowTourDialog}>

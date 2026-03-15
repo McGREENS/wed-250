@@ -1,17 +1,57 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useRef } from "react";
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { Plus, Edit, Trash2, Eye, EyeOff, DollarSign, Clock, CheckCircle } from "lucide-react";
+import { Plus, Edit, Trash2, Eye, EyeOff, DollarSign, Clock, CheckCircle, Upload, ImageIcon, Video, X, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 import ServiceCreationWizard from "./ServiceCreationWizard";
 
-export default function ServicesClient({ initialServices }: any) {
+export default function ServicesClient({ initialServices, initialPortfolio }: any) {
     const [services, setServices] = useState(initialServices || []);
     const [showWizard, setShowWizard] = useState(false);
     const [editingService, setEditingService] = useState<any>(null);
+    const [portfolioItems, setPortfolioItems] = useState(initialPortfolio || []);
+    const [uploadingForService, setUploadingForService] = useState<string | null>(null);
+    const fileInputRef = useRef<HTMLInputElement>(null);
+    const [pendingServiceId, setPendingServiceId] = useState<string | null>(null);
+
+    const handleVenueFileSelect = async (e: React.ChangeEvent<HTMLInputElement>, serviceId: string) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+        const isImage = file.type.startsWith('image/');
+        const isVideo = file.type.startsWith('video/');
+        if (!isImage && !isVideo) { toast.error('Please select an image or video file'); return; }
+        const maxSize = isImage ? 5 * 1024 * 1024 : 50 * 1024 * 1024;
+        if (file.size > maxSize) { toast.error(`File must be less than ${isImage ? '5MB' : '50MB'}`); return; }
+        setUploadingForService(serviceId);
+        const reader = new FileReader();
+        reader.onloadend = async () => {
+            const res = await fetch('/api/vendor/portfolio', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ file: reader.result, type: isImage ? 'image' : 'video', title: file.name.replace(/\.[^.]+$/, ''), category: 'Venue', serviceId }),
+            });
+            if (res.ok) {
+                const data = await res.json();
+                setPortfolioItems((prev: any[]) => [...prev, data.item]);
+                toast.success('Photo uploaded successfully');
+            } else {
+                const err = await res.json();
+                toast.error(err.error || 'Upload failed');
+            }
+            setUploadingForService(null);
+        };
+        reader.readAsDataURL(file);
+        e.target.value = '';
+    };
+
+    const handleRemoveVenuePhoto = async (id: string) => {
+        await fetch(`/api/vendor/portfolio?id=${id}`, { method: 'DELETE' });
+        setPortfolioItems((prev: any[]) => prev.filter((i: any) => i.id !== id));
+        toast.success('Photo removed');
+    };
 
     const handleEdit = (service: any) => {
         setEditingService(service);
@@ -68,8 +108,10 @@ export default function ServicesClient({ initialServices }: any) {
 
                     <div className="grid md:grid-cols-2 gap-6">
                 {services.map((service: any) => {
-                    const features = JSON.parse(service.features);
-                    const metadata = service.metadata ? JSON.parse(service.metadata) : {};
+                    let features: any = { duration: '', items: [] };
+                    try { features = service.features ? JSON.parse(service.features) : features; } catch { features = { duration: '', items: [] }; }
+                    let metadata: any = {};
+                    try { metadata = service.metadata ? JSON.parse(service.metadata) : {}; } catch { metadata = {}; }
                     return (
                         <Card key={service.id} className={`border-gray-100 shadow-sm overflow-hidden ${!service.active && 'opacity-60'}`}>
                             {service.image && (
@@ -123,6 +165,54 @@ export default function ServicesClient({ initialServices }: any) {
                                         {metadata.amenities && metadata.amenities.length > 0 && (
                                             <div className="mt-2">
                                                 <span className="text-gray-500">Amenities:</span> <span className="font-medium">{metadata.amenities}</span>
+                                            </div>
+                                        )}
+                                    </div>
+                                )}
+
+                                {service.serviceType === "Venue" && (
+                                    <div className="mb-4">
+                                        <div className="flex items-center justify-between mb-2">
+                                            <p className="text-xs font-semibold text-gray-600">Venue Portfolio</p>
+                                            <label className="cursor-pointer">
+                                                <input
+                                                    type="file"
+                                                    accept="image/*,video/*"
+                                                    className="hidden"
+                                                    onChange={(e) => handleVenueFileSelect(e, service.id)}
+                                                    disabled={uploadingForService === service.id}
+                                                />
+                                                <span className="flex items-center gap-1 text-xs text-[#8B3A3A] font-medium hover:underline">
+                                                    {uploadingForService === service.id
+                                                        ? <><Loader2 className="w-3 h-3 animate-spin" /> Uploading...</>
+                                                        : <><Upload className="w-3 h-3" /> Add Photo/Video</>}
+                                                </span>
+                                            </label>
+                                        </div>
+                                        {portfolioItems.filter((i: any) => i.serviceId === service.id).length === 0 ? (
+                                            <p className="text-xs text-gray-400 italic">No venue photos yet. Add some to showcase your space.</p>
+                                        ) : (
+                                            <div className="grid grid-cols-3 gap-2">
+                                                {portfolioItems.filter((i: any) => i.serviceId === service.id).map((item: any) => (
+                                                    <div key={item.id} className="relative group rounded-lg overflow-hidden aspect-square bg-gray-100">
+                                                        {item.type === 'image' ? (
+                                                            <img src={item.url} alt={item.title} className="w-full h-full object-cover" />
+                                                        ) : (
+                                                            <div className="relative w-full h-full">
+                                                                <video src={item.url} className="w-full h-full object-cover" />
+                                                                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                                                                    <Video className="w-5 h-5 text-white" />
+                                                                </div>
+                                                            </div>
+                                                        )}
+                                                        <button
+                                                            onClick={() => handleRemoveVenuePhoto(item.id)}
+                                                            className="absolute top-1 right-1 bg-black/60 text-white rounded-full p-0.5 opacity-0 group-hover:opacity-100 transition-opacity"
+                                                        >
+                                                            <X className="w-3 h-3" />
+                                                        </button>
+                                                    </div>
+                                                ))}
                                             </div>
                                         )}
                                     </div>

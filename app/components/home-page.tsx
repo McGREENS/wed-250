@@ -213,14 +213,14 @@ export default function HomePage() {
 
                     <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
                         {[
-                            { name: "Venues", img: "https://images.unsplash.com/photo-1519167758481-83f29da8c525?w=500&h=500&fit=crop" },
-                            { name: "Photographers", img: "https://images.unsplash.com/photo-1537905569824-f89f14cceb68?w=500&h=500&fit=crop" },
-                            { name: "Decor & Floral", img: "https://images.unsplash.com/photo-1505963507340-e554b3d8753d?w=500&h=500&fit=crop" },
+                            { name: "Venues", img: "/venues.jpg" },
+                            { name: "Photographers", img: "/photography.jpg" },
+                            { name: "Decor & Floral", img: "/decor.jpg" },
                             { name: "Catering", img: "https://images.unsplash.com/photo-1555244162-803834f70033?w=500&h=500&fit=crop" },
-                            { name: "Planners", img: "https://images.unsplash.com/photo-1550995123-08092780655d?w=500&h=500&fit=crop" },
-                            { name: "Entertainment", img: "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=500&h=500&fit=crop" },
-                            { name: "Transport", img: "https://images.unsplash.com/photo-1549317661-bd32c8ce0db2?w=500&h=500&fit=crop" },
-                            { name: "Attire", img: "https://images.unsplash.com/photo-1594552072238-b8a33785b261?w=500&h=500&fit=crop" }
+                            { name: "Planners", img: "/planner.jpg" },
+                            { name: "Entertainment", img: "/entertainment.jpg" },
+                            { name: "Transport", img: "/traansport.jpg" },
+                            { name: "Attire", img: "/attire.jpg" }
                         ].map((cat, idx) => (
                             <Link key={idx} href={createPageUrl(cat.name === 'Venues' ? 'VenueMarketplace' : 'Vendors')}>
                                 <div className="group relative overflow-hidden rounded-xl aspect-square shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
@@ -252,8 +252,8 @@ export default function HomePage() {
                                     className="rounded-lg object-cover h-96 w-full -mt-8 shadow-lg"
                                 />
                                 <img
-                                    src="https://images.unsplash.com/photo-1532277627-2c9c749eb403?w=800&h=1000&fit=crop"
-                                    alt="Flowers"
+                                    src="/wediing.jpg"
+                                    alt="Attire"
                                     className="rounded-lg object-cover h-96 w-full mt-8 shadow-lg"
                                 />
                             </div>

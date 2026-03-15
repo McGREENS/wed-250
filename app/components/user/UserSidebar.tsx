@@ -2,7 +2,7 @@
 
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
-import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight, Building2, Store, UserCog } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useUserSidebar } from './UserSidebarContext';
 
@@ -10,7 +10,10 @@ const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/bookings', label: 'My Bookings', icon: Calendar },
   { href: '/dashboard/favorites', label: 'Favorites', icon: Heart },
-  { href: '/dashboard/settings', label: 'Settings', icon: Settings },
+  { href: '/dashboard/wedding-settings', label: 'Wedding Settings', icon: UserCog },
+  { href: '/venues', label: 'Browse Venues', icon: Building2 },
+  { href: '/vendors', label: 'Browse Vendors', icon: Store },
+  { href: '/dashboard/settings', label: 'Account Settings', icon: Settings },
 ];
 
 export default function UserSidebar() {

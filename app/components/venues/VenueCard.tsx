@@ -1,10 +1,57 @@
+"use client";
+
 import Link from 'next/link';
-// import { createPageUrl } from '../../utils';
 import { MapPin, Users, Star, Heart, CheckCircle } from 'lucide-react';
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
+import { useState } from 'react';
+import { toast } from 'sonner';
 
-export default function VenueCard({ venue, viewMode = 'grid' }) {
+export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false, onFavoriteToggle }) {
+  const [isLoading, setIsLoading] = useState(false);
+  const [favorite, setFavorite] = useState(isFavorite);
+
+  const handleFavoriteClick = async (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+    
+    setIsLoading(true);
+    try {
+      const method = favorite ? 'DELETE' : 'POST';
+      const url = favorite 
+        ? `/api/favorites?venueId=${venue.id}`
+        : '/api/favorites';
+      
+      console.log('Favorite action:', { method, url, venueId: venue.id, favorite });
+      
+      const res = await fetch(url, {
+        method,
+        headers: { 'Content-Type': 'application/json' },
+        body: method === 'POST' ? JSON.stringify({ venueId: venue.id }) : undefined,
+      });
+
+      const data = await res.json();
+      console.log('Response:', { status: res.status, data });
+
+      if (res.ok) {
+        setFavorite(!favorite);
+        toast.success(favorite ? 'Removed from favorites' : 'Added to favorites');
+        onFavoriteToggle?.();
+      } else {
+        if (res.status === 401) {
+          toast.error('Please login to save favorites');
+        } else {
+          toast.error(data.error || 'Failed to update favorite');
+        }
+      }
+    } catch (error) {
+      console.error('Favorite error:', error);
+      toast.error('Something went wrong');
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   if (viewMode === 'list') {
     return (
       <Link
@@ -82,8 +129,14 @@ export default function VenueCard({ venue, viewMode = 'grid' }) {
                 <Button className="bg-burgundy hover:bg-burgundy-light text-white flex-1">
                   View Details
                 </Button>
-                <Button variant="outline" size="icon" className="border-burgundy text-burgundy">
-                  <Heart className="w-4 h-4" />
+                <Button 
+                  variant="outline" 
+                  size="icon" 
+                  className={`border-burgundy ${favorite ? 'bg-burgundy text-white' : 'text-burgundy'}`}
+                  onClick={handleFavoriteClick}
+                  disabled={isLoading}
+                >
+                  <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
                 </Button>
               </div>
             </div>
@@ -112,13 +165,13 @@ export default function VenueCard({ venue, viewMode = 'grid' }) {
             </Badge>
           )}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-            }}
-            className="absolute top-3 right-3 w-9 h-9 bg-white/90 backdrop-blur rounded-full flex items-center justify-center hover:bg-white transition-colors"
+            onClick={handleFavoriteClick}
+            disabled={isLoading}
+            className={`absolute top-3 right-3 w-9 h-9 backdrop-blur rounded-full flex items-center justify-center transition-colors ${
+              favorite ? 'bg-burgundy text-white' : 'bg-white/90 hover:bg-white text-burgundy'
+            }`}
           >
-            <Heart className="w-4 h-4 text-burgundy" />
+            <Heart className={`w-4 h-4 ${favorite ? 'fill-current' : ''}`} />
           </button>
         </div>
 

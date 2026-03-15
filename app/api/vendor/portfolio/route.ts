@@ -34,7 +34,7 @@ export async function POST(req: NextRequest) {
   }
 
   const body = await req.json();
-  const { file, type, title, category } = body;
+  const { file, type, title, category, serviceId } = body;
 
   const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
   
@@ -71,6 +71,7 @@ export async function POST(req: NextRequest) {
     url: file,
     title,
     category,
+    serviceId: serviceId || null,
     date: new Date().toISOString(),
     active: true,
     featured: false,

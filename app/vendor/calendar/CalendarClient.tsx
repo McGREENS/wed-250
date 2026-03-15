@@ -1,16 +1,20 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, Clock, MapPin, Users, X } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, Plus, Ban, Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CalendarClient({ initialData }: any) {
+    const router = useRouter();
     const [currentDate, setCurrentDate] = useState(new Date());
     const [selectedDate, setSelectedDate] = useState<Date | null>(null);
     const [blockedDates, setBlockedDates] = useState<string[]>(initialData.availability?.blocked || []);
+    const [blockingLoading, setBlockingLoading] = useState(false);
+    const [navigatingDate, setNavigatingDate] = useState<string | null>(null);
     const bookedDates = initialData.bookings || [];
 
     const getDaysInMonth = (date: Date) => {
@@ -26,31 +30,34 @@ export default function CalendarClient({ initialData }: any) {
     const formatDate = (date: Date) => date.toISOString().split('T')[0];
 
     const isDateBooked = (dateStr: string) => bookedDates.some((d: any) => formatDate(new Date(d.eventDate)) === dateStr);
-
     const isDateBlocked = (dateStr: string) => blockedDates.includes(dateStr);
-
     const getEventForDate = (dateStr: string) => bookedDates.find((d: any) => formatDate(new Date(d.eventDate)) === dateStr);
 
     const handleBlockDate = async () => {
         if (!selectedDate) return;
         const dateStr = formatDate(selectedDate);
-        
-        if (isDateBlocked(dateStr)) {
-            await fetch("/api/vendor/calendar", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ date: dateStr, action: "unblock" }),
-            });
-            setBlockedDates(blockedDates.filter(d => d !== dateStr));
-            toast.success("Date unblocked");
-        } else {
-            await fetch("/api/vendor/calendar", {
-                method: "PUT",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ date: dateStr, action: "block" }),
-            });
-            setBlockedDates([...blockedDates, dateStr]);
-            toast.success("Date blocked");
+        setBlockingLoading(true);
+        try {
+            if (isDateBlocked(dateStr)) {
+                await fetch("/api/vendor/calendar", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ date: dateStr, action: "unblock" }),
+                });
+                setBlockedDates(blockedDates.filter(d => d !== dateStr));
+                toast.success("Date unblocked");
+            } else {
+                await fetch("/api/vendor/calendar", {
+                    method: "PUT",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ date: dateStr, action: "block" }),
+                });
+                setBlockedDates([...blockedDates, dateStr]);
+                toast.success("Date blocked");
+            }
+        } finally {
+            setBlockingLoading(false);
+            setSelectedDate(null);
         }
     };
 
@@ -110,7 +117,7 @@ export default function CalendarClient({ initialData }: any) {
                                     return (
                                         <button
                                             key={day}
-                                            onClick={() => setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
+                                            onClick={() => !isPast && setSelectedDate(new Date(currentDate.getFullYear(), currentDate.getMonth(), day))}
                                             className={`aspect-square p-2 rounded-lg text-sm font-medium transition-all ${
                                                 isSelected
                                                     ? "bg-burgundy text-white ring-2 ring-burgundy ring-offset-2"
@@ -122,7 +129,6 @@ export default function CalendarClient({ initialData }: any) {
                                                     ? "text-gray-300 cursor-not-allowed"
                                                     : "bg-white border border-gray-200 hover:border-burgundy hover:bg-burgundy/5"
                                             }`}
-                                            disabled={isPast}
                                         >
                                             {day}
                                         </button>
@@ -146,44 +152,6 @@ export default function CalendarClient({ initialData }: any) {
                             </div>
                         </CardContent>
                     </Card>
-
-                    {selectedDate && (
-                        <Card className="border-gray-100 shadow-sm mt-6">
-                            <CardHeader className="border-b border-gray-100">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-lg">
-                                        {selectedDate.toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' })}
-                                    </CardTitle>
-                                    <Button variant="ghost" size="sm" onClick={() => setSelectedDate(null)}>
-                                        <X className="w-4 h-4" />
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                {getEventForDate(formatDate(selectedDate)) ? (
-                                    <div className="bg-sand/20 p-4 rounded-lg mb-4">
-                                        <p className="text-sm font-semibold text-charcoal mb-2">
-                                            Booking: {getEventForDate(formatDate(selectedDate))?.serviceType}
-                                        </p>
-                                        <p className="text-sm text-gray-600">
-                                            Status: {getEventForDate(formatDate(selectedDate))?.status}
-                                        </p>
-                                    </div>
-                                ) : (
-                                    <p className="text-sm text-gray-600 mb-4">
-                                        {isDateBlocked(formatDate(selectedDate)) ? "This date is blocked" : "No events scheduled for this date"}
-                                    </p>
-                                )}
-                                <Button 
-                                    onClick={handleBlockDate} 
-                                    variant="outline" 
-                                    className={`w-full ${isDateBlocked(formatDate(selectedDate)) ? "border-green-300 text-green-600 hover:bg-green-50" : "border-red-300 text-red-600 hover:bg-red-50"}`}
-                                >
-                                    {isDateBlocked(formatDate(selectedDate)) ? "Unblock Date" : "Block Date"}
-                                </Button>
-                            </CardContent>
-                        </Card>
-                    )}
                 </div>
 
                 <div className="space-y-6">
@@ -201,16 +169,14 @@ export default function CalendarClient({ initialData }: any) {
                                 upcomingEvents.map((event: any, idx: number) => (
                                     <div key={idx} className="p-4 bg-sand/20 rounded-lg">
                                         <div className="flex items-start justify-between mb-2">
-                                            <h4 className="font-semibold text-charcoal">{event.serviceType}</h4>
-                                            <Badge className={event.status === "CONFIRMED" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
+                                            <h4 className="font-semibold text-charcoal">{event.clientName || event.serviceType || event.eventType}</h4>
+                                            <Badge className={event.status === "confirmed" ? "bg-green-100 text-green-800" : "bg-yellow-100 text-yellow-800"}>
                                                 {event.status}
                                             </Badge>
                                         </div>
-                                        <div className="space-y-1 text-sm text-gray-600">
-                                            <div className="flex items-center gap-2">
-                                                <CalendarIcon className="w-4 h-4" />
-                                                <span>{new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
-                                            </div>
+                                        <div className="flex items-center gap-2 text-sm text-gray-600">
+                                            <CalendarIcon className="w-4 h-4" />
+                                            <span>{new Date(event.eventDate).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}</span>
                                         </div>
                                     </div>
                                 ))
@@ -237,6 +203,67 @@ export default function CalendarClient({ initialData }: any) {
                     </Card>
                 </div>
             </div>
+
+            {/* Date Action Modal */}
+            {selectedDate && (
+                <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4" onClick={() => setSelectedDate(null)}>
+                    <div className="bg-white rounded-2xl shadow-xl w-full max-w-sm p-6" onClick={e => e.stopPropagation()}>
+                        <div className="flex items-center justify-between mb-4">
+                            <h3 className="text-lg font-bold text-charcoal">
+                                {selectedDate.toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' })}
+                            </h3>
+                            <button onClick={() => setSelectedDate(null)} className="p-1 rounded-full hover:bg-gray-100">
+                                <X className="w-5 h-5 text-gray-500" />
+                            </button>
+                        </div>
+
+                        {getEventForDate(formatDate(selectedDate)) ? (
+                            <div className="bg-green-50 border border-green-200 rounded-xl p-4 mb-4">
+                                <p className="text-sm font-semibold text-green-800">
+                                    {getEventForDate(formatDate(selectedDate))?.clientName || getEventForDate(formatDate(selectedDate))?.serviceType}
+                                </p>
+                                <p className="text-xs text-green-600 mt-1 capitalize">
+                                    Status: {getEventForDate(formatDate(selectedDate))?.status}
+                                </p>
+                            </div>
+                        ) : isDateBlocked(formatDate(selectedDate)) ? (
+                            <div className="bg-red-50 border border-red-200 rounded-xl p-4 mb-4">
+                                <p className="text-sm font-semibold text-red-800">This date is blocked / busy</p>
+                            </div>
+                        ) : (
+                            <div className="bg-gray-50 border border-gray-200 rounded-xl p-4 mb-4">
+                                <p className="text-sm text-gray-600">This date is available</p>
+                            </div>
+                        )}
+
+                        <div className="flex flex-col gap-3">
+                            {!isDateBooked(formatDate(selectedDate)) && (
+                                <Button
+                                    onClick={() => { setNavigatingDate(formatDate(selectedDate)); router.push(`/vendor/bookings?date=${formatDate(selectedDate)}`); }}
+                                    disabled={navigatingDate !== null}
+                                    className="w-full bg-burgundy hover:bg-burgundy/90 text-white"
+                                >
+                                    {navigatingDate ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Plus className="w-4 h-4 mr-2" />}
+                                    Create Booking for this Date
+                                </Button>
+                            )}
+                            <Button
+                                onClick={handleBlockDate}
+                                disabled={blockingLoading}
+                                variant="outline"
+                                className={`w-full ${
+                                    isDateBlocked(formatDate(selectedDate))
+                                        ? "border-green-300 text-green-700 hover:bg-green-50"
+                                        : "border-red-300 text-red-700 hover:bg-red-50"
+                                }`}
+                            >
+                                {blockingLoading ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Ban className="w-4 h-4 mr-2" />}
+                                {isDateBlocked(formatDate(selectedDate)) ? "Unblock this Date" : "Mark as Busy / Block"}
+                            </Button>
+                        </div>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }

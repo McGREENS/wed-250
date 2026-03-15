@@ -13,3 +13,26 @@ const client = createClient({
 });
 
 export const db = drizzle(client, { schema });
+
+// Migration function for tasks table
+export async function migrateTasks() {
+  try {
+    await client.execute(`
+      CREATE TABLE IF NOT EXISTS tasks (
+        id TEXT PRIMARY KEY,
+        user_id TEXT NOT NULL,
+        title TEXT NOT NULL,
+        timeline TEXT NOT NULL,
+        completed INTEGER DEFAULT 0,
+        custom INTEGER DEFAULT 0,
+        created_at INTEGER,
+        updated_at INTEGER,
+        FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+      );
+    `);
+    console.log('Tasks table created successfully!');
+  } catch (error) {
+    console.error('Migration failed:', error);
+    throw error;
+  }
+}

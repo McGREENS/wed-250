@@ -5,132 +5,235 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
-import { useState } from 'react';
+import { User, Lock, Save, Eye, EyeOff } from 'lucide-react';
+import { useEffect, useState } from 'react';
+import { toast } from 'sonner';
 
 export default function SettingsPage() {
-    const [profile, setProfile] = useState({
-        coupleName: 'Sarah & Michael',
-        email: 'user@andiza.rw',
-        phone: '+250 788 123 456',
-        weddingDate: '2024-12-15',
-        venue: 'Kigali Serena Hotel',
-        guestCount: 150,
-    });
+  const [profile, setProfile] = useState({ name: '', phone: '' });
+  const [passwords, setPasswords] = useState({ current: '', new: '', confirm: '' });
+  const [showPasswords, setShowPasswords] = useState({ current: false, new: false, confirm: false });
+  const [loadingProfile, setLoadingProfile] = useState(true);
+  const [savingProfile, setSavingProfile] = useState(false);
+  const [savingPassword, setSavingPassword] = useState(false);
 
-    const [notifications, setNotifications] = useState({
-        emailNotifications: true,
-        smsNotifications: false,
-        bookingUpdates: true,
-        vendorMessages: true,
-        reminderAlerts: true,
-    });
+  useEffect(() => {
+    const fetchUser = async () => {
+      try {
+        const res = await fetch('/api/user-settings');
+        if (res.ok) {
+          const data = await res.json();
+          setProfile({ name: data.name || '', phone: data.phone || '' });
+        }
+      } catch (error) {
+        toast.error('Failed to load profile');
+      } finally {
+        setLoadingProfile(false);
+      }
+    };
+    fetchUser();
+  }, []);
 
+  const handleSaveProfile = async () => {
+    if (!profile.name) return toast.error('Name is required');
+    setSavingProfile(true);
+    try {
+      const res = await fetch('/api/user-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'profile', ...profile }),
+      });
+      if (res.ok) {
+        toast.success('Profile updated successfully');
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to update profile');
+      }
+    } catch (error) {
+      toast.error('Failed to update profile');
+    } finally {
+      setSavingProfile(false);
+    }
+  };
+
+  const handleChangePassword = async () => {
+    if (!passwords.current || !passwords.new || !passwords.confirm) {
+      return toast.error('All password fields are required');
+    }
+    if (passwords.new !== passwords.confirm) {
+      return toast.error('New passwords do not match');
+    }
+    if (passwords.new.length < 8) {
+      return toast.error('Password must be at least 8 characters');
+    }
+    setSavingPassword(true);
+    try {
+      const res = await fetch('/api/user-settings', {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'password', currentPassword: passwords.current, newPassword: passwords.new }),
+      });
+      if (res.ok) {
+        toast.success('Password changed successfully');
+        setPasswords({ current: '', new: '', confirm: '' });
+      } else {
+        const err = await res.json();
+        toast.error(err.error || 'Failed to change password');
+      }
+    } catch (error) {
+      toast.error('Failed to change password');
+    } finally {
+      setSavingPassword(false);
+    }
+  };
+
+  if (loadingProfile) {
     return (
-        <UserPageLayout>
-            <div className="max-w-4xl mx-auto">
-                <div className="mb-8">
-                    <h1 className="text-3xl font-serif text-charcoal mb-2">Settings</h1>
-                    <p className="text-gray-600">Manage your account and preferences</p>
-                </div>
-
-                <Tabs defaultValue="profile" className="space-y-6">
-                    <TabsList className="bg-white border border-gray-100">
-                        <TabsTrigger value="profile">Profile</TabsTrigger>
-                        <TabsTrigger value="account">Account</TabsTrigger>
-                        <TabsTrigger value="notifications">Notifications</TabsTrigger>
-                        <TabsTrigger value="security">Security</TabsTrigger>
-                    </TabsList>
-
-                    <TabsContent value="profile">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardContent className="p-6">
-                                <h3 className="text-lg font-semibold text-charcoal mb-6">Wedding Profile</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="coupleName">Couple Names</Label>
-                                        <Input id="coupleName" value={profile.coupleName} onChange={(e) => setProfile({...profile, coupleName: e.target.value})} />
-                                    </div>
-                                    <div className="grid md:grid-cols-2 gap-4">
-                                        <div>
-                                            <Label htmlFor="weddingDate">Wedding Date</Label>
-                                            <Input id="weddingDate" type="date" value={profile.weddingDate} onChange={(e) => setProfile({...profile, weddingDate: e.target.value})} />
-                                        </div>
-                                        <div>
-                                            <Label htmlFor="guestCount">Guest Count</Label>
-                                            <Input id="guestCount" type="number" value={profile.guestCount} onChange={(e) => setProfile({...profile, guestCount: parseInt(e.target.value)})} />
-                                        </div>
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="venue">Venue</Label>
-                                        <Input id="venue" value={profile.venue} onChange={(e) => setProfile({...profile, venue: e.target.value})} />
-                                    </div>
-                                    <Button className="bg-burgundy hover:bg-burgundy-light text-white">Save Changes</Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="account">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardContent className="p-6">
-                                <h3 className="text-lg font-semibold text-charcoal mb-6">Account Information</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="email">Email Address</Label>
-                                        <Input id="email" type="email" value={profile.email} onChange={(e) => setProfile({...profile, email: e.target.value})} />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="phone">Phone Number</Label>
-                                        <Input id="phone" value={profile.phone} onChange={(e) => setProfile({...profile, phone: e.target.value})} />
-                                    </div>
-                                    <Button className="bg-burgundy hover:bg-burgundy-light text-white">Update Account</Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="notifications">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardContent className="p-6">
-                                <h3 className="text-lg font-semibold text-charcoal mb-6">Notification Preferences</h3>
-                                <div className="space-y-4">
-                                    {Object.entries(notifications).map(([key, value]) => (
-                                        <div key={key} className="flex items-center justify-between p-3 bg-sand/20 rounded-lg">
-                                            <span className="text-sm text-charcoal capitalize">{key.replace(/([A-Z])/g, ' $1').trim()}</span>
-                                            <input type="checkbox" checked={value} onChange={(e) => setNotifications({...notifications, [key]: e.target.checked})} className="w-5 h-5 text-burgundy rounded" />
-                                        </div>
-                                    ))}
-                                    <Button className="bg-burgundy hover:bg-burgundy-light text-white">Save Preferences</Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    <TabsContent value="security">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardContent className="p-6">
-                                <h3 className="text-lg font-semibold text-charcoal mb-6">Change Password</h3>
-                                <div className="space-y-4">
-                                    <div>
-                                        <Label htmlFor="currentPassword">Current Password</Label>
-                                        <Input id="currentPassword" type="password" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="newPassword">New Password</Label>
-                                        <Input id="newPassword" type="password" />
-                                    </div>
-                                    <div>
-                                        <Label htmlFor="confirmPassword">Confirm New Password</Label>
-                                        <Input id="confirmPassword" type="password" />
-                                    </div>
-                                    <Button className="bg-burgundy hover:bg-burgundy-light text-white">Update Password</Button>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
-            </div>
-        </UserPageLayout>
+      <UserPageLayout>
+        <div className="max-w-2xl mx-auto animate-pulse">
+          <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
+          <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+          <div className="space-y-6">
+            <div className="h-48 bg-gray-200 rounded"></div>
+            <div className="h-48 bg-gray-200 rounded"></div>
+          </div>
+        </div>
+      </UserPageLayout>
     );
+  }
+
+  return (
+    <UserPageLayout>
+      <div className="max-w-2xl mx-auto">
+        <div className="mb-8">
+          <h1 className="text-3xl font-serif text-charcoal mb-2">Account Settings</h1>
+          <p className="text-gray-600">Manage your profile and security</p>
+        </div>
+
+        <div className="space-y-6">
+          {/* Profile Section */}
+          <Card className="border-gray-100 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                  <User className="w-5 h-5 text-burgundy" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-charcoal">Profile</h2>
+                  <p className="text-sm text-gray-500">Update your name and phone number</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="name">Full Name</Label>
+                  <Input
+                    id="name"
+                    value={profile.name}
+                    onChange={(e) => setProfile({ ...profile, name: e.target.value })}
+                    placeholder="Your full name"
+                    className="border-gray-200 focus:border-burgundy"
+                  />
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="phone">Phone Number</Label>
+                  <Input
+                    id="phone"
+                    value={profile.phone}
+                    onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
+                    placeholder="+250 7XX XXX XXX"
+                    className="border-gray-200 focus:border-burgundy"
+                  />
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    onClick={handleSaveProfile}
+                    disabled={savingProfile}
+                    className="bg-burgundy text-white hover:bg-burgundy/90"
+                  >
+                    <Save className="w-4 h-4 mr-2" />
+                    {savingProfile ? 'Saving...' : 'Save Profile'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+
+          {/* Password Section */}
+          <Card className="border-gray-100 shadow-sm">
+            <CardContent className="p-6">
+              <div className="flex items-center gap-3 mb-6">
+                <div className="w-10 h-10 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                  <Lock className="w-5 h-5 text-burgundy" />
+                </div>
+                <div>
+                  <h2 className="font-semibold text-charcoal">Password</h2>
+                  <p className="text-sm text-gray-500">Change your account password</p>
+                </div>
+              </div>
+              <div className="space-y-4">
+                <div className="space-y-1">
+                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="currentPassword"
+                      type={showPasswords.current ? 'text' : 'password'}
+                      value={passwords.current}
+                      onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
+                      placeholder="Enter current password"
+                      className="border-gray-200 focus:border-burgundy pr-10"
+                    />
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal">
+                      {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="newPassword">New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="newPassword"
+                      type={showPasswords.new ? 'text' : 'password'}
+                      value={passwords.new}
+                      onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
+                      placeholder="Min. 8 characters"
+                      className="border-gray-200 focus:border-burgundy pr-10"
+                    />
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal">
+                      {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="space-y-1">
+                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <div className="relative">
+                    <Input
+                      id="confirmPassword"
+                      type={showPasswords.confirm ? 'text' : 'password'}
+                      value={passwords.confirm}
+                      onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
+                      placeholder="Repeat new password"
+                      className="border-gray-200 focus:border-burgundy pr-10"
+                    />
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal">
+                      {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                    </button>
+                  </div>
+                </div>
+                <div className="flex justify-end pt-2">
+                  <Button
+                    onClick={handleChangePassword}
+                    disabled={savingPassword}
+                    className="bg-burgundy text-white hover:bg-burgundy/90"
+                  >
+                    <Lock className="w-4 h-4 mr-2" />
+                    {savingPassword ? 'Updating...' : 'Change Password'}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </div>
+      </div>
+    </UserPageLayout>
+  );
 }
