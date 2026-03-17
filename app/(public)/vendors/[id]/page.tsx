@@ -2,46 +2,89 @@
 
 import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
-import { createPageUrl } from '@/app/utils';
-import { MapPin, Heart, Mail, Phone, CheckCircle, ArrowLeft, Star, Calendar, Images, Save, ChevronDown, ChevronUp, MessageCircle, Award, Users, Camera } from 'lucide-react';
+import { useParams } from 'next/navigation';
+import { MapPin, Star, ArrowLeft, Heart, BadgeCheck, Share2, Briefcase, Heart as HeartIcon, Users, Globe, Award, Package, CheckCircle, Camera, Video, Utensils, Music, Car, Palette, Sparkles, Shirt, Clock, DollarSign, ChevronDown, ChevronUp } from 'lucide-react';
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { Card, CardContent } from "@/app/components/ui/card";
-import { useParams } from 'next/navigation';
+import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
 
-export default function VendorDetail() {
-    const [activeImage, setActiveImage] = useState(0);
-    const [expandedService, setExpandedService] = useState<number | null>(null);
-    const [selectedDate, setSelectedDate] = useState<number | null>(null);
+const TYPE_COLORS: Record<string, string> = {
+    Photography:  "bg-blue-100 text-blue-700",
+    Videography:  "bg-purple-100 text-purple-700",
+    Catering:     "bg-orange-100 text-orange-700",
+    Decoration:   "bg-pink-100 text-pink-700",
+    Music:        "bg-indigo-100 text-indigo-700",
+    Planning:     "bg-yellow-100 text-yellow-700",
+    Makeup:       "bg-rose-100 text-rose-700",
+    Attire:       "bg-teal-100 text-teal-700",
+    Transport:    "bg-slate-100 text-slate-700",
+    Venue:        "bg-green-100 text-green-700",
+};
+
+export default function VendorDetailPage() {
     const params = useParams();
     const vendorId = params.id as string;
+    const { data: session } = useSession();
 
     const [vendor, setVendor] = useState<any>(null);
     const [services, setServices] = useState<any[]>([]);
     const [isLoading, setIsLoading] = useState(true);
+    const [isFavorite, setIsFavorite] = useState(false);
+    const [favLoading, setFavLoading] = useState(false);
 
     useEffect(() => {
-        const fetchVendor = async () => {
-            try {
-                const res = await fetch(`/api/vendors/${vendorId}`);
-                const data = await res.json();
-                setVendor(data.vendor);
-                setServices(data.services || []);
-            } catch (error) {
-                console.error('Error fetching vendor:', error);
-            } finally {
-                setIsLoading(false);
-            }
-        };
-        if (vendorId) fetchVendor();
+        fetch(`/api/vendors/${vendorId}`)
+            .then((r) => r.json())
+            .then((d) => {
+                setVendor(d.vendor);
+                setServices(d.services || []);
+            })
+            .catch(console.error)
+            .finally(() => setIsLoading(false));
     }, [vendorId]);
+
+    useEffect(() => {
+        if (!session?.user) return;
+        fetch('/api/favorites')
+            .then((r) => r.json())
+            .then((d) => {
+                const ids = d.vendors?.map((v: any) => v.vendorId) || [];
+                setIsFavorite(ids.includes(vendorId));
+            })
+            .catch(console.error);
+    }, [session, vendorId]);
+
+    const handleFavorite = async () => {
+        if (!session?.user) { toast.error('Please login to save favorites'); return; }
+        setFavLoading(true);
+        try {
+            const method = isFavorite ? 'DELETE' : 'POST';
+            const url = isFavorite ? `/api/favorites?vendorId=${vendorId}` : '/api/favorites';
+            const res = await fetch(url, {
+                method,
+                headers: { 'Content-Type': 'application/json' },
+                body: method === 'POST' ? JSON.stringify({ vendorId }) : undefined,
+            });
+            if (res.ok) {
+                setIsFavorite(!isFavorite);
+                toast.success(isFavorite ? 'Removed from favorites' : 'Saved to favorites');
+            }
+        } catch { toast.error('Something went wrong'); }
+        finally { setFavLoading(false); }
+    };
+
+    const handleShare = () => {
+        navigator.clipboard.writeText(window.location.href);
+        toast.success('Link copied to clipboard');
+    };
 
     if (isLoading) {
         return (
             <div className="min-h-screen bg-cream flex items-center justify-center">
                 <div className="text-center">
-                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-burgundy mx-auto mb-4"></div>
-                    <p className="text-gray-600">Loading vendor details...</p>
+                    <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-burgundy mx-auto mb-4" />
+                    <p className="text-gray-600">Loading vendor...</p>
                 </div>
             </div>
         );
@@ -53,468 +96,473 @@ export default function VendorDetail() {
                 <div className="text-center">
                     <h2 className="text-2xl font-bold text-charcoal mb-4">Vendor not found</h2>
                     <Link href="/vendors">
-                        <Button className="bg-burgundy hover:bg-burgundy-light text-white">
-                            Back to Vendors
-                        </Button>
+                        <Button className="bg-burgundy hover:bg-burgundy-light text-white">Back to Vendors</Button>
                     </Link>
                 </div>
             </div>
         );
     }
 
-    const images = vendor.images ? JSON.parse(vendor.images) : [];
     const portfolio = vendor.portfolio ? JSON.parse(vendor.portfolio) : [];
     const categories = vendor.categories ? JSON.parse(vendor.categories) : [];
+    const activeServices = services.filter((s) => s.active !== false);
+    const minPrice = activeServices.length > 0 ? Math.min(...activeServices.map((s) => s.price)) : null;
 
-    // Get hero image - prioritize latest portfolio image
-    const getHeroImage = () => {
-        if (portfolio.length > 0) {
-            const latestPortfolio = portfolio[portfolio.length - 1];
-            return latestPortfolio?.url || latestPortfolio;
-        }
-        return images[0] || 'https://images.unsplash.com/photo-1519228621490-a633b619bd3b?w=1200&h=800&fit=crop';
-    };
-
-    const heroImage = getHeroImage();
-
-    // Sample vendor data - replace with real data from backend using vendorId
-    const vendorData = {
-        id: 1,
-        name: vendor.businessName,
-        category: categories.join(', ') || 'General',
-        location: vendor.location,
-        price_range: vendor.priceRange || '850,000 RWF',
-        rating: 4.9,
-        reviews: 128,
-        description: vendor.description || 'Professional wedding services provider in Rwanda.',
-        images: images.length > 0 ? images : [
-            'https://images.unsplash.com/photo-1519228621490-a633b619bd3b?w=1200&h=800&fit=crop'
-        ],
-        contact_email: vendor.email || 'info@vendor.rw',
-        contact_phone: vendor.phone || '+250 788 123 456',
-        availability: vendor.availability || 'Available for bookings',
-        featured: vendor.featured || false,
-        premium_partner: true,
-        years_experience: 8,
-        weddings_done: 450,
-        staff_members: 12,
-        awards_won: 4,
-        services: services.map((s: any) => ({
-            id: s.id,
-            title: `${s.serviceType} - ${s.name}`,
-            description: s.description,
-            price: s.price,
-            features: s.features ? JSON.parse(s.features) : [],
-            metadata: s.metadata ? JSON.parse(s.metadata) : {},
-            image: s.image
-        })),
-        portfolio_images: portfolio.length > 0 ? portfolio.map((p: any) => p?.url || p) : images.slice(0, 4),
-        pricing_tiers: [
-            {
-                name: 'Essential Memories',
-                price: '850,000 RWF',
-                features: [
-                    '8 hours coverage',
-                    '1 senior photographer',
-                    '400 edited high-res photos',
-                    'Digital delivery (4 weeks)',
-                    'Basic retouching'
-                ]
-            },
-            {
-                name: 'Heritage Collection',
-                price: '1,450,000 RWF',
-                popular: true,
-                features: [
-                    'Full day coverage (12h)',
-                    '2 photographers',
-                    '800+ edited photos',
-                    'Premium photo album (40 pages)',
-                    'A3 framed print',
-                    'Digital delivery (3 weeks)'
-                ]
-            },
-            {
-                name: 'Royal Cinematic',
-                price: '2,200,000 RWF',
-                features: [
-                    'Multi-day coverage',
-                    'Team of 4 (photo + video)',
-                    'Drone cinematography',
-                    '60-min feature film',
-                    'Hand-crafted deluxe album',
-                    'VIP express delivery (10 days)'
-                ]
-            }
-        ],
-        customer_reviews: [
-            {
-                id: 1,
-                name: 'Sandrine Uwera',
-                date: 'October 12, 2023',
-                rating: 5,
-                comment: 'Absolutely incredible work! The team captured our wedding day perfectly. The Heritage Collection album is stunning - every photo tells a story. Professional, creative, and so easy to work with. Highly recommend!',
-                vendor_response: 'Thank you so much Sandrine! It was an honor to capture your special day. We\'re thrilled you love the Heritage Collection album - we put so much love into crafting it. Wishing you a lifetime of happiness!'
-            }
-        ]
-    };
+    // Hero image: first service image → first portfolio image → fallback
+    const heroImage =
+        activeServices.find((s) => s.image)?.image ||
+        (portfolio[0]?.url || portfolio[0]) ||
+        'https://images.unsplash.com/photo-1519228621490-a633b619bd3b?w=1400&h=800&fit=crop';
 
     return (
         <div className="min-h-screen bg-cream">
-            {/* Hero Section */}
-            <div className="relative h-96 md:h-[500px]">
-                <div className="absolute inset-0">
-                    <img
-                        src={heroImage}
-                        alt={vendorData.name}
-                        className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/40" />
+
+            {/* ── HERO ── */}
+            <div className="relative h-[420px] md:h-[520px]">
+                <img src={heroImage} alt={vendor.businessName} className="absolute inset-0 w-full h-full object-cover" />
+                {/* gradient overlay */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+
+                {/* top bar: back + actions */}
+                <div className="absolute top-0 left-0 right-0 px-6 md:px-12 pt-6 flex items-center justify-between">
+                    <Link href="/vendors" className="inline-flex items-center gap-2 text-white/90 hover:text-white bg-black/20 backdrop-blur px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                        <ArrowLeft className="w-4 h-4" /> Back to Vendors
+                    </Link>
+                    <div className="flex items-center gap-2">
+                        <button onClick={handleShare} className="w-9 h-9 bg-black/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                            <Share2 className="w-4 h-4" />
+                        </button>
+                        <button onClick={handleFavorite} disabled={favLoading}
+                            className={`w-9 h-9 backdrop-blur rounded-full flex items-center justify-center transition-colors ${isFavorite ? 'bg-burgundy text-white' : 'bg-black/20 text-white hover:bg-black/40'}`}>
+                            <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
+                        </button>
+                    </div>
                 </div>
-                
-                {/* Vendor Info Overlay */}
-                <div className="absolute bottom-0 left-0 right-0 p-6 md:p-12">
+
+                {/* bottom: vendor info */}
+                <div className="absolute bottom-0 left-0 right-0 px-6 md:px-12 pb-8">
                     <div className="max-w-7xl mx-auto">
-                        <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
-                            <div className="space-y-3">
-                                {vendorData.premium_partner && (
-                                    <Badge className="bg-burgundy text-white border-none w-fit">
-                                        Premium Partner
-                                    </Badge>
-                                )}
-                                <h1 className="text-3xl md:text-5xl font-bold text-white">
-                                    {vendorData.name}
-                                </h1>
-                                <div className="flex flex-wrap items-center gap-4 text-white/90 text-sm md:text-base">
-                                    <div className="flex items-center gap-1">
-                                        <Star className="w-4 h-4 md:w-5 md:h-5 fill-yellow-400 text-yellow-400" />
-                                        <span>{vendorData.rating} ({vendorData.reviews} Reviews)</span>
-                                    </div>
-                                    <div className="flex items-center gap-1">
-                                        <MapPin className="w-4 h-4 md:w-5 md:h-5" />
-                                        <span>{vendorData.location}</span>
-                                    </div>
-                                    <Badge variant="secondary" className="bg-white/20 text-white border-white/30 backdrop-blur">
-                                        {vendorData.category}
-                                    </Badge>
-                                </div>
-                            </div>
-                            
-                            <div className="flex flex-col sm:flex-row gap-3">
-                                <Button
-                                    variant="secondary"
-                                    className="bg-white/10 backdrop-blur border-white/20 text-white hover:bg-white/20"
-                                    onClick={() => {}}
-                                >
-                                    <Images className="w-4 h-4 mr-2" />
-                                    View Gallery
-                                </Button>
-                                <Button
-                                    className="bg-burgundy hover:bg-burgundy-light text-white"
-                                    onClick={() => {}}
-                                >
-                                    <Save className="w-4 h-4 mr-2" />
-                                    Save Vendor
-                                </Button>
-                            </div>
+                        {/* badges row */}
+                        <div className="flex flex-wrap items-center gap-2 mb-3">
+                            {vendor.verified && (
+                                <span className="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                    <BadgeCheck className="w-3.5 h-3.5" /> Verified
+                                </span>
+                            )}
+                            {vendor.featured && (
+                                <span className="inline-flex items-center gap-1 bg-burgundy text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                    <Star className="w-3.5 h-3.5 fill-current" /> Featured
+                                </span>
+                            )}
+                            {categories.filter((c: string) => c !== 'Venue').map((cat: string) => (
+                                <span key={cat} className={`text-xs font-semibold px-3 py-1 rounded-full ${TYPE_COLORS[cat] || 'bg-white/20 text-white'}`}>
+                                    {cat}
+                                </span>
+                            ))}
+                        </div>
+
+                        {/* name */}
+                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 drop-shadow">
+                            {vendor.businessName}
+                        </h1>
+
+                        {/* meta row */}
+                        <div className="flex flex-wrap items-center gap-5 text-white/90 text-sm">
+                            {vendor.location && (
+                                <span className="flex items-center gap-1.5">
+                                    <MapPin className="w-4 h-4 shrink-0" /> {vendor.location}
+                                </span>
+                            )}
+                            {vendor.rating > 0 && (
+                                <span className="flex items-center gap-1.5">
+                                    <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 shrink-0" />
+                                    <span className="font-semibold">{vendor.rating}</span>
+                                    {vendor.reviewCount > 0 && <span className="text-white/70">({vendor.reviewCount} reviews)</span>}
+                                </span>
+                            )}
+                            {activeServices.length > 0 && (
+                                <span className="text-white/80">
+                                    {activeServices.length} service package{activeServices.length !== 1 ? 's' : ''}
+                                </span>
+                            )}
+                            {minPrice && (
+                                <span className="font-semibold text-white">
+                                    From {minPrice.toLocaleString()} RWF
+                                </span>
+                            )}
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* Back Button */}
-            <div className="bg-white border-b border-gray-100">
-                <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-4">
-                    <Link
-                        href="/vendors"
-                        className="inline-flex items-center gap-2 text-gray-600 hover:text-burgundy transition-colors"
-                    >
-                        <ArrowLeft className="w-4 h-4" />
-                        Back to Vendors
-                    </Link>
-                </div>
-            </div>
-
+            {/* ── PAGE BODY (steps 2-5 go here) ── */}
             <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
                 <div className="grid lg:grid-cols-3 gap-8">
-                    {/* Main Content */}
                     <div className="lg:col-span-2 space-y-8">
-                        {/* Key Metrics */}
-                        <div className="grid grid-cols-2 md:grid-cols-4 gap-4 bg-white p-6 rounded-2xl shadow-sm border border-gray-100">
-                            <div className="flex flex-col items-center justify-center p-4 text-center border-r border-gray-100 last:border-r-0">
-                                <Calendar className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendorData.years_experience}+</span>
-                                <span className="text-sm text-gray-500">Years Experience</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center p-4 text-center border-r border-gray-100 last:border-r-0">
-                                <Heart className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendorData.weddings_done}+</span>
-                                <span className="text-sm text-gray-500">Weddings Done</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center p-4 text-center border-r border-gray-100 last:border-r-0">
-                                <Users className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendorData.staff_members}</span>
-                                <span className="text-sm text-gray-500">Staff Members</span>
-                            </div>
-                            <div className="flex flex-col items-center justify-center p-4 text-center">
-                                <Award className="w-6 h-6 text-burgundy mb-2" />
-                                <span className="text-xl font-bold text-charcoal">{vendorData.awards_won}</span>
-                                <span className="text-sm text-gray-500">Awards Won</span>
-                            </div>
-                        </div>
-
-                        {/* About Section */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-2xl font-bold text-charcoal mb-4">About {vendorData.name}</h2>
-                            <p className="text-gray-600 leading-relaxed">
-                                {vendorData.description}
-                            </p>
-                        </div>
-
-                        {/* Services Section */}
-                        {vendorData.services.length > 0 && (
-                            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                                <h2 className="text-2xl font-bold text-charcoal mb-6">Our Services</h2>
-                                <div className="grid md:grid-cols-2 gap-6">
-                                    {vendorData.services.map((service: any) => (
-                                        <div key={service.id} className="border border-gray-200 rounded-xl overflow-hidden hover:shadow-lg transition-shadow">
-                                            {service.image && (
-                                                <img
-                                                    src={service.image}
-                                                    alt={service.title}
-                                                    className="w-full h-48 object-cover"
-                                                />
-                                            )}
-                                            <div className="p-5">
-                                                <div className="flex items-start justify-between mb-3">
-                                                    <h3 className="font-semibold text-charcoal text-lg flex-1">{service.title}</h3>
-                                                    <Badge className="bg-burgundy text-white border-0 text-sm ml-2">
-                                                        {service.price.toLocaleString()} RWF
-                                                    </Badge>
-                                                </div>
-                                                <p className="text-gray-600 text-sm mb-4">{service.description}</p>
-                                                {service.features.length > 0 && (
-                                                    <div>
-                                                        <h4 className="font-semibold text-charcoal text-sm mb-2">Features:</h4>
-                                                        <ul className="space-y-2">
-                                                            {service.features.map((feature: string, idx: number) => (
-                                                                <li key={idx} className="flex items-start gap-2">
-                                                                    <CheckCircle className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" />
-                                                                    <span className="text-sm text-gray-700">{feature}</span>
-                                                                </li>
-                                                            ))}
-                                                        </ul>
-                                                    </div>
-                                                )}
-                                                <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white mt-4">
-                                                    Select Package
-                                                </Button>
-                                            </div>
-                                        </div>
-                                    ))}
-                                </div>
-                            </div>
-                        )}
-
-                        {/* Portfolio Gallery */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <div className="flex items-center justify-between mb-6">
-                                <h2 className="text-2xl font-bold text-charcoal">Portfolio Gallery</h2>
-                                <Link href="#" className="text-burgundy hover:text-burgundy-light font-medium flex items-center gap-1">
-                                    View All {vendorData.portfolio_images.length} Images
-                                    <ArrowLeft className="w-4 h-4 rotate-180" />
-                                </Link>
-                            </div>
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="md:col-span-2">
-                                    <img
-                                        src={vendorData.portfolio_images[0]}
-                                        alt="Portfolio 1"
-                                        className="w-full h-64 md:h-80 object-cover rounded-lg"
-                                    />
-                                </div>
-                                {vendorData.portfolio_images.slice(1, 3).map((img: string, idx: number) => (
-                                    <div key={idx}>
-                                        <img
-                                            src={img}
-                                            alt={`Portfolio ${idx + 2}`}
-                                            className="w-full h-40 object-cover rounded-lg"
-                                        />
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-
-                        {/* Pricing Tiers Section */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <h2 className="text-2xl font-bold text-charcoal mb-6">Pricing Tiers</h2>
-                            <div className="grid md:grid-cols-3 gap-6">
-                                {vendorData.pricing_tiers.map((tier: any, index: number) => (
-                                    <div key={index} className={`border rounded-2xl p-6 ${tier.popular ? 'border-burgundy bg-burgundy/5' : 'border-gray-200'}`}>
-                                        {tier.popular && (
-                                            <div className="bg-burgundy text-white text-sm font-medium py-1 px-3 rounded-full text-center mb-4">
-                                                Most Popular
-                                            </div>
-                                        )}
-                                        <h3 className="text-xl font-bold text-charcoal mb-2">{tier.name}</h3>
-                                        <div className="text-2xl font-bold text-burgundy mb-4">{tier.price}</div>
-                                        <ul className="space-y-3 mb-6">
-                                            {tier.features.map((feature, featureIndex) => (
-                                                <li key={featureIndex} className="flex items-start gap-2">
-                                                    <CheckCircle className="w-5 h-5 text-green-500 flex-shrink-0 mt-0.5" />
-                                                    <span className="text-gray-700 text-sm">{feature}</span>
-                                                </li>
-                                            ))}
-                                        </ul>
-                                        <Button className="w-full bg-burgundy hover:bg-burgundy-light text-white">
-                                            Select Package
-                                        </Button>
-                                    </div>
-                                ))}
-                            </div>
-                            <div className="mt-6 p-4 bg-sand/30 rounded-lg">
-                                <p className="text-sm text-gray-700">
-                                    Prices are indicative. Final quotes depend on travel requirements and custom add-ons.
-                                </p>
-                            </div>
-                        </div>
-
-                        {/* Customer Reviews Section */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
-                            <div className="flex items-center justify-between mb-6">
-                                <div className="flex items-center gap-3">
-                                    <div className="flex items-center">
-                                        {[...Array(5)].map((_, i) => (
-                                            <Star key={i} className="w-5 h-5 fill-yellow-400 text-yellow-400" />
-                                        ))}
-                                    </div>
-                                    <span className="text-xl font-semibold text-charcoal">{vendorData.rating}</span>
-                                    <span className="text-gray-600">Average Rating</span>
-                                </div>
-                                <Button variant="outline" className="border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
-                                    Write a Review
-                                </Button>
-                            </div>
-
-                            <div className="space-y-6">
-                                {vendorData.customer_reviews.map((review: any) => (
-                                    <div key={review.id} className="border-b border-gray-100 last:border-b-0 pb-6 last:pb-0">
-                                        <div className="flex items-start justify-between mb-3">
-                                            <div>
-                                                <div className="font-semibold text-charcoal">{review.name}</div>
-                                                <div className="text-sm text-gray-500">{review.date}</div>
-                                            </div>
-                                            <div className="flex items-center">
-                                                {[...Array(5)].map((_, i) => (
-                                                    <Star key={i} className={`w-4 h-4 ${i < review.rating ? 'fill-yellow-400 text-yellow-400' : 'text-gray-300'}`} />
-                                                ))}
-                                            </div>
-                                        </div>
-                                        <p className="text-gray-700 mb-4">{review.comment}</p>
-                                        {review.vendor_response && (
-                                            <div className="bg-sand/50 rounded-lg p-4 border-l-4 border-burgundy">
-                                                <div className="text-sm font-semibold text-burgundy mb-1">{vendorData.name} Response</div>
-                                                <p className="text-gray-700 text-sm">{review.vendor_response}</p>
-                                            </div>
-                                        )}
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
+                        {/* ── STEP 2: ABOUT + STATS ── */}
+                        <AboutSection vendor={vendor} services={activeServices} />
+                        {/* ── STEP 3: SERVICES ── */}
+                        <ServicesSection services={activeServices} vendorId={vendorId} vendorName={vendor.businessName} />
+                        {/* ── STEP 4: PORTFOLIO ── */}
+                        <PortfolioSection services={activeServices} vendorPortfolio={portfolio} />
                     </div>
-
-                    {/* Sidebar */}
                     <div className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-24">
-                            {/* Pricing & Availability */}
-                            <div className="mb-6">
-                                <div className="text-2xl font-bold text-charcoal mb-2">
-                                    Starting from {vendorData.price_range}
-                                </div>
-                                <div className="text-sm text-orange-600 font-medium mb-4">
-                                    {vendorData.availability}
-                                </div>
-                            </div>
-
-                            {/* Calendar */}
-                            <div className="mb-6">
-                                <h3 className="text-lg font-semibold text-charcoal mb-3">Select Event Date</h3>
-                                <div className="grid grid-cols-7 gap-1 text-center">
-                                    {['S', 'M', 'T', 'W', 'T', 'F', 'S'].map((day, index) => (
-                                        <div key={index} className="text-xs font-medium text-gray-500 py-2">
-                                            {day}
-                                        </div>
-                                    ))}
-                                    {[...Array(31)].map((_, index) => {
-                                        const day = index + 1;
-                                        const isBooked = [25, 26].includes(day);
-                                        const isSelected = selectedDate === day;
-                                        
-                                        return (
-                                            <button
-                                                key={day}
-                                                onClick={() => !isBooked && setSelectedDate(isSelected ? null : day)}
-                                                disabled={isBooked}
-                                                className={`
-                                                    py-2 text-sm rounded transition-colors
-                                                    ${isBooked 
-                                                        ? 'bg-gray-100 text-gray-400 cursor-not-allowed' 
-                                                        : isSelected 
-                                                        ? 'bg-burgundy text-white' 
-                                                        : 'hover:bg-burgundy hover:text-white'
-                                                    }
-                                                `}
-                                            >
-                                                {day}
-                                            </button>
-                                        );
-                                    })}
-                                </div>
-                            </div>
-
-                            {/* Action Buttons */}
-                            <div className="space-y-3 mb-6">
-                                <Button 
-                                    className="w-full bg-burgundy hover:bg-burgundy-light text-white"
-                                    onClick={() => {}}
-                                >
-                                    Book Now
-                                </Button>
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full border-burgundy text-burgundy hover:bg-burgundy hover:text-white"
-                                    onClick={() => {}}
-                                >
-                                    Request Custom Quote
-                                </Button>
-                            </div>
-
-                            {/* Response Time */}
-                            <div className="text-center text-sm text-gray-600 mb-6">
-                                Response time: ~2 hours
-                            </div>
-
-                            {/* Chat Section */}
-                            <div className="border-t border-gray-100 pt-6">
-                                <div className="text-center mb-4">
-                                    <MessageCircle className="w-8 h-8 text-burgundy mx-auto mb-2" />
-                                    <h3 className="text-lg font-semibold text-charcoal mb-2">Have Questions?</h3>
-                                    <p className="text-sm text-gray-600">
-                                        Chat directly with {vendorData.name} about your specific needs.
-                                    </p>
-                                </div>
-                                <Button 
-                                    variant="outline" 
-                                    className="w-full border-burgundy text-burgundy hover:bg-burgundy hover:text-white"
-                                    onClick={() => {}}
-                                >
-                                    Message Vendor
-                                </Button>
-                            </div>
+                        {/* Step 5 sidebar goes here */}
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-gray-400 text-sm sticky top-24">
+                            Sidebar coming in step 5...
                         </div>
                     </div>
                 </div>
             </div>
+
+        </div>
+    );
+}
+
+// ── STEP 2: About + Stats ────────────────────────────────────────────────────
+function AboutSection({ vendor, services }: { vendor: any; services: any[] }) {
+    // Pull stats from service metadata — use the first service that has them
+    const meta = services.reduce((acc: any, s: any) => {
+        try {
+            const m = s.metadata ? JSON.parse(s.metadata) : {};
+            return { ...m, ...acc };
+        } catch { return acc; }
+    }, {});
+
+    const stats = [
+        {
+            icon: Briefcase,
+            value: meta.yearsExperience ? `${meta.yearsExperience}+` : null,
+            label: 'Years Experience',
+        },
+        {
+            icon: HeartIcon,
+            value: meta.weddingsPlanned ? `${meta.weddingsPlanned}+` : services.length > 0 ? `${services.length}` : null,
+            label: meta.weddingsPlanned ? 'Weddings Done' : 'Services Offered',
+        },
+        {
+            icon: Users,
+            value: meta.teamSize || null,
+            label: 'Team Size',
+        },
+        {
+            icon: Globe,
+            value: meta.languages || null,
+            label: 'Languages',
+        },
+        {
+            icon: Award,
+            value: meta.certifications || null,
+            label: 'Certifications',
+        },
+    ].filter((s) => s.value);
+
+    const categories = vendor.categories ? JSON.parse(vendor.categories) : [];
+
+    return (
+        <>
+            {/* Stats bar */}
+            {stats.length > 0 && (
+                <div className="bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+                    <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 divide-x divide-y divide-gray-100">
+                        {stats.map((stat, i) => {
+                            const Icon = stat.icon;
+                            return (
+                                <div key={i} className="flex flex-col items-center justify-center p-5 text-center gap-2">
+                                    <div className="w-9 h-9 rounded-xl bg-burgundy/8 flex items-center justify-center">
+                                        <Icon className="w-4 h-4 text-burgundy" />
+                                    </div>
+                                    <span className="text-base font-bold text-charcoal leading-tight">{stat.value}</span>
+                                    <span className="text-xs text-gray-400">{stat.label}</span>
+                                </div>
+                            );
+                        })}
+                    </div>
+                </div>
+            )}
+
+            {/* About */}
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+                <h2 className="text-xl font-bold text-charcoal mb-4">About {vendor.businessName}</h2>
+
+                {vendor.description ? (
+                    <p className="text-gray-600 leading-relaxed text-sm">{vendor.description}</p>
+                ) : (
+                    <p className="text-gray-400 italic text-sm">This vendor hasn't added a description yet.</p>
+                )}
+
+                {/* Extra metadata details */}
+                {(meta.serviceArea || meta.serviceStyle || meta.planningType || meta.makeupType || meta.decorType || meta.transportType || meta.attireCategory || meta.entertainmentType || meta.cuisineType) && (
+                    <div className="mt-5 pt-5 border-t border-gray-100 grid grid-cols-2 gap-3">
+                        {[
+                            { label: 'Service Area',    value: meta.serviceArea },
+                            { label: 'Service Style',   value: meta.serviceStyle },
+                            { label: 'Planning Type',   value: meta.planningType },
+                            { label: 'Makeup Type',     value: meta.makeupType },
+                            { label: 'Decor Type',      value: meta.decorType },
+                            { label: 'Transport Type',  value: meta.transportType },
+                            { label: 'Attire Category', value: meta.attireCategory },
+                            { label: 'Entertainment',   value: meta.entertainmentType },
+                            { label: 'Cuisine',         value: meta.cuisineType },
+                        ].filter((r) => r.value).map((row, i) => (
+                            <div key={i}>
+                                <p className="text-[11px] font-semibold text-gray-400 uppercase tracking-wider">{row.label}</p>
+                                <p className="text-sm text-charcoal capitalize mt-0.5">{row.value}</p>
+                            </div>
+                        ))}
+                    </div>
+                )}
+
+                {/* Category tags */}
+                {categories.length > 0 && (
+                    <div className="mt-5 pt-5 border-t border-gray-100 flex flex-wrap gap-2">
+                        {categories.map((cat: string) => (
+                            <span key={cat} className={`text-xs font-medium px-3 py-1 rounded-full ${
+                                TYPE_COLORS[cat] || 'bg-gray-100 text-gray-600'
+                            }`}>{cat}</span>
+                        ))}
+                    </div>
+                )}
+            </div>
+        </>
+    );
+}
+
+// ── STEP 3: Services ─────────────────────────────────────────────────────────
+const TYPE_ICONS: Record<string, React.ElementType> = {
+    Photography: Camera, Videography: Video, Catering: Utensils,
+    Music, Transport: Car, Planning: Package, Makeup: Sparkles,
+    Decoration: Palette, Attire: Shirt,
+};
+
+function ServicesSection({ services, vendorId, vendorName }: { services: any[]; vendorId: string; vendorName: string }) {
+    const [expanded, setExpanded] = useState<string | null>(null);
+
+    if (!services.length) return null;
+
+    return (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 className="text-xl font-bold text-charcoal mb-5">Service Packages</h2>
+            <div className="space-y-4">
+                {services.map((svc) => {
+                    const meta = (() => { try { return svc.metadata ? JSON.parse(svc.metadata) : {}; } catch { return {}; } })();
+                    const features = (() => { try { return svc.features ? JSON.parse(svc.features) : {}; } catch { return {}; } })();
+                    const items: string[] = features.items || [];
+                    const isOpen = expanded === svc.id;
+                    const Icon = TYPE_ICONS[svc.serviceType] || Package;
+                    const colorCls = TYPE_COLORS[svc.serviceType] || 'bg-gray-100 text-gray-600';
+
+                    // Build key highlights from metadata
+                    const highlights: { label: string; value: string }[] = [
+                        meta.duration         && { label: 'Duration',    value: meta.duration },
+                        meta.photoCount       && { label: 'Photos',      value: meta.photoCount },
+                        meta.shootingStyle    && { label: 'Style',       value: meta.shootingStyle },
+                        meta.deliveryFormat   && { label: 'Delivery',    value: meta.deliveryFormat },
+                        meta.cuisineType      && { label: 'Cuisine',     value: meta.cuisineType },
+                        meta.serviceStyle     && { label: 'Style',       value: meta.serviceStyle },
+                        meta.minGuests        && { label: 'Min Guests',  value: meta.minGuests },
+                        meta.maxGuests        && { label: 'Max Guests',  value: meta.maxGuests },
+                        meta.musicGenres      && { label: 'Genres',      value: meta.musicGenres },
+                        meta.vehicleTypes     && { label: 'Vehicles',    value: meta.vehicleTypes },
+                        meta.passengerCapacity && { label: 'Capacity',   value: meta.passengerCapacity },
+                        meta.makeupStyle      && { label: 'Style',       value: meta.makeupStyle },
+                        meta.peopleCovered    && { label: 'People',      value: meta.peopleCovered },
+                        meta.decorStyle       && { label: 'Style',       value: meta.decorStyle },
+                        meta.styleOptions     && { label: 'Style',       value: meta.styleOptions },
+                        meta.leadTime         && { label: 'Lead Time',   value: meta.leadTime },
+                    ].filter(Boolean) as { label: string; value: string }[];
+
+                    return (
+                        <div key={svc.id} className="border border-gray-100 rounded-xl overflow-hidden">
+                            {/* Card header — always visible */}
+                            <div className="flex items-start gap-4 p-4">
+                                {svc.image ? (
+                                    <img src={svc.image} alt={svc.name} className="w-20 h-20 rounded-lg object-cover shrink-0" />
+                                ) : (
+                                    <div className={`w-20 h-20 rounded-lg flex items-center justify-center shrink-0 ${colorCls}`}>
+                                        <Icon className="w-8 h-8" />
+                                    </div>
+                                )}
+                                <div className="flex-1 min-w-0">
+                                    <div className="flex items-start justify-between gap-2">
+                                        <div>
+                                            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-full ${colorCls}`}>
+                                                {svc.serviceType}
+                                            </span>
+                                            <h3 className="text-base font-bold text-charcoal mt-1">{svc.name}</h3>
+                                        </div>
+                                        <div className="text-right shrink-0">
+                                            <p className="text-lg font-bold text-burgundy">{Number(svc.price).toLocaleString()}</p>
+                                            <p className="text-[11px] text-gray-400">RWF</p>
+                                        </div>
+                                    </div>
+                                    {svc.description && (
+                                        <p className="text-sm text-gray-500 mt-1 line-clamp-2">{svc.description}</p>
+                                    )}
+                                    {features.duration && (
+                                        <span className="inline-flex items-center gap-1 text-xs text-gray-500 mt-1">
+                                            <Clock className="w-3 h-3" /> {features.duration}
+                                        </span>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Expand toggle */}
+                            <button
+                                onClick={() => setExpanded(isOpen ? null : svc.id)}
+                                className="w-full flex items-center justify-between px-4 py-2.5 bg-gray-50 text-sm text-gray-500 hover:bg-gray-100 transition-colors border-t border-gray-100"
+                            >
+                                <span>{isOpen ? 'Hide details' : 'View details'}</span>
+                                {isOpen ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                            </button>
+
+                            {/* Expanded details */}
+                            {isOpen && (
+                                <div className="px-4 pb-4 pt-3 space-y-4 border-t border-gray-100">
+                                    {/* Highlights grid */}
+                                    {highlights.length > 0 && (
+                                        <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
+                                            {highlights.map((h, i) => (
+                                                <div key={i} className="bg-gray-50 rounded-lg px-3 py-2">
+                                                    <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider">{h.label}</p>
+                                                    <p className="text-sm text-charcoal capitalize mt-0.5">{h.value}</p>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
+                                    {/* Included items */}
+                                    {items.length > 0 && (
+                                        <div>
+                                            <p className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">What's Included</p>
+                                            <ul className="grid grid-cols-1 sm:grid-cols-2 gap-1.5">
+                                                {items.map((item, i) => (
+                                                    <li key={i} className="flex items-start gap-2 text-sm text-gray-600">
+                                                        <CheckCircle className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
+                                                        {item}
+                                                    </li>
+                                                ))}
+                                            </ul>
+                                        </div>
+                                    )}
+                                    {/* CTA */}
+                                    <Link href={`/booking?vendorId=${vendorId}&serviceId=${svc.id}`}>
+                                        <Button className="w-full bg-burgundy hover:bg-burgundy/90 text-white rounded-xl">
+                                            Book This Package
+                                        </Button>
+                                    </Link>
+                                </div>
+                            )}
+                        </div>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// ── STEP 4: Portfolio Gallery ─────────────────────────────────────────────────
+function PortfolioSection({ services, vendorPortfolio }: { services: any[]; vendorPortfolio: any[] }) {
+    const [activeService, setActiveService] = useState<string>('all');
+    const [lightbox, setLightbox] = useState<string | null>(null);
+
+    // Build per-service image lists
+    const serviceImages: { serviceId: string; serviceName: string; serviceType: string; images: string[] }[] =
+        services
+            .map((svc) => {
+                const imgs: string[] = [];
+                if (svc.image) imgs.push(svc.image);
+                try {
+                    const m = svc.metadata ? JSON.parse(svc.metadata) : {};
+                    if (Array.isArray(m.gallery)) imgs.push(...m.gallery);
+                } catch { /* ignore */ }
+                return { serviceId: svc.id, serviceName: svc.name, serviceType: svc.serviceType, images: imgs };
+            })
+            .filter((s) => s.images.length > 0);
+
+    // Vendor-level portfolio images (not tied to a service)
+    const vendorImgs: string[] = vendorPortfolio.map((p: any) => p.url || p).filter(Boolean);
+
+    const allImages = [
+        ...vendorImgs.map((url) => ({ url, serviceId: 'vendor', serviceName: 'General', serviceType: '' })),
+        ...serviceImages.flatMap((s) => s.images.map((url) => ({ url, serviceId: s.serviceId, serviceName: s.serviceName, serviceType: s.serviceType }))),
+    ];
+
+    const filtered = activeService === 'all' ? allImages : allImages.filter((img) => img.serviceId === activeService);
+
+    if (allImages.length === 0) return null;
+
+    const tabs = [
+        { id: 'all', label: `All (${allImages.length})` },
+        ...(vendorImgs.length > 0 ? [{ id: 'vendor', label: 'General' }] : []),
+        ...serviceImages.map((s) => ({ id: s.serviceId, label: s.serviceName })),
+    ];
+
+    return (
+        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100">
+            <h2 className="text-xl font-bold text-charcoal mb-4">Portfolio</h2>
+
+            {/* Service filter tabs */}
+            {tabs.length > 2 && (
+                <div className="flex flex-wrap gap-2 mb-5">
+                    {tabs.map((tab) => (
+                        <button
+                            key={tab.id}
+                            onClick={() => setActiveService(tab.id)}
+                            className={`text-xs font-medium px-3 py-1.5 rounded-full border transition-colors ${
+                                activeService === tab.id
+                                    ? 'bg-burgundy text-white border-burgundy'
+                                    : 'bg-white text-gray-600 border-gray-200 hover:border-burgundy hover:text-burgundy'
+                            }`}
+                        >
+                            {tab.label}
+                        </button>
+                    ))}
+                </div>
+            )}
+
+            {/* Grid */}
+            <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
+                {filtered.map((img, i) => (
+                    <button
+                        key={i}
+                        onClick={() => setLightbox(img.url)}
+                        className="relative aspect-square rounded-xl overflow-hidden group focus:outline-none"
+                    >
+                        <img
+                            src={img.url}
+                            alt={img.serviceName}
+                            className="w-full h-full object-cover transition-transform duration-300 group-hover:scale-105"
+                        />
+                        {img.serviceType && (
+                            <span className={`absolute top-2 left-2 text-[10px] font-semibold px-2 py-0.5 rounded-full ${TYPE_COLORS[img.serviceType] || 'bg-white/80 text-gray-700'}`}>
+                                {img.serviceType}
+                            </span>
+                        )}
+                        <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors" />
+                    </button>
+                ))}
+            </div>
+
+            {/* Lightbox */}
+            {lightbox && (
+                <div
+                    className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4"
+                    onClick={() => setLightbox(null)}
+                >
+                    <img
+                        src={lightbox}
+                        alt="Portfolio"
+                        className="max-w-full max-h-full rounded-xl object-contain"
+                        onClick={(e) => e.stopPropagation()}
+                    />
+                    <button
+                        onClick={() => setLightbox(null)}
+                        className="absolute top-4 right-4 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-lg transition-colors"
+                    >
+                        ✕
+                    </button>
+                </div>
+            )}
         </div>
     );
 }
