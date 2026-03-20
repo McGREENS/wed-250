@@ -60,6 +60,37 @@ export default function ServiceDetailPage() {
     const [favLoading, setFavLoading] = useState(false);
     const [lightbox, setLightbox] = useState<string | null>(null);
     const [showAllFeatures, setShowAllFeatures] = useState(false);
+    const [showBooking, setShowBooking] = useState(false);
+    const [bookingDone, setBookingDone] = useState(false);
+    const [bookingLoading, setBookingLoading] = useState(false);
+    const [bookingForm, setBookingForm] = useState({ clientName: '', clientEmail: '', clientPhone: '', eventDate: '', notes: '' });
+    const [bookingError, setBookingError] = useState('');
+
+    const handleBook = async (e: React.FormEvent) => {
+        e.preventDefault();
+        setBookingError('');
+        setBookingLoading(true);
+        try {
+            const res = await fetch('/api/bookings/service', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    vendorId,
+                    serviceId,
+                    userId: session?.user?.id || null,
+                    ...bookingForm,
+                }),
+            });
+            const data = await res.json();
+            if (!res.ok) { setBookingError(data.error || 'Failed to submit booking'); return; }
+            setBookingDone(true);
+            toast.success('Booking request sent!');
+        } catch {
+            setBookingError('Something went wrong. Please try again.');
+        } finally {
+            setBookingLoading(false);
+        }
+    };
 
     useEffect(() => {
         fetch(`/api/vendors/services/${serviceId}`)
@@ -83,6 +114,17 @@ export default function ServiceDetailPage() {
             })
             .catch(console.error);
     }, [session, vendorId]);
+
+    // Pre-fill booking form with session user data
+    useEffect(() => {
+        if (session?.user) {
+            setBookingForm((prev) => ({
+                ...prev,
+                clientName: prev.clientName || session.user.name || '',
+                clientEmail: prev.clientEmail || session.user.email || '',
+            }));
+        }
+    }, [session]);
 
     const handleFavorite = async () => {
         if (!session?.user) { toast.error('Please login to save favorites'); return; }
@@ -409,11 +451,12 @@ export default function ServiceDetailPage() {
 
                             {/* CTAs */}
                             <div className="px-6 py-5 space-y-3">
-                                <Link href={`/booking?vendorId=${vendorId}&serviceId=${serviceId}`}>
-                                    <Button className="w-full bg-burgundy hover:bg-burgundy/90 text-white rounded-xl h-11 text-sm font-semibold shadow-sm">
-                                        Book This Package
-                                    </Button>
-                                </Link>
+                                <Button
+                                    onClick={() => { setShowBooking(true); setBookingDone(false); setBookingError(''); }}
+                                    className="w-full bg-burgundy hover:bg-burgundy/90 text-white rounded-xl h-11 text-sm font-semibold shadow-sm"
+                                >
+                                    Book This Package
+                                </Button>
                                 <Link href={`/vendors/${vendorId}`}>
                                     <Button variant="outline" className="w-full rounded-xl h-11 border-gray-200 text-charcoal hover:border-burgundy hover:text-burgundy text-sm">
                                         View Vendor Profile
@@ -490,6 +533,120 @@ export default function ServiceDetailPage() {
                 <div className="fixed inset-0 z-50 bg-black/90 flex items-center justify-center p-4" onClick={() => setLightbox(null)}>
                     <img src={lightbox} alt="Portfolio" className="max-w-full max-h-full rounded-xl object-contain" onClick={(e) => e.stopPropagation()} />
                     <button onClick={() => setLightbox(null)} className="absolute top-4 right-4 w-9 h-9 bg-white/10 hover:bg-white/20 rounded-full flex items-center justify-center text-white text-lg transition-colors">✕</button>
+                </div>
+            )}
+
+            {/* Booking Modal */}
+            {showBooking && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowBooking(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg flex flex-col max-h-[90vh]" onClick={(e) => e.stopPropagation()}>
+
+                        {/* Modal header */}
+                        <div className="bg-gradient-to-br from-burgundy to-burgundy/80 px-6 py-5">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">Book This Package</p>
+                                    <h2 className="text-white font-bold text-lg leading-tight">{service.name}</h2>
+                                    <p className="text-white/70 text-sm mt-0.5">{vendor.businessName} &bull; {Number(service.price).toLocaleString()} RWF</p>
+                                </div>
+                                <button onClick={() => setShowBooking(false)} className="text-white/70 hover:text-white text-xl leading-none mt-0.5">✕</button>
+                            </div>
+                        </div>
+
+                        {bookingDone ? (
+                            /* Success state */
+                            <div className="px-6 py-10 text-center overflow-y-auto">
+                                <div className="w-16 h-16 rounded-full bg-green-100 flex items-center justify-center mx-auto mb-4">
+                                    <CheckCircle className="w-8 h-8 text-green-600" />
+                                </div>
+                                <h3 className="text-xl font-bold text-charcoal mb-2">Request Sent!</h3>
+                                <p className="text-gray-500 text-sm mb-1">Your booking request has been submitted.</p>
+                                <p className="text-gray-400 text-sm mb-6">Check your email for confirmation. The vendor will be in touch shortly.</p>
+                                <Button onClick={() => setShowBooking(false)} className="bg-burgundy hover:bg-burgundy/90 text-white rounded-xl px-8">
+                                    Done
+                                </Button>
+                            </div>
+                        ) : (
+                            /* Form */
+                            <form onSubmit={handleBook} className="px-6 py-5 space-y-4 overflow-y-auto">
+                                <div className="grid grid-cols-2 gap-4">
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Full Name *</label>
+                                        <input
+                                            required
+                                            type="text"
+                                            value={bookingForm.clientName}
+                                            onChange={(e) => setBookingForm({ ...bookingForm, clientName: e.target.value })}
+                                            placeholder="Your full name"
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Email *</label>
+                                        <input
+                                            required
+                                            type="email"
+                                            value={bookingForm.clientEmail}
+                                            onChange={(e) => setBookingForm({ ...bookingForm, clientEmail: e.target.value })}
+                                            placeholder="you@email.com"
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Phone</label>
+                                        <input
+                                            type="tel"
+                                            value={bookingForm.clientPhone}
+                                            onChange={(e) => setBookingForm({ ...bookingForm, clientPhone: e.target.value })}
+                                            placeholder="+250 7XX XXX XXX"
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Wedding / Event Date *</label>
+                                        <input
+                                            required
+                                            type="date"
+                                            min={new Date().toISOString().split('T')[0]}
+                                            value={bookingForm.eventDate}
+                                            onChange={(e) => setBookingForm({ ...bookingForm, eventDate: e.target.value })}
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
+                                        />
+                                    </div>
+                                    <div className="col-span-2">
+                                        <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes <span className="text-gray-300 normal-case font-normal">optional</span></label>
+                                        <textarea
+                                            rows={3}
+                                            value={bookingForm.notes}
+                                            onChange={(e) => setBookingForm({ ...bookingForm, notes: e.target.value })}
+                                            placeholder="Any special requests or questions for the vendor..."
+                                            className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none"
+                                        />
+                                    </div>
+                                </div>
+
+                                {bookingError && (
+                                    <p className="text-sm text-red-600 bg-red-50 px-4 py-2.5 rounded-xl">{bookingError}</p>
+                                )}
+
+                                <div className="flex gap-3 pt-1">
+                                    <Button
+                                        type="submit"
+                                        disabled={bookingLoading}
+                                        className="flex-1 bg-burgundy hover:bg-burgundy/90 text-white rounded-xl h-11 font-semibold"
+                                    >
+                                        {bookingLoading ? (
+                                            <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</span>
+                                        ) : 'Send Booking Request'}
+                                    </Button>
+                                    <Button type="button" variant="outline" onClick={() => setShowBooking(false)} className="rounded-xl h-11 border-gray-200 text-gray-600">
+                                        Cancel
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-gray-400 text-center">You&apos;ll receive a confirmation email. The vendor will contact you to finalise details.</p>
+                            </form>
+                        )}
+                    </div>
                 </div>
             )}
         </div>

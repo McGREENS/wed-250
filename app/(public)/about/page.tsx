@@ -95,7 +95,7 @@ export default function AboutPage() {
                         </div>
                         <div className="relative">
                             <img
-                                src="https://images.unsplash.com/photo-1465495976277-4387d4b0b4c6?w=800&h=600&fit=crop"
+                                src="/about1.jpg"
                                 alt="Wedding couple"
                                 className="rounded-2xl shadow-xl"
                             />
@@ -163,7 +163,7 @@ export default function AboutPage() {
                     <div className="grid lg:grid-cols-2 gap-12 items-center">
                         <div>
                             <img
-                                src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=600&fit=crop"
+                                src="/about2.jpg"
                                 alt="Wedding celebration"
                                 className="rounded-2xl shadow-xl"
                             />
@@ -181,9 +181,9 @@ export default function AboutPage() {
                                 ))}
                             </div>
                             <div className="mt-8">
-                                <Link href={createPageUrl('PlanBuilder')}>
+                                <Link href={createPageUrl('Vendors')}>
                                     <Button className="bg-burgundy hover:bg-burgundy-light text-white">
-                                        Start Planning Your Wedding
+                                        Browse Vendors
                                     </Button>
                                 </Link>
                             </div>
@@ -203,14 +203,14 @@ export default function AboutPage() {
                         Join thousands of couples who trusted us with their special day
                     </p>
                     <div className="flex flex-col sm:flex-row gap-4 justify-center">
-                        <Link href={createPageUrl('PlanBuilder')}>
+                        <Link href={createPageUrl('Vendors')}>
                             <Button className="bg-white text-burgundy hover:bg-gray-50">
-                                Create Your Wedding Plan
+                                Browse Vendors
                             </Button>
                         </Link>
-                        <Link href={createPageUrl('Contact')}>
-                            <Button variant="outline" className="border-white text-white hover:bg-white/10">
-                                Contact Us
+                        <Link href={createPageUrl('Venues')}>
+                            <Button className="bg-white/10 text-white border border-white hover:bg-white/20">
+                                Explore Venues
                             </Button>
                         </Link>
                     </div>

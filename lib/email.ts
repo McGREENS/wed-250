@@ -416,3 +416,218 @@ export async function sendTourDeclinedEmail({
   console.log("Tour declined email sent:", result);
   return result;
 }
+
+// ── Service Booking Emails ────────────────────────────────────────────────────
+
+export async function sendServiceBookingClientEmail({
+  clientEmail, clientName, serviceName, serviceType, vendorName,
+  vendorLocation, eventDate, price, notes, dashboardUrl,
+}: {
+  clientEmail: string; clientName: string; serviceName: string; serviceType: string;
+  vendorName: string; vendorLocation: string; eventDate: string; price: number;
+  notes: string | null; dashboardUrl: string;
+}) {
+  const html = `
+    <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
+    <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0;">
+        <tr><td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#8B3A3A;border-radius:12px 12px 0 0;padding:36px 40px;text-align:center;">
+                <p style="margin:0 0 6px;color:rgba(255,255,255,0.7);font-size:13px;letter-spacing:2px;text-transform:uppercase;">Booking Request Received</p>
+                <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">Your booking is on its way! 🎉</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="background:#fff;padding:36px 40px;border:1px solid #e8e8e8;border-top:none;">
+                <p style="margin:0 0 20px;font-size:15px;color:#444;">Hi <strong>${clientName}</strong>,</p>
+                <p style="margin:0 0 28px;font-size:15px;color:#444;line-height:1.6;">
+                  Your booking request for <strong>${serviceName}</strong> has been received and is now <strong style="color:#d97706;">pending confirmation</strong> from the vendor. You'll receive another email once they confirm.
+                </p>
+
+                <!-- Booking details card -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf8f4;border-left:4px solid #8B3A3A;border-radius:0 8px 8px 0;margin-bottom:28px;">
+                  <tr><td style="padding:24px 28px;">
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:6px 0;width:150px;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Service</td>
+                        <td style="padding:6px 0;font-size:14px;color:#2C2C2C;font-weight:600;">${serviceName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Type</td>
+                        <td style="padding:6px 0;font-size:14px;color:#2C2C2C;">${serviceType}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Vendor</td>
+                        <td style="padding:6px 0;font-size:14px;color:#2C2C2C;">${vendorName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Location</td>
+                        <td style="padding:6px 0;font-size:14px;color:#2C2C2C;">${vendorLocation}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Event Date</td>
+                        <td style="padding:6px 0;font-size:14px;color:#2C2C2C;font-weight:600;">${eventDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:6px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Package Price</td>
+                        <td style="padding:6px 0;font-size:15px;color:#8B3A3A;font-weight:700;">${price.toLocaleString()} RWF</td>
+                      </tr>
+                      ${notes ? `<tr><td style="padding:6px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your Notes</td><td style="padding:6px 0;font-size:14px;color:#2C2C2C;font-style:italic;">${notes}</td></tr>` : ''}
+                    </table>
+                  </td></tr>
+                </table>
+
+                <!-- Status badge -->
+                <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:14px 20px;margin-bottom:28px;text-align:center;">
+                  <p style="margin:0;font-size:14px;color:#92400e;font-weight:600;">⏳ Status: Pending Vendor Confirmation</p>
+                  <p style="margin:6px 0 0;font-size:13px;color:#78350f;">The vendor will review your request and confirm shortly.</p>
+                </div>
+
+                <!-- CTA -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td align="center" style="padding:8px 0 28px;">
+                    <a href="${dashboardUrl}" style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;">
+                      Track Your Booking
+                    </a>
+                  </td></tr>
+                </table>
+
+                <p style="margin:0;font-size:13px;color:#999;line-height:1.6;border-top:1px solid #f0f0f0;padding-top:20px;">
+                  If you have any questions, you can reply to this email or visit your dashboard.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f9f9f9;border:1px solid #e8e8e8;border-top:none;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
+                <p style="margin:0;font-size:12px;color:#aaa;">Andiza &mdash; Rwanda&rsquo;s Wedding Planning Platform &bull; Norrsken House Kigali</p>
+              </td>
+            </tr>
+
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+  `;
+
+  return resend.emails.send({
+    from: 'Andiza <onboarding@resend.dev>',
+    to: clientEmail,
+    subject: `📋 Booking Request Received — ${serviceName} on ${eventDate}`,
+    html,
+  });
+}
+
+export async function sendServiceBookingVendorEmail({
+  vendorEmail, vendorName, clientName, clientEmail, clientPhone,
+  serviceName, serviceType, eventDate, price, notes, dashboardUrl,
+}: {
+  vendorEmail: string; vendorName: string; clientName: string; clientEmail: string;
+  clientPhone: string | null; serviceName: string; serviceType: string;
+  eventDate: string; price: number; notes: string | null; dashboardUrl: string;
+}) {
+  const html = `
+    <!DOCTYPE html><html lang="en"><head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width,initial-scale=1.0" /></head>
+    <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0;">
+        <tr><td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#8B3A3A;border-radius:12px 12px 0 0;padding:36px 40px;text-align:center;">
+                <p style="margin:0 0 6px;color:rgba(255,255,255,0.7);font-size:13px;letter-spacing:2px;text-transform:uppercase;">New Booking Request</p>
+                <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">You have a new booking! 🎊</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="background:#fff;padding:36px 40px;border:1px solid #e8e8e8;border-top:none;">
+                <p style="margin:0 0 20px;font-size:15px;color:#444;">Hi <strong>${vendorName}</strong>,</p>
+                <p style="margin:0 0 28px;font-size:15px;color:#444;line-height:1.6;">
+                  A client has requested to book your <strong>${serviceType}</strong> service — <strong>${serviceName}</strong>. Review the details below and confirm or update the booking from your dashboard.
+                </p>
+
+                <!-- Client + booking details -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf8f4;border-left:4px solid #8B3A3A;border-radius:0 8px 8px 0;margin-bottom:28px;">
+                  <tr><td style="padding:24px 28px;">
+                    <p style="margin:0 0 14px;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Client Details</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:5px 0;width:150px;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Name</td>
+                        <td style="padding:5px 0;font-size:14px;color:#2C2C2C;font-weight:600;">${clientName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Email</td>
+                        <td style="padding:5px 0;font-size:14px;color:#2C2C2C;"><a href="mailto:${clientEmail}" style="color:#8B3A3A;">${clientEmail}</a></td>
+                      </tr>
+                      ${clientPhone ? `<tr><td style="padding:5px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Phone</td><td style="padding:5px 0;font-size:14px;color:#2C2C2C;">${clientPhone}</td></tr>` : ''}
+                    </table>
+                    <div style="border-top:1px solid #e8d8c8;margin:16px 0;"></div>
+                    <p style="margin:0 0 14px;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Booking Details</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:5px 0;width:150px;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Service</td>
+                        <td style="padding:5px 0;font-size:14px;color:#2C2C2C;font-weight:600;">${serviceName}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Type</td>
+                        <td style="padding:5px 0;font-size:14px;color:#2C2C2C;">${serviceType}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Event Date</td>
+                        <td style="padding:5px 0;font-size:14px;color:#2C2C2C;font-weight:600;">${eventDate}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:5px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Package Price</td>
+                        <td style="padding:5px 0;font-size:15px;color:#8B3A3A;font-weight:700;">${price.toLocaleString()} RWF</td>
+                      </tr>
+                      ${notes ? `<tr><td style="padding:5px 0;font-size:12px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Client Notes</td><td style="padding:5px 0;font-size:14px;color:#2C2C2C;font-style:italic;">${notes}</td></tr>` : ''}
+                    </table>
+                  </td></tr>
+                </table>
+
+                <!-- CTA -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td align="center" style="padding:8px 0 28px;">
+                    <a href="${dashboardUrl}" style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;">
+                      View &amp; Manage Booking
+                    </a>
+                  </td></tr>
+                </table>
+
+                <p style="margin:0;font-size:13px;color:#999;line-height:1.6;border-top:1px solid #f0f0f0;padding-top:20px;">
+                  You can reply directly to the client at <a href="mailto:${clientEmail}" style="color:#8B3A3A;">${clientEmail}</a>.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f9f9f9;border:1px solid #e8e8e8;border-top:none;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
+                <p style="margin:0;font-size:12px;color:#aaa;">Andiza &mdash; Rwanda&rsquo;s Wedding Planning Platform &bull; Norrsken House Kigali</p>
+              </td>
+            </tr>
+
+          </table>
+        </td></tr>
+      </table>
+    </body></html>
+  `;
+
+  return resend.emails.send({
+    from: 'Andiza <onboarding@resend.dev>',
+    to: vendorEmail,
+    replyTo: clientEmail,
+    subject: `🎊 New Booking Request — ${serviceName} for ${eventDate}`,
+    html,
+  });
+}

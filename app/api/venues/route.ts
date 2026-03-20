@@ -3,15 +3,13 @@ import { db } from '@/lib/db';
 import { vendors, servicePackages } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+export const revalidate = 0;
+
 export async function GET(req: NextRequest) {
   try {
-    const { searchParams } = new URL(req.url);
-    const search = searchParams.get('search');
-    const category = searchParams.get('category');
-
-    // If category is Venues, get from service packages
-    if (category === 'Venues') {
-      const venueServices = await db.select({
+    const venueServices = await db
+      .select({
         id: servicePackages.id,
         vendorId: servicePackages.vendorId,
         name: servicePackages.name,
@@ -24,43 +22,69 @@ export async function GET(req: NextRequest) {
       .from(servicePackages)
       .where(eq(servicePackages.serviceType, 'Venue'));
 
-      // Get vendor details for each venue
-      const venuesWithVendor = await Promise.all(
-        venueServices.map(async (venue: any) => {
-          const [vendor] = await db.select().from(vendors).where(eq(vendors.id, venue.vendorId)).limit(1);
-          const metadata = venue.metadata ? JSON.parse(venue.metadata) : {};
-          
-          return {
-            id: venue.id,
-            businessName: venue.name,
-            category: 'Venues',
-            location: vendor?.location || 'Kigali, Rwanda',
-            priceRange: `${venue.price.toLocaleString()} RWF`,
-            description: venue.description,
-            images: venue.image ? JSON.stringify([venue.image]) : vendor?.images || '[]',
-            featured: vendor?.featured || false,
-            capacity: metadata.capacity,
-            venueType: metadata.venueType,
-            amenities: metadata.amenities,
-          };
-        })
-      );
+    const venuesWithVendor = await Promise.all(
+      venueServices.map(async (venue) => {
+        const [vendor] = await db
+          .select()
+          .from(vendors)
+          .where(eq(vendors.id, venue.vendorId))
+          .limit(1);
 
-      // Filter by search if provided
-      const filtered = search 
-        ? venuesWithVendor.filter((v: any) => 
-            v.businessName.toLowerCase().includes(search.toLowerCase()) ||
-            v.description?.toLowerCase().includes(search.toLowerCase())
-          )
-        : venuesWithVendor;
+        let meta: Record<string, any> = {};
+        try {
+          if (venue.metadata) {
+            const parsed = JSON.parse(venue.metadata);
+            // metadata is double-nested in some rows — unwrap if needed
+            if (parsed.metadata && typeof parsed.metadata === 'string') {
+              meta = { ...JSON.parse(parsed.metadata), ...parsed };
+            } else {
+              meta = parsed;
+            }
+          }
+        } catch { /* ignore */ }
 
-      return NextResponse.json({ venues: filtered });
-    }
+        const maxCap = parseInt(meta.maxCapacity) || null;
+        const minCap = parseInt(meta.minCapacity) || null;
 
-    // For other categories, return empty for now
-    return NextResponse.json({ venues: [] });
+        // Build amenities array from boolean/string fields
+        const amenities: string[] = [];
+        if (meta.parkingCapacity)                          amenities.push('Parking');
+        if (meta.bridalSuite === 'yes')                    amenities.push('Bridal Suite');
+        if (meta.barService && meta.barService !== 'none') amenities.push('Bar Service');
+        if (meta.cateringOptions && meta.cateringOptions !== 'none') amenities.push('Catering Kitchen');
+        if (meta.accommodation)                            amenities.push('Accommodation');
+        if (meta.avEquipment)                              amenities.push('Audio/Visual Equipment');
+        if (meta.furnitureIncluded === 'yes')              amenities.push('Tables & Chairs');
+        if (meta.accessibility)                            amenities.push('Wheelchair Accessible');
+        if (meta.indoorOutdoor === 'outdoor' || meta.indoorOutdoor === 'both') amenities.push('Outdoor Space');
+
+        return {
+          id: venue.id,
+          name: venue.name,
+          description: venue.description,
+          price: venue.price,
+          image: venue.image,
+          featured: vendor?.featured || false,
+          location: meta.location || vendor?.location || 'Kigali, Rwanda',
+          venueType: meta.venueType || null,
+          indoorOutdoor: meta.indoorOutdoor || null,
+          maxCapacity: maxCap,
+          minCapacity: minCap,
+          amenities,
+          meta,
+        };
+      })
+    );
+
+    const response = NextResponse.json({ venues: venuesWithVendor });
+    response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate, proxy-revalidate');
+    response.headers.set('Pragma', 'no-cache');
+    response.headers.set('Expires', '0');
+    return response;
   } catch (error) {
     console.error('Error fetching venues:', error);
-    return NextResponse.json({ error: 'Failed to fetch venues' }, { status: 500 });
+    const response = NextResponse.json({ error: 'Failed to fetch venues' }, { status: 500 });
+    response.headers.set('Cache-Control', 'no-store');
+    return response;
   }
 }

@@ -1,14 +1,18 @@
-import { Heart, Menu } from 'lucide-react';
+"use client";
+
+import { Heart, Menu, X } from 'lucide-react';
 import Link from 'next/link';
-import { auth } from "@/auth";
+import { useState } from 'react';
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
 
-export default async function PublicLayout({
+export default function PublicLayout({
   children,
+  session,
 }: {
   children: React.ReactNode;
+  session: any;
 }) {
-  const session = await auth();
+  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
   return (
     <>
@@ -30,11 +34,24 @@ export default async function PublicLayout({
             </div>
 
             {/* Mobile Menu Button */}
-            <button className="md:hidden p-2 text-charcoal">
-              <Menu className="w-6 h-6" />
+            <button 
+              onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
+              className="md:hidden p-2 text-charcoal hover:text-burgundy transition-colors"
+              aria-label="Toggle menu"
+            >
+              {mobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
             </button>
           </div>
         </div>
+
+        {/* Mobile Menu */}
+        {mobileMenuOpen && (
+          <div className="md:hidden border-t border-gray-100 bg-white">
+            <div className="max-w-[1600px] mx-auto px-4 sm:px-8 py-6">
+              <NavbarLinks session={session} isMobile onClose={() => setMobileMenuOpen(false)} />
+            </div>
+          </div>
+        )}
       </nav>
 
       <main className="min-h-screen">

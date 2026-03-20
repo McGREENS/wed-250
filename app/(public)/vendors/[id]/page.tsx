@@ -118,85 +118,120 @@ export default function VendorDetailPage() {
         <div className="min-h-screen bg-cream">
 
             {/* ── HERO ── */}
-            <div className="relative h-[420px] md:h-[520px]">
+            <div className="relative h-[480px] md:h-[580px]">
                 <img src={heroImage} alt={vendor.businessName} className="absolute inset-0 w-full h-full object-cover" />
-                {/* gradient overlay */}
-                <div className="absolute inset-0 bg-gradient-to-t from-black/75 via-black/30 to-black/10" />
+                {/* layered gradient: dark at top for bar, heavy at bottom for text */}
+                <div className="absolute inset-0 bg-gradient-to-t from-black/85 via-black/40 to-black/30" />
 
-                {/* top bar: back + actions */}
+                {/* ── top bar ── */}
                 <div className="absolute top-0 left-0 right-0 px-6 md:px-12 pt-6 flex items-center justify-between">
-                    <Link href="/vendors" className="inline-flex items-center gap-2 text-white/90 hover:text-white bg-black/20 backdrop-blur px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                    <Link
+                        href="/vendors"
+                        className="inline-flex items-center gap-2 text-white/90 hover:text-white bg-white/10 backdrop-blur-sm border border-white/20 px-4 py-2 rounded-full text-sm font-medium transition-all hover:bg-white/20"
+                    >
                         <ArrowLeft className="w-4 h-4" /> Back to Vendors
                     </Link>
                     <div className="flex items-center gap-2">
-                        <button onClick={handleShare} className="w-9 h-9 bg-black/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                        <button
+                            onClick={handleShare}
+                            className="w-9 h-9 bg-white/10 backdrop-blur-sm border border-white/20 rounded-full flex items-center justify-center text-white hover:bg-white/20 transition-all"
+                            title="Copy link"
+                        >
                             <Share2 className="w-4 h-4" />
                         </button>
-                        <button onClick={handleFavorite} disabled={favLoading}
-                            className={`w-9 h-9 backdrop-blur rounded-full flex items-center justify-center transition-colors ${isFavorite ? 'bg-burgundy text-white' : 'bg-black/20 text-white hover:bg-black/40'}`}>
+                        <button
+                            onClick={handleFavorite}
+                            disabled={favLoading}
+                            title={isFavorite ? 'Remove from favorites' : 'Save to favorites'}
+                            className={`w-9 h-9 backdrop-blur-sm border rounded-full flex items-center justify-center transition-all ${
+                                isFavorite
+                                    ? 'bg-burgundy border-burgundy text-white'
+                                    : 'bg-white/10 border-white/20 text-white hover:bg-white/20'
+                            }`}
+                        >
                             <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
                         </button>
                     </div>
                 </div>
 
-                {/* bottom: vendor info */}
-                <div className="absolute bottom-0 left-0 right-0 px-6 md:px-12 pb-8">
+                {/* ── bottom info + avatar overlap ── */}
+                <div className="absolute bottom-0 left-0 right-0 px-6 md:px-12">
                     <div className="max-w-7xl mx-auto">
+
                         {/* badges row */}
                         <div className="flex flex-wrap items-center gap-2 mb-3">
                             {vendor.verified && (
-                                <span className="inline-flex items-center gap-1 bg-blue-500 text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                <span className="inline-flex items-center gap-1 bg-blue-500/90 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
                                     <BadgeCheck className="w-3.5 h-3.5" /> Verified
                                 </span>
                             )}
                             {vendor.featured && (
-                                <span className="inline-flex items-center gap-1 bg-burgundy text-white text-xs font-semibold px-3 py-1 rounded-full">
+                                <span className="inline-flex items-center gap-1 bg-burgundy/90 backdrop-blur-sm text-white text-xs font-semibold px-3 py-1 rounded-full">
                                     <Star className="w-3.5 h-3.5 fill-current" /> Featured
                                 </span>
                             )}
-                            {categories.filter((c: string) => c !== 'Venue').map((cat: string) => (
-                                <span key={cat} className={`text-xs font-semibold px-3 py-1 rounded-full ${TYPE_COLORS[cat] || 'bg-white/20 text-white'}`}>
+                            {categories.map((cat: string) => (
+                                <span key={cat} className="text-xs font-semibold px-3 py-1 rounded-full bg-white/15 backdrop-blur-sm text-white border border-white/20">
                                     {cat}
                                 </span>
                             ))}
                         </div>
 
-                        {/* name */}
-                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 drop-shadow">
+                        {/* business name */}
+                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 drop-shadow-lg leading-tight">
                             {vendor.businessName}
                         </h1>
 
                         {/* meta row */}
-                        <div className="flex flex-wrap items-center gap-5 text-white/90 text-sm">
+                        <div className="flex flex-wrap items-center gap-4 text-white/85 text-sm mb-0 pb-8">
                             {vendor.location && (
                                 <span className="flex items-center gap-1.5">
-                                    <MapPin className="w-4 h-4 shrink-0" /> {vendor.location}
+                                    <MapPin className="w-4 h-4 shrink-0 text-white/60" /> {vendor.location}
                                 </span>
                             )}
                             {vendor.rating > 0 && (
                                 <span className="flex items-center gap-1.5">
                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 shrink-0" />
-                                    <span className="font-semibold">{vendor.rating}</span>
-                                    {vendor.reviewCount > 0 && <span className="text-white/70">({vendor.reviewCount} reviews)</span>}
+                                    <span className="font-semibold text-white">{vendor.rating}</span>
+                                    {vendor.reviewCount > 0 && (
+                                        <span className="text-white/60">({vendor.reviewCount} reviews)</span>
+                                    )}
                                 </span>
                             )}
                             {activeServices.length > 0 && (
-                                <span className="text-white/80">
-                                    {activeServices.length} service package{activeServices.length !== 1 ? 's' : ''}
+                                <span className="flex items-center gap-1.5">
+                                    <Package className="w-4 h-4 shrink-0 text-white/60" />
+                                    {activeServices.length} package{activeServices.length !== 1 ? 's' : ''}
                                 </span>
                             )}
                             {minPrice && (
-                                <span className="font-semibold text-white">
+                                <span className="flex items-center gap-1.5 font-semibold text-white">
+                                    <DollarSign className="w-4 h-4 shrink-0 text-white/60" />
                                     From {minPrice.toLocaleString()} RWF
                                 </span>
                             )}
+                        </div>
+
+                        {/* avatar — sits on the hero/body boundary */}
+                        <div className="flex items-end gap-5 translate-y-1/2">
+                            <div className="w-24 h-24 md:w-28 md:h-28 rounded-2xl ring-4 ring-white shadow-xl overflow-hidden shrink-0 bg-white">
+                                {vendor.profileImage ? (
+                                    <img src={vendor.profileImage} alt={vendor.businessName} className="w-full h-full object-cover" />
+                                ) : (
+                                    <div className="w-full h-full bg-gradient-to-br from-burgundy/20 to-burgundy/40 flex items-center justify-center">
+                                        <span className="text-3xl font-bold text-burgundy">
+                                            {vendor.businessName.charAt(0).toUpperCase()}
+                                        </span>
+                                    </div>
+                                )}
+                            </div>
                         </div>
                     </div>
                 </div>
             </div>
 
-            {/* ── PAGE BODY (steps 2-5 go here) ── */}
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-12">
+            {/* ── PAGE BODY ── */}
+            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 pt-20 pb-12">
                 <div className="grid lg:grid-cols-3 gap-8">
                     <div className="lg:col-span-2 space-y-8">
                         {/* ── STEP 2: ABOUT + STATS ── */}

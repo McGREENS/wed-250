@@ -1,15 +1,27 @@
 "use client";
 
-import Link from 'next/link';
 import { MapPin, Users, Star, Heart, CheckCircle } from 'lucide-react';
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false, onFavoriteToggle }) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
   const [favorite, setFavorite] = useState(isFavorite);
+
+  const handleCardClick = () => {
+    if (!session?.user) {
+      toast.error('Please login to view venue details');
+      router.push('/login');
+      return;
+    }
+    router.push(`/venues/${venue.id}`);
+  };
 
   const handleFavoriteClick = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -54,9 +66,9 @@ export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false
 
   if (viewMode === 'list') {
     return (
-      <Link
-        href={`/venues/${venue.id}`}
-        className="group block"
+      <div
+        onClick={handleCardClick}
+        className="group block cursor-pointer"
       >
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all">
           <div className="flex gap-6 p-6">
@@ -142,14 +154,14 @@ export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false
             </div>
           </div>
         </div>
-      </Link>
+      </div>
     );
   }
 
   return (
-    <Link
-      href={`/venues/${venue.id}`}
-      className="group block"
+    <div
+      onClick={handleCardClick}
+      className="group block cursor-pointer"
     >
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1">
         <div className="relative h-48 overflow-hidden">
@@ -219,6 +231,6 @@ export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false
           </Button>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }

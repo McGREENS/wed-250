@@ -1,10 +1,11 @@
 "use client";
 
-import Link from 'next/link';
 import { MapPin, Star, Heart, BadgeCheck } from 'lucide-react';
 import { Badge } from "@/app/components/ui/badge";
 import { useState } from 'react';
 import { toast } from 'sonner';
+import { useSession } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 
 const TYPE_COLORS: Record<string, string> = {
   Photography:  "bg-blue-100 text-blue-700",
@@ -33,12 +34,23 @@ const FALLBACK_IMAGES: Record<string, string> = {
 export default function ServiceCard({ service, viewMode = 'grid', isFavorite = false, onFavoriteToggle }: {
   service: any; viewMode?: string; isFavorite?: boolean; onFavoriteToggle?: () => void;
 }) {
+  const { data: session } = useSession();
+  const router = useRouter();
   const [favorite, setFavorite] = useState(isFavorite);
   const [isLoading, setIsLoading] = useState(false);
 
   const image = service.image || FALLBACK_IMAGES[service.serviceType] || FALLBACK_IMAGES.Photography;
   const typeCls = TYPE_COLORS[service.serviceType] || "bg-gray-100 text-gray-700";
   const rating = service.vendorRating || 0;
+
+  const handleCardClick = () => {
+    if (!session?.user) {
+      toast.error('Please login to view service details');
+      router.push('/login');
+      return;
+    }
+    router.push(`/vendors/${service.vendorId}/services/${service.id}`);
+  };
 
   const handleFavorite = async (e: React.MouseEvent) => {
     e.preventDefault();
@@ -69,7 +81,7 @@ export default function ServiceCard({ service, viewMode = 'grid', isFavorite = f
 
   if (viewMode === 'list') {
     return (
-      <Link href={`/vendors/${service.vendorId}/services/${service.id}`} className="group block">
+      <div onClick={handleCardClick} className="group block cursor-pointer">
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all p-5">
           <div className="flex gap-5">
             <div className="relative w-28 h-28 flex-shrink-0">
@@ -110,12 +122,12 @@ export default function ServiceCard({ service, viewMode = 'grid', isFavorite = f
             </div>
           </div>
         </div>
-      </Link>
+      </div>
     );
   }
 
   return (
-    <Link href={`/vendors/${service.vendorId}/services/${service.id}`} className="group block">
+    <div onClick={handleCardClick} className="group block cursor-pointer">
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1">
         <div className="relative h-48 overflow-hidden">
           <img src={image} alt={service.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
@@ -157,6 +169,6 @@ export default function ServiceCard({ service, viewMode = 'grid', isFavorite = f
           </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
