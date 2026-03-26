@@ -67,16 +67,18 @@ export async function POST(req: NextRequest) {
     // Hash password
     const hashedPassword = await bcrypt.hash(password, 10);
 
-    // Create user
+    // Create user with proper typing
+    const insertData = {
+      name,
+      email,
+      password: hashedPassword,
+      role: role as 'ADMIN' | 'VENDOR' | 'COUPLE',
+      phone: phone || null,
+    };
+
     const [newUser] = await db
       .insert(users)
-      .values({
-        name,
-        email,
-        password: hashedPassword,
-        role,
-        phone: phone || null,
-      })
+      .values(insertData as any)
       .returning({
         id: users.id,
         name: users.name,

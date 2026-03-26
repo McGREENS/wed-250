@@ -63,14 +63,10 @@ export default function AdminSettingsPage() {
     // Update form when session changes
     useEffect(() => {
         if (session?.user) {
-            setProfileForm(prev => ({
-                ...prev,
-                name: session.user.name || '',
-                email: session.user.email || '',
-                phone: session.user.phone || '',
-            }));
+            // Fetch user data from database to get phone number
+            fetchCurrentUserData();
         }
-    }, [session?.user?.name, session?.user?.email, session?.user?.phone]);
+    }, [session?.user?.id]);
 
     useEffect(() => {
         if (status === 'loading') return;
@@ -150,13 +146,14 @@ export default function AdminSettingsPage() {
 
             if (res.ok) {
                 toast.success('Profile updated successfully');
+                // Refresh user data from database
+                await fetchCurrentUserData();
                 await update({
                     ...session,
                     user: {
                         ...session?.user,
                         name: profileForm.name,
                         email: profileForm.email,
-                        phone: profileForm.phone,
                     },
                 });
                 setProfileForm(prev => ({

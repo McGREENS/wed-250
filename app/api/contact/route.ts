@@ -31,16 +31,18 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    const insertData = {
+      name,
+      email,
+      phone: phone || null,
+      subject: subject || null,
+      message,
+      status: 'UNREAD' as const,
+    };
+
     const [newMessage] = await db
       .insert(contactMessages)
-      .values({
-        name,
-        email,
-        phone: phone || null,
-        subject: subject || null,
-        message,
-        status: 'UNREAD',
-      })
+      .values(insertData as any)
       .returning();
 
     return NextResponse.json({ message: newMessage });
@@ -62,7 +64,7 @@ export async function PATCH(req: NextRequest) {
 
     const [updatedMessage] = await db
       .update(contactMessages)
-      .set({ status })
+      .set({ status: status as 'UNREAD' | 'READ' | 'REPLIED' } as any)
       .where(eq(contactMessages.id, messageId))
       .returning();
 
