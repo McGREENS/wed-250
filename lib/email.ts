@@ -1,6 +1,15 @@
-import { Resend } from "resend";
+import nodemailer from 'nodemailer';
 
-const resend = new Resend(process.env.RESEND_API_KEY);
+// Create SMTP transporter
+const transporter = nodemailer.createTransport({
+  host: 'mail.cylacon.com',
+  port: 587,
+  secure: false, // true for 465, false for other ports
+  auth: {
+    user: 'andiza@cylacon.com',
+    pass: '3fGapSreQA7BhVLJemFs',
+  },
+});
 
 export async function sendWelcomeEmail(email: string, name: string, role: "COUPLE" | "VENDOR") {
   const subject =
@@ -39,8 +48,8 @@ export async function sendWelcomeEmail(email: string, name: string, role: "COUPL
       </div>
     `;
 
-  const result = await resend.emails.send({
-    from: "Andiza <onboarding@resend.dev>",
+  const result = await transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: email,
     subject,
     html,
@@ -95,8 +104,8 @@ export async function sendTourConfirmationEmail({
     </div>
   `;
 
-  const result = await resend.emails.send({
-    from: "Andiza <onboarding@resend.dev>",
+  const result = await transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: email,
     subject: `✅ Venue Visit Confirmed – ${venueName} on ${formattedDate}`,
     html,
@@ -225,8 +234,8 @@ export async function sendQuoteRequestEmail({
     </html>
   `;
 
-  const result = await resend.emails.send({
-    from: 'Andiza <onboarding@resend.dev>',
+  const result = await transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: vendorEmail,
     replyTo: clientEmail,
     subject: `💌 New Quote Request for ${venueName} — ${eventDate}`,
@@ -299,8 +308,8 @@ export async function sendQuoteAcceptedEmail({
       </table>
     </body></html>
   `;
-  return resend.emails.send({
-    from: 'Andiza <onboarding@resend.dev>',
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: clientEmail,
     subject: `✅ Booking Confirmed — ${venueName} on ${eventDate}`,
     html,
@@ -353,8 +362,8 @@ export async function sendQuoteDeclinedEmail({
       </table>
     </body></html>
   `;
-  return resend.emails.send({
-    from: 'Andiza <onboarding@resend.dev>',
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: clientEmail,
     subject: `Quote Update — ${venueName}`,
     html,
@@ -406,8 +415,8 @@ export async function sendTourDeclinedEmail({
     </div>
   `;
 
-  const result = await resend.emails.send({
-    from: "Andiza <onboarding@resend.dev>",
+  const result = await transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: email,
     subject: `Venue Visit Request Update – ${venueName}`,
     html,
@@ -517,8 +526,8 @@ export async function sendServiceBookingClientEmail({
     </body></html>
   `;
 
-  return resend.emails.send({
-    from: 'Andiza <onboarding@resend.dev>',
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: clientEmail,
     subject: `📋 Booking Request Received — ${serviceName} on ${eventDate}`,
     html,
@@ -623,11 +632,117 @@ export async function sendServiceBookingVendorEmail({
     </body></html>
   `;
 
-  return resend.emails.send({
-    from: 'Andiza <onboarding@resend.dev>',
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
     to: vendorEmail,
     replyTo: clientEmail,
     subject: `🎊 New Booking Request — ${serviceName} for ${eventDate}`,
+    html,
+  });
+}
+
+export async function sendAdminOnboardingEmail({
+  email,
+  name,
+  password,
+}: {
+  email: string;
+  name: string;
+  password: string;
+}) {
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+    <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0;">
+        <tr><td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#8B3A3A;border-radius:12px 12px 0 0;padding:36px 40px;text-align:center;">
+                <p style="margin:0 0 6px;color:rgba(255,255,255,0.7);font-size:13px;letter-spacing:2px;text-transform:uppercase;">Welcome to Andiza</p>
+                <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">Your Admin Account is Ready! 🎉</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="background:#fff;padding:36px 40px;border:1px solid #e8e8e8;border-top:none;">
+                <p style="margin:0 0 20px;font-size:15px;color:#444;">Hi <strong>${name}</strong>,</p>
+                <p style="margin:0 0 28px;font-size:15px;color:#444;line-height:1.6;">
+                  Your admin account has been created for the Andiza platform. You now have full access to manage users, vendors, bookings, and all platform operations.
+                </p>
+
+                <!-- Login credentials card -->
+                <table width="100%" cellpadding="0" cellspacing="0" style="background:#fdf8f4;border-left:4px solid #8B3A3A;border-radius:0 8px 8px 0;margin-bottom:28px;">
+                  <tr><td style="padding:24px 28px;">
+                    <p style="margin:0 0 16px;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Your Login Credentials</p>
+                    <table width="100%" cellpadding="0" cellspacing="0">
+                      <tr>
+                        <td style="padding:8px 0;width:120px;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Email</td>
+                        <td style="padding:8px 0;font-size:14px;color:#2C2C2C;font-weight:600;font-family:monospace;background:#fff;padding:8px 12px;border-radius:4px;">${email}</td>
+                      </tr>
+                      <tr>
+                        <td style="padding:8px 0;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:0.5px;">Password</td>
+                        <td style="padding:8px 0;font-size:14px;color:#2C2C2C;font-weight:600;font-family:monospace;background:#fff;padding:8px 12px;border-radius:4px;">${password}</td>
+                      </tr>
+                    </table>
+                  </td></tr>
+                </table>
+
+                <!-- Security notice -->
+                <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:16px 20px;margin-bottom:28px;">
+                  <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;">
+                    <strong>🔒 Security Tip:</strong> Please change your password after your first login from the admin settings page.
+                  </p>
+                </div>
+
+                <!-- Admin capabilities -->
+                <p style="margin:0 0 12px;font-size:14px;color:#444;font-weight:600;">As an admin, you can:</p>
+                <ul style="margin:0 0 28px;padding-left:20px;font-size:14px;color:#555;line-height:1.8;">
+                  <li>Manage all users, vendors, and couples</li>
+                  <li>Monitor bookings and platform activity</li>
+                  <li>Review and moderate content</li>
+                  <li>Access comprehensive analytics and reports</li>
+                  <li>Configure platform settings</li>
+                </ul>
+
+                <!-- CTA -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td align="center" style="padding:8px 0 28px;">
+                    <a href="${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/login"
+                       style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.3px;">
+                      Login to Admin Dashboard
+                    </a>
+                  </td></tr>
+                </table>
+
+                <p style="margin:0;font-size:13px;color:#999;line-height:1.6;border-top:1px solid #f0f0f0;padding-top:20px;">
+                  If you have any questions or need assistance, please contact the platform administrator.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f9f9f9;border:1px solid #e8e8e8;border-top:none;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
+                <p style="margin:0;font-size:12px;color:#aaa;">Andiza &mdash; Rwanda's Wedding Planning Platform &bull; Norrsken House Kigali</p>
+              </td>
+            </tr>
+
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
+    to: email,
+    subject: '🎉 Welcome to Andiza - Your Admin Account',
     html,
   });
 }

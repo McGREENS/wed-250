@@ -9,8 +9,24 @@ export async function GET() {
     const session = await auth();
     if (!session?.user?.id) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
 
-    const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
-    if (!vendor) return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
+    let [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
+    
+    // Create vendor record if it doesn't exist
+    if (!vendor) {
+      const [newVendor] = await db.insert(vendors).values({
+        userId: session.user.id,
+        businessName: session.user.name || 'My Business',
+        serviceType: 'Other',
+        location: 'Kigali, Rwanda',
+        description: '',
+        rating: 0,
+        reviewCount: 0,
+        verified: false,
+        featured: false,
+        portfolio: '[]',
+      }).returning();
+      vendor = newVendor;
+    }
 
     const now = new Date();
     const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
@@ -24,7 +40,7 @@ export async function GET() {
     const allServices = await db.select().from(servicePackages)
       .where(eq(servicePackages.vendorId, vendor.id));
 
-    const allTours = await db.select().from(venueTours);
+    const allTours = await db.select().from(venueTours).where(eq(venueTours.vendorId, vendor.id));
     const [user] = await db.select({ image: users.image }).from(users).where(eq(users.id, session.user.id)).limit(1);
 
     const allReviews = await db.select().from(reviews)

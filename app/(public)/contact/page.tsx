@@ -1,8 +1,7 @@
 "use client";
 
 import React, { useState } from 'react';
-import { base44 } from '@/api/base44Client';
-import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Facebook, Instagram, Twitter } from 'lucide-react';
+import { Mail, Phone, MapPin, Clock, Send, CheckCircle, Facebook, Instagram, Twitter, Loader2 } from 'lucide-react';
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Button } from "@/app/components/ui/button";
@@ -18,6 +17,7 @@ export default function ContactPage() {
     });
     const [isSubmitting, setIsSubmitting] = useState(false);
     const [isSubmitted, setIsSubmitted] = useState(false);
+    const [error, setError] = useState('');
 
     const handleInputChange = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
@@ -26,21 +26,34 @@ export default function ContactPage() {
     const handleSubmit = async (e: React.FormEvent) => {
         e.preventDefault();
         setIsSubmitting(true);
+        setError('');
 
         try {
-            await base44.entities.ContactMessage.create(formData);
-            setIsSubmitted(true);
-            setFormData({
-                name: '',
-                email: '',
-                phone: '',
-                subject: '',
-                message: ''
+            const res = await fetch('/api/contact', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify(formData),
             });
 
-            setTimeout(() => setIsSubmitted(false), 5000);
+            const data = await res.json();
+
+            if (res.ok) {
+                setIsSubmitted(true);
+                setFormData({
+                    name: '',
+                    email: '',
+                    phone: '',
+                    subject: '',
+                    message: ''
+                });
+
+                setTimeout(() => setIsSubmitted(false), 5000);
+            } else {
+                setError(data.error || 'Failed to send message. Please try again.');
+            }
         } catch (error) {
             console.error('Error submitting contact form:', error);
+            setError('Something went wrong. Please try again later.');
         } finally {
             setIsSubmitting(false);
         }
@@ -103,8 +116,8 @@ export default function ContactPage() {
 
                                 {isSubmitted ? (
                                     <div className="py-12 text-center">
-                                        <div className="w-16 h-16 bg-burgundy/10 rounded-full flex items-center justify-center mx-auto mb-4">
-                                            <CheckCircle className="w-8 h-8 text-burgundy" />
+                                        <div className="w-16 h-16 bg-green-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                                            <CheckCircle className="w-8 h-8 text-green-600" />
                                         </div>
                                         <h3 className="text-xl font-semibold text-[#2C2C2C] mb-2">
                                             Message Sent Successfully!
@@ -115,6 +128,11 @@ export default function ContactPage() {
                                     </div>
                                 ) : (
                                     <form onSubmit={handleSubmit} className="space-y-6">
+                                        {error && (
+                                            <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                                                <p className="text-red-600 text-sm">{error}</p>
+                                            </div>
+                                        )}
                                         <div className="grid md:grid-cols-2 gap-6">
                                             <div>
                                                 <label className="block text-sm font-medium text-[#2C2C2C] mb-2">
@@ -187,10 +205,13 @@ export default function ContactPage() {
                                         <Button
                                             type="submit"
                                             disabled={isSubmitting}
-                                            className="w-full bg-burgundy hover:bg-burgundy-light text-white py-6 text-lg"
+                                            className="w-full bg-burgundy hover:bg-burgundy-light text-white py-6 text-lg disabled:opacity-50 disabled:cursor-not-allowed"
                                         >
                                             {isSubmitting ? (
-                                                'Sending...'
+                                                <>
+                                                    <Loader2 className="w-5 h-5 mr-2 animate-spin" />
+                                                    Sending...
+                                                </>
                                             ) : (
                                                 <>
                                                     <Send className="w-5 h-5 mr-2" />

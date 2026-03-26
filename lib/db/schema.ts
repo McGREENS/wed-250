@@ -193,6 +193,18 @@ export const tasks = sqliteTable("tasks", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Contact Messages table
+export const contactMessages = sqliteTable("contact_messages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone"),
+  subject: text("subject"),
+  message: text("message").notNull(),
+  status: text("status", { enum: ["UNREAD", "READ", "REPLIED"] }).default("UNREAD"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Relations
 export const usersRelations = relations(users, ({ many }) => ({
   accounts: many(accounts),

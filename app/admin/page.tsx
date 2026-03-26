@@ -1,414 +1,356 @@
 "use client";
 
-import React, { useState } from 'react';
-import { useQuery } from '@tanstack/react-query';
-import { base44 } from '@/api/base44Client';
+import React, { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
+import AdminLayout from './AdminLayout';
 import {
     Users,
     Calendar,
     ShoppingBag,
-    Mail,
     TrendingUp,
-    Search,
-    MoreVertical
+    Building2,
+    DollarSign,
+    Star,
+    FileText,
+    ArrowUp,
+    ArrowDown,
 } from 'lucide-react';
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Badge } from "@/app/components/ui/badge";
-import { Input } from "@/app/components/ui/input";
-import { Button } from "@/app/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
-import {
-    Table,
-    TableBody,
-    TableCell,
-    TableHead,
-    TableHeader,
-    TableRow,
-} from "@/app/components/ui/table";
 
 export default function AdminDashboardPage() {
-    const [activeTab, setActiveTab] = useState('overview');
-    const [searchQuery, setSearchQuery] = useState('');
+    const { data: session, status } = useSession();
+    const router = useRouter();
+    const [stats, setStats] = useState<any>(null);
+    const [loading, setLoading] = useState(true);
 
-    // Fetch all data
-    const { data: vendors = [], isLoading: vendorsLoading } = useQuery({
-        queryKey: ['vendors'],
-        queryFn: () => base44.entities.Vendor.list('-created_date', 100)
-    });
+    useEffect(() => {
+        if (status === 'loading') return;
+        
+        if (!session?.user || session.user.role !== 'ADMIN') {
+            router.push('/login');
+            return;
+        }
 
-    const { data: weddingPlans = [], isLoading: plansLoading } = useQuery({
-        queryKey: ['weddingPlans'],
-        queryFn: () => base44.entities.WeddingPlan.list('-created_date', 100)
-    });
+        fetchStats();
+    }, [session, status, router]);
 
-    const { data: bookings = [], isLoading: bookingsLoading } = useQuery({
-        queryKey: ['bookings'],
-        queryFn: () => base44.entities.Booking.list('-created_date', 100)
-    });
+    const fetchStats = async () => {
+        try {
+            const res = await fetch('/api/admin/stats');
+            if (res.ok) {
+                const data = await res.json();
+                setStats(data);
+            }
+        } catch (error) {
+            console.error('Error fetching stats:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
-    const { data: messages = [], isLoading: messagesLoading } = useQuery({
-        queryKey: ['messages'],
-        queryFn: () => base44.entities.ContactMessage.list('-created_date', 100)
-    });
+    if (loading || !stats) {
+        return (
+            <AdminLayout>
+                <div className="flex items-center justify-center h-screen">
+                    <div className="text-center">
+                        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-burgundy mx-auto mb-4"></div>
+                        <p className="text-gray-600">Loading dashboard...</p>
+                    </div>
+                </div>
+            </AdminLayout>
+        );
+    }
 
-    // Calculate stats
-    const stats = [
+    const statCards = [
         {
-            title: 'Total Vendors',
-            value: vendors.length,
-            icon: ShoppingBag,
-            change: '+12%',
+            title: 'Total Revenue',
+            value: `${stats.totalRevenue?.toLocaleString()} RWF`,
+            icon: DollarSign,
+            change: '+12.5%',
+            trend: 'up',
+            color: 'from-green-500 to-green-600'
+        },
+        {
+            title: 'Total Users',
+            value: stats.totalUsers,
+            icon: Users,
+            change: '+8.2%',
+            trend: 'up',
             color: 'from-burgundy to-burgundy/60'
         },
         {
-            title: 'Active Plans',
-            value: weddingPlans.filter((p: any) => p.status !== 'completed').length,
-            icon: Calendar,
-            change: '+8%',
-            color: 'from-gold to-gold/60'
+            title: 'Total Vendors',
+            value: stats.totalVendors,
+            icon: ShoppingBag,
+            change: '+5.1%',
+            trend: 'up',
+            color: 'from-blue-500 to-blue-600'
         },
         {
             title: 'Total Bookings',
-            value: bookings.length,
-            icon: Users,
-            change: '+23%',
-            color: 'from-burgundy to-burgundy/60'
+            value: stats.totalBookings,
+            icon: Calendar,
+            change: '+15.3%',
+            trend: 'up',
+            color: 'from-purple-500 to-purple-600'
         },
         {
-            title: 'New Messages',
-            value: messages.filter((m: any) => m.status === 'new').length,
-            icon: Mail,
-            change: '',
-            color: 'from-gold to-gold/60'
+            title: 'Total Services',
+            value: stats.totalServices,
+            icon: Building2,
+            change: '+3.7%',
+            trend: 'up',
+            color: 'from-orange-500 to-orange-600'
+        },
+        {
+            title: 'Total Reviews',
+            value: stats.totalReviews,
+            icon: Star,
+            change: '+9.4%',
+            trend: 'up',
+            color: 'from-yellow-500 to-yellow-600'
+        },
+        {
+            title: 'Pending Bookings',
+            value: stats.pendingBookings,
+            icon: FileText,
+            change: '-2.1%',
+            trend: 'down',
+            color: 'from-red-500 to-red-600'
+        },
+        {
+            title: 'Pending Tours',
+            value: stats.pendingTours,
+            icon: Building2,
+            change: '+4.2%',
+            trend: 'up',
+            color: 'from-indigo-500 to-indigo-600'
         }
     ];
 
     const statusColors: any = {
         pending: 'bg-yellow-100 text-yellow-800',
-        in_progress: 'bg-blue-100 text-blue-800',
+        confirmed: 'bg-blue-100 text-blue-800',
         completed: 'bg-green-100 text-green-800',
-        new: 'bg-red-100 text-red-800',
-        read: 'bg-gray-100 text-gray-800',
-        replied: 'bg-green-100 text-green-800'
+        cancelled: 'bg-red-100 text-red-800',
+        COUPLE: 'bg-pink-100 text-pink-800',
+        VENDOR: 'bg-blue-100 text-blue-800',
+        ADMIN: 'bg-purple-100 text-purple-800',
     };
 
     return (
-        <div className="min-h-screen bg-cream bg-noise">
-            <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-8">
+        <AdminLayout>
+            <div className="p-4 sm:p-6 lg:p-8">
                 {/* Header */}
                 <div className="mb-8">
-                    <h1 className="text-4xl font-serif text-charcoal mb-2">
-                        Admin Dashboard
+                    <h1 className="text-3xl font-bold text-charcoal mb-2">
+                        Dashboard Overview
                     </h1>
                     <p className="text-gray-600">
-                        Manage vendors, wedding plans, and bookings
+                        Welcome back, {session?.user?.name}! Here's what's happening today.
                     </p>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid md:grid-cols-4 gap-6 mb-8">
-                    {stats.map((stat, index) => {
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                    {statCards.map((stat, index) => {
                         const Icon = stat.icon;
+                        const TrendIcon = stat.trend === 'up' ? ArrowUp : ArrowDown;
                         return (
-                            <Card key={index} className="border-gray-100 shadow-sm">
+                            <Card key={index} className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
                                 <CardContent className="p-6">
                                     <div className="flex items-center justify-between mb-4">
-                                        <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center`}>
+                                        <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
                                             <Icon className="w-6 h-6 text-white" />
                                         </div>
-                                        {stat.change && (
-                                            <div className="flex items-center gap-1 text-green-600 text-sm font-medium">
-                                                <TrendingUp className="w-4 h-4" />
-                                                {stat.change}
-                                            </div>
-                                        )}
+                                        <div className={`flex items-center gap-1 text-sm font-medium ${stat.trend === 'up' ? 'text-green-600' : 'text-red-600'}`}>
+                                            <TrendIcon className="w-4 h-4" />
+                                            {stat.change}
+                                        </div>
                                     </div>
                                     <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                                    <p className="text-3xl font-bold text-charcoal">{stat.value}</p>
+                                    <p className="text-2xl font-bold text-charcoal">{stat.value}</p>
                                 </CardContent>
                             </Card>
                         );
                     })}
                 </div>
 
-                {/* Tabs */}
-                <Tabs value={activeTab} onValueChange={setActiveTab}>
-                    <TabsList className="bg-white border border-gray-100 mb-6">
-                        <TabsTrigger value="overview">Overview</TabsTrigger>
-                        <TabsTrigger value="vendors">Vendors</TabsTrigger>
-                        <TabsTrigger value="plans">Wedding Plans</TabsTrigger>
-                        <TabsTrigger value="bookings">Bookings</TabsTrigger>
-                        <TabsTrigger value="messages">Messages</TabsTrigger>
-                    </TabsList>
-
-                    {/* Overview Tab */}
-                    <TabsContent value="overview">
-                        <div className="grid lg:grid-cols-2 gap-6">
-                            {/* Recent Plans */}
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardHeader className="border-b border-gray-100">
-                                    <CardTitle className="text-lg">Recent Wedding Plans</CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="space-y-4">
-                                        {weddingPlans.slice(0, 5).map((plan: any) => (
-                                            <div
-                                                key={plan.id}
-                                                className="flex items-center justify-between p-3 border border-gray-100 rounded-lg"
-                                            >
-                                                <div>
-                                                    <p className="font-semibold text-charcoal">{plan.couple_names}</p>
-                                                    <p className="text-sm text-gray-600">
-                                                        {new Date(plan.wedding_date).toLocaleDateString()}
-                                                    </p>
-                                                </div>
-                                                <Badge className={statusColors[plan.status]}>
-                                                    {plan.status}
+                {/* Charts Row */}
+                <div className="grid lg:grid-cols-2 gap-6 mb-8">
+                    {/* User Distribution */}
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardHeader className="border-b border-gray-100">
+                            <CardTitle className="text-lg">User Distribution</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="space-y-4">
+                                {stats.usersByRole && stats.usersByRole.length > 0 ? (
+                                    stats.usersByRole.map((role: any) => (
+                                        <div key={role.role} className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <Badge className={statusColors[role.role]}>
+                                                    {role.role}
                                                 </Badge>
                                             </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-
-                            {/* Recent Messages */}
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardHeader className="border-b border-gray-100">
-                                    <CardTitle className="text-lg">Recent Messages</CardTitle>
-                                </CardHeader>
-                                <CardContent className="p-6">
-                                    <div className="space-y-4">
-                                        {messages.slice(0, 5).map((message: any) => (
-                                            <div
-                                                key={message.id}
-                                                className="p-3 border border-gray-100 rounded-lg"
-                                            >
-                                                <div className="flex items-start justify-between mb-2">
-                                                    <p className="font-semibold text-charcoal">{message.name}</p>
-                                                    <Badge className={statusColors[message.status]}>
-                                                        {message.status}
-                                                    </Badge>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-32 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className="bg-burgundy h-2 rounded-full"
+                                                        style={{ width: `${(role.count / stats.totalUsers) * 100}%` }}
+                                                    />
                                                 </div>
-                                                <p className="text-sm text-gray-600 line-clamp-2">
-                                                    {message.message}
-                                                </p>
-                                            </div>
-                                        ))}
-                                    </div>
-                                </CardContent>
-                            </Card>
-                        </div>
-                    </TabsContent>
-
-                    {/* Vendors Tab */}
-                    <TabsContent value="vendors">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <div className="flex items-center justify-between">
-                                    <CardTitle className="text-lg">All Vendors</CardTitle>
-                                    <Button className="bg-burgundy hover:bg-burgundy-light text-white">
-                                        Add Vendor
-                                    </Button>
-                                </div>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="mb-4">
-                                    <div className="relative">
-                                        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
-                                        <Input
-                                            placeholder="Search vendors..."
-                                            value={searchQuery}
-                                            onChange={(e) => setSearchQuery(e.target.value)}
-                                            className="pl-10"
-                                        />
-                                    </div>
-                                </div>
-
-                                <div className="overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Name</TableHead>
-                                                <TableHead>Category</TableHead>
-                                                <TableHead>Location</TableHead>
-                                                <TableHead>Price Range</TableHead>
-                                                <TableHead>Featured</TableHead>
-                                                <TableHead></TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {vendors
-                                                .filter((v: any) =>
-                                                    v.name?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-                                                    v.category?.toLowerCase().includes(searchQuery.toLowerCase())
-                                                )
-                                                .map((vendor: any) => (
-                                                    <TableRow key={vendor.id}>
-                                                        <TableCell className="font-medium">{vendor.name}</TableCell>
-                                                        <TableCell>
-                                                            <Badge variant="secondary" className="bg-sand text-charcoal border-0">
-                                                                {vendor.category}
-                                                            </Badge>
-                                                        </TableCell>
-                                                        <TableCell>{vendor.location}</TableCell>
-                                                        <TableCell>{vendor.price_range}</TableCell>
-                                                        <TableCell>
-                                                            {vendor.featured && (
-                                                                <Badge className="bg-burgundy text-white">Featured</Badge>
-                                                            )}
-                                                        </TableCell>
-                                                        <TableCell>
-                                                            <Button variant="ghost" size="icon">
-                                                                <MoreVertical className="w-4 h-4" />
-                                                            </Button>
-                                                        </TableCell>
-                                                    </TableRow>
-                                                ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    {/* Wedding Plans Tab */}
-                    <TabsContent value="plans">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-lg">All Wedding Plans</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Couple</TableHead>
-                                                <TableHead>Wedding Date</TableHead>
-                                                <TableHead>Guest Count</TableHead>
-                                                <TableHead>Budget</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead></TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {weddingPlans.map((plan: any) => (
-                                                <TableRow key={plan.id}>
-                                                    <TableCell className="font-medium">{plan.couple_names}</TableCell>
-                                                    <TableCell>
-                                                        {new Date(plan.wedding_date).toLocaleDateString()}
-                                                    </TableCell>
-                                                    <TableCell>{plan.guest_count}</TableCell>
-                                                    <TableCell>${plan.budget?.toLocaleString()}</TableCell>
-                                                    <TableCell>
-                                                        <Badge className={statusColors[plan.status]}>
-                                                            {plan.status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button variant="ghost" size="icon">
-                                                            <MoreVertical className="w-4 h-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    {/* Bookings Tab */}
-                    <TabsContent value="bookings">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-lg">All Bookings</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="overflow-x-auto">
-                                    <Table>
-                                        <TableHeader>
-                                            <TableRow>
-                                                <TableHead>Vendor</TableHead>
-                                                <TableHead>Service</TableHead>
-                                                <TableHead>Quote</TableHead>
-                                                <TableHead>Status</TableHead>
-                                                <TableHead>Payment</TableHead>
-                                                <TableHead></TableHead>
-                                            </TableRow>
-                                        </TableHeader>
-                                        <TableBody>
-                                            {bookings.map((booking: any) => (
-                                                <TableRow key={booking.id}>
-                                                    <TableCell className="font-medium">{booking.vendor_name}</TableCell>
-                                                    <TableCell>{booking.service_category}</TableCell>
-                                                    <TableCell>${booking.quote_amount?.toLocaleString()}</TableCell>
-                                                    <TableCell>
-                                                        <Badge className={statusColors[booking.booking_status]}>
-                                                            {booking.booking_status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Badge className={statusColors[booking.payment_status]}>
-                                                            {booking.payment_status}
-                                                        </Badge>
-                                                    </TableCell>
-                                                    <TableCell>
-                                                        <Button variant="ghost" size="icon">
-                                                            <MoreVertical className="w-4 h-4" />
-                                                        </Button>
-                                                    </TableCell>
-                                                </TableRow>
-                                            ))}
-                                        </TableBody>
-                                    </Table>
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-
-                    {/* Messages Tab */}
-                    <TabsContent value="messages">
-                        <Card className="border-gray-100 shadow-sm">
-                            <CardHeader className="border-b border-gray-100">
-                                <CardTitle className="text-lg">Contact Messages</CardTitle>
-                            </CardHeader>
-                            <CardContent className="p-6">
-                                <div className="space-y-4">
-                                    {messages.map((message: any) => (
-                                        <div
-                                            key={message.id}
-                                            className="border border-gray-100 rounded-lg p-4 hover:shadow-md transition-shadow"
-                                        >
-                                            <div className="flex items-start justify-between mb-3">
-                                                <div>
-                                                    <h4 className="font-semibold text-charcoal">{message.name}</h4>
-                                                    <p className="text-sm text-gray-600">{message.email}</p>
-                                                </div>
-                                                <Badge className={statusColors[message.status]}>
-                                                    {message.status}
-                                                </Badge>
-                                            </div>
-                                            {message.subject && (
-                                                <p className="font-medium text-charcoal mb-2">{message.subject}</p>
-                                            )}
-                                            <p className="text-gray-700">{message.message}</p>
-                                            <div className="flex gap-2 mt-4">
-                                                <Button size="sm" className="bg-burgundy hover:bg-burgundy-light text-white">
-                                                    Reply
-                                                </Button>
-                                                <Button size="sm" variant="outline">
-                                                    Mark as Read
-                                                </Button>
+                                                <span className="text-sm font-semibold text-charcoal w-12 text-right">
+                                                    {role.count}
+                                                </span>
                                             </div>
                                         </div>
-                                    ))}
-                                </div>
-                            </CardContent>
-                        </Card>
-                    </TabsContent>
-                </Tabs>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500 text-center py-4">No data available</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Booking Status */}
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardHeader className="border-b border-gray-100">
+                            <CardTitle className="text-lg">Booking Status</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="space-y-4">
+                                {stats.bookingsByStatus && stats.bookingsByStatus.length > 0 ? (
+                                    stats.bookingsByStatus.map((booking: any) => (
+                                        <div key={booking.status} className="flex items-center justify-between">
+                                            <div className="flex items-center gap-3">
+                                                <Badge className={statusColors[booking.status]}>
+                                                    {booking.status}
+                                                </Badge>
+                                            </div>
+                                            <div className="flex items-center gap-3">
+                                                <div className="w-32 bg-gray-200 rounded-full h-2">
+                                                    <div
+                                                        className="bg-burgundy h-2 rounded-full"
+                                                        style={{ width: `${(booking.count / stats.totalBookings) * 100}%` }}
+                                                    />
+                                                </div>
+                                                <span className="text-sm font-semibold text-charcoal w-12 text-right">
+                                                    {booking.count}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500 text-center py-4">No data available</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+
+                {/* Data Tables */}
+                <div className="grid lg:grid-cols-3 gap-6">
+                    {/* Recent Users */}
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardHeader className="border-b border-gray-100">
+                            <CardTitle className="text-lg">Recent Users</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="space-y-3">
+                                {stats.recentUsers && stats.recentUsers.length > 0 ? (
+                                    stats.recentUsers.slice(0, 5).map((user: any) => (
+                                        <div
+                                            key={user.id}
+                                            className="flex items-center justify-between p-3 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow"
+                                        >
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-charcoal text-sm truncate">{user.name}</p>
+                                                <p className="text-xs text-gray-600 truncate">{user.email}</p>
+                                            </div>
+                                            <Badge variant="secondary" className="bg-sand text-charcoal border-0 text-xs">
+                                                {user.role}
+                                            </Badge>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500 text-center py-4">No users yet</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Recent Bookings */}
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardHeader className="border-b border-gray-100">
+                            <CardTitle className="text-lg">Recent Bookings</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="space-y-3">
+                                {stats.recentBookings && stats.recentBookings.length > 0 ? (
+                                    stats.recentBookings.slice(0, 5).map((booking: any) => (
+                                        <div
+                                            key={booking.id}
+                                            className="p-3 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow"
+                                        >
+                                            <div className="flex items-start justify-between mb-2">
+                                                <div className="flex-1 min-w-0">
+                                                    <p className="font-semibold text-charcoal text-sm truncate">{booking.clientName}</p>
+                                                    <p className="text-xs text-gray-600">{booking.serviceType}</p>
+                                                </div>
+                                                <Badge className={`${statusColors[booking.status]} text-xs`}>
+                                                    {booking.status}
+                                                </Badge>
+                                            </div>
+                                            <p className="text-xs font-medium text-burgundy">
+                                                {booking.totalAmount?.toLocaleString()} RWF
+                                            </p>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500 text-center py-4">No bookings yet</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+
+                    {/* Top Vendors */}
+                    <Card className="border-gray-100 shadow-sm">
+                        <CardHeader className="border-b border-gray-100">
+                            <CardTitle className="text-lg">Top Rated Vendors</CardTitle>
+                        </CardHeader>
+                        <CardContent className="p-6">
+                            <div className="space-y-3">
+                                {stats.topVendors && stats.topVendors.length > 0 ? (
+                                    stats.topVendors.map((vendor: any, index: number) => (
+                                        <div
+                                            key={vendor.id}
+                                            className="flex items-center gap-3 p-3 border border-gray-100 rounded-lg hover:shadow-sm transition-shadow"
+                                        >
+                                            <div className="w-8 h-8 bg-burgundy/10 rounded-full flex items-center justify-center flex-shrink-0">
+                                                <span className="text-burgundy font-bold text-sm">#{index + 1}</span>
+                                            </div>
+                                            <div className="flex-1 min-w-0">
+                                                <p className="font-semibold text-charcoal text-sm truncate">{vendor.businessName}</p>
+                                                <div className="flex items-center gap-1 mt-1">
+                                                    <Star className="w-3 h-3 text-yellow-500 fill-yellow-500" />
+                                                    <span className="text-xs text-gray-600">
+                                                        {vendor.rating?.toFixed(1)} ({vendor.reviewCount} reviews)
+                                                    </span>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))
+                                ) : (
+                                    <p className="text-sm text-gray-500 text-center py-4">No vendors yet</p>
+                                )}
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
             </div>
-        </div>
+        </AdminLayout>
     );
 }
