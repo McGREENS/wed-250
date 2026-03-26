@@ -85,7 +85,7 @@ export async function GET() {
       .select({
         id: vendors.id,
         businessName: vendors.businessName,
-        categories: vendors.categories,
+        category: vendors.category,
         location: vendors.location,
         verified: vendors.verified,
         featured: vendors.featured,

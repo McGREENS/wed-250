@@ -13,7 +13,7 @@ export async function GET(_req: NextRequest, { params }: { params: Promise<{ ser
     const [vendorRow] = await db
       .select({
         id: vendors.id, userId: vendors.userId, businessName: vendors.businessName,
-        categories: vendors.categories, description: vendors.description, location: vendors.location,
+        category: vendors.category, description: vendors.description, location: vendors.location,
         priceRange: vendors.priceRange, rating: vendors.rating, reviewCount: vendors.reviewCount,
         featured: vendors.featured, verified: vendors.verified, images: vendors.images,
         portfolio: vendors.portfolio, availability: vendors.availability,

@@ -31,7 +31,7 @@ export async function GET(req: NextRequest) {
             id: fav.id,
             vendorId: vendor.id,
             name: vendor.businessName,
-            categories: vendor.categories,
+            category: vendor.category,
             location: vendor.location,
             priceRange: vendor.priceRange,
             rating: vendor.rating,
