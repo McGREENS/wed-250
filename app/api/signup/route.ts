@@ -74,7 +74,7 @@ export async function POST(req: NextRequest) {
         await db.insert(vendors).values({
           userId: user.id,
           businessName,
-          categories: JSON.stringify([serviceCategory]),
+          category: serviceCategory,
         } as any);
       }
 

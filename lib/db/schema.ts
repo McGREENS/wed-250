@@ -52,7 +52,7 @@ export const vendors = sqliteTable("vendors", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   businessName: text("business_name").notNull(),
-  categories: text("categories").notNull(), // JSON array: ["Photography", "Catering", "Venues"]
+  category: text("category").notNull(), // Single category or "Multi Service Provider"
   description: text("description"),
   location: text("location"),
   priceRange: text("price_range"),
@@ -202,6 +202,19 @@ export const contactMessages = sqliteTable("contact_messages", {
   subject: text("subject"),
   message: text("message").notNull(),
   status: text("status", { enum: ["UNREAD", "READ", "REPLIED"] }).default("UNREAD"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Pending Vendor Signups table (for OTP verification)
+export const pendingVendorSignups = sqliteTable("pending_vendor_signups", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  businessName: text("business_name").notNull(),
+  email: text("email").notNull(),
+  phone: text("phone").notNull(),
+  serviceCategory: text("service_category").notNull(),
+  password: text("password").notNull(), // hashed
+  otp: text("otp").notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 

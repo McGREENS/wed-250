@@ -152,7 +152,14 @@ export default function VendorDashboardPage() {
 
     fetch('/api/vendor/dashboard')
       .then(r => r.json())
-      .then(setData)
+      .then(d => {
+        if (d.error) {
+          console.error('Dashboard error:', d.error);
+          return;
+        }
+        setData(d);
+      })
+      .catch(err => console.error('Fetch error:', err))
       .finally(() => setLoading(false));
   }, []);
 
@@ -166,9 +173,20 @@ export default function VendorDashboardPage() {
     );
   }
 
-  if (!data) return null;
+  if (!data) {
+    return (
+      <VendorPageLayout>
+        <div className="flex flex-col items-center justify-center min-h-[60vh] gap-4">
+          <p className="text-gray-500">Unable to load dashboard data</p>
+          <Button onClick={() => window.location.reload()} className="bg-burgundy hover:bg-burgundy/90 text-white">
+            Retry
+          </Button>
+        </div>
+      </VendorPageLayout>
+    );
+  }
 
-  const { vendor, stats, monthlyRevenue, statusBreakdown, upcomingBookings, recentBookings, profileScore, profileTips } = data;
+  const { vendor, stats, monthlyRevenue = [], statusBreakdown, upcomingBookings, recentBookings, profileScore, profileTips } = data;
   const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue), 0);
   const today = new Date();
 

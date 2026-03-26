@@ -11,8 +11,9 @@ import { Input } from "@/app/components/ui/input";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Label } from "@/app/components/ui/label";
+import { signIn } from "next-auth/react";
 import { toast } from "sonner";
-import { Heart, Store, Eye, EyeOff } from "lucide-react";
+import { Heart, Store, Eye, EyeOff, Loader2 } from "lucide-react";
 
 const CoupleSignupSchema = z.object({
     name: z.string().min(1, "Name is required"),
@@ -47,6 +48,10 @@ export default function SignupPage() {
     const [showPassword, setShowPassword] = useState(false);
     const [showConfirmPassword, setShowConfirmPassword] = useState(false);
     const [activeTab, setActiveTab] = useState("couple");
+    const [showOTPModal, setShowOTPModal] = useState(false);
+    const [otp, setOtp] = useState('');
+    const [vendorEmail, setVendorEmail] = useState('');
+    const [verifyingOTP, setVerifyingOTP] = useState(false);
 
     const coupleForm = useForm<CoupleFormValues>({
         resolver: zodResolver(CoupleSignupSchema),
@@ -73,7 +78,20 @@ export default function SignupPage() {
                     return;
                 }
                 toast.success("Account created successfully!");
-                router.push("/dashboard");
+                
+                // Auto-login after signup
+                const loginRes = await signIn("credentials", {
+                    email: values.email,
+                    password: values.password,
+                    redirect: false,
+                });
+                
+                if (loginRes?.ok) {
+                    router.push("/dashboard");
+                    router.refresh();
+                } else {
+                    router.push("/login");
+                }
             } catch (err) {
                 setError("Something went wrong");
             }
@@ -84,22 +102,65 @@ export default function SignupPage() {
         setError(null);
         startTransition(async () => {
             try {
-                const res = await fetch("/api/signup", {
+                const res = await fetch("/api/vendor/send-otp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "vendor", ...values }),
+                    body: JSON.stringify({ ...values }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    setError(data.error || "Failed to create account");
+                    setError(data.error || "Failed to send OTP");
                     return;
                 }
-                toast.success("Vendor account created successfully!");
-                router.push("/vendor/dashboard");
+                toast.success("OTP sent to your email!");
+                setVendorEmail(values.email);
+                setShowOTPModal(true);
             } catch (err) {
                 setError("Something went wrong");
             }
         });
+    };
+
+    const handleVerifyOTP = async () => {
+        if (!otp || otp.length !== 6) {
+            toast.error('Please enter a valid 6-digit OTP');
+            return;
+        }
+        
+        setVerifyingOTP(true);
+        try {
+            const res = await fetch("/api/vendor/verify-otp", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ email: vendorEmail, otp }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                toast.error(data.error || "Invalid OTP");
+                return;
+            }
+            toast.success("Account created successfully!");
+            setShowOTPModal(false);
+            
+            // Auto-login after verification
+            const vendorFormData = vendorForm.getValues();
+            const loginRes = await signIn("credentials", {
+                email: vendorFormData.email,
+                password: vendorFormData.password,
+                redirect: false,
+            });
+            
+            if (loginRes?.ok) {
+                router.push("/vendor/dashboard");
+                router.refresh();
+            } else {
+                router.push("/login");
+            }
+        } catch (err) {
+            toast.error("Failed to verify OTP");
+        } finally {
+            setVerifyingOTP(false);
+        }
     };
 
     return (
@@ -195,16 +256,27 @@ export default function SignupPage() {
 
                                 <div className="space-y-2">
                                     <Label htmlFor="service-category">Service Category</Label>
-                                    <select id="service-category" {...vendorForm.register("serviceCategory")} className="w-full h-10 px-3 rounded-md border border-gray-200 bg-white">
+                                    <select 
+                                        id="service-category" 
+                                        {...vendorForm.register("serviceCategory")}
+                                        className="w-full h-10 px-3 rounded-md border border-gray-200 bg-white"
+                                    >
                                         <option value="">Select a category</option>
-                                        <option value="venue">Venue</option>
-                                        <option value="photography">Photography</option>
-                                        <option value="catering">Catering</option>
-                                        <option value="decoration">Decoration</option>
-                                        <option value="music">Music/DJ</option>
-                                        <option value="planning">Wedding Planning</option>
+                                        <option value="Venue">Venue</option>
+                                        <option value="Photography">Photography</option>
+                                        <option value="Videography">Videography</option>
+                                        <option value="Catering">Catering</option>
+                                        <option value="Decoration">Decoration</option>
+                                        <option value="Music">Music/DJ</option>
+                                        <option value="Planning">Wedding Planning</option>
+                                        <option value="Makeup">Makeup & Hair</option>
+                                        <option value="Attire">Attire & Fashion</option>
+                                        <option value="Transport">Transportation</option>
+                                        <option value="Multi Service Provider">Multi Service Provider</option>
                                     </select>
-                                    {vendorForm.formState.errors.serviceCategory && <p className="text-xs text-red-500">{vendorForm.formState.errors.serviceCategory.message}</p>}
+                                    {vendorForm.formState.errors.serviceCategory && (
+                                        <p className="text-xs text-red-500">{vendorForm.formState.errors.serviceCategory.message}</p>
+                                    )}
                                 </div>
 
                                 <div className="space-y-2">
@@ -242,6 +314,76 @@ export default function SignupPage() {
                     </div>
                 </CardContent>
             </Card>
+
+            {/* OTP Verification Modal */}
+            {showOTPModal && (
+                <div className="fixed inset-0 bg-black/60 backdrop-blur-sm flex items-center justify-center z-50 p-4">
+                    <Card className="w-full max-w-md bg-white border-gray-200 shadow-2xl">
+                        <CardHeader className="border-b border-gray-200 bg-gray-50">
+                            <div className="flex items-center justify-between">
+                                <CardTitle className="text-lg font-bold text-charcoal">Verify Your Email</CardTitle>
+                                <button
+                                    onClick={() => {
+                                        setShowOTPModal(false);
+                                        setOtp('');
+                                    }}
+                                    disabled={verifyingOTP}
+                                    className="text-gray-500 hover:text-gray-700"
+                                >
+                                    ✕
+                                </button>
+                            </div>
+                        </CardHeader>
+                        <CardContent className="p-6 bg-white">
+                            <p className="text-sm text-gray-600 mb-4">
+                                We've sent a 6-digit OTP to <strong>{vendorEmail}</strong>. Please enter it below to complete your registration.
+                            </p>
+                            <div className="space-y-4">
+                                <Input
+                                    type="text"
+                                    placeholder="Enter 6-digit OTP"
+                                    value={otp}
+                                    onChange={(e) => setOtp(e.target.value.replace(/\D/g, '').slice(0, 6))}
+                                    disabled={verifyingOTP}
+                                    className="border-gray-300 text-center text-2xl tracking-widest font-mono"
+                                    maxLength={6}
+                                />
+                                <div className="flex gap-3">
+                                    <Button
+                                        onClick={handleVerifyOTP}
+                                        disabled={!otp || otp.length !== 6 || verifyingOTP}
+                                        className="flex-1 bg-burgundy hover:bg-burgundy/90 text-white"
+                                    >
+                                        {verifyingOTP ? (
+                                            <>
+                                                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                                                Verifying...
+                                            </>
+                                        ) : (
+                                            'Verify & Create Account'
+                                        )}
+                                    </Button>
+                                </div>
+                                <p className="text-xs text-gray-500 text-center">
+                                    Didn't receive the code?{" "}
+                                    <button
+                                        type="button"
+                                        onClick={() => {
+                                            setShowOTPModal(false);
+                                            setOtp('');
+                                            vendorForm.handleSubmit(onVendorSubmit)();
+                                        }}
+                                        disabled={verifyingOTP}
+                                        className="text-burgundy hover:underline font-medium"
+                                    >
+                                        Resend OTP
+                                    </button>
+                                </p>
+                            </div>
+                        </CardContent>
+                    </Card>
+                </div>
+            )}
         </div>
     );
 }

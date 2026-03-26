@@ -746,3 +746,86 @@ export async function sendAdminOnboardingEmail({
     html,
   });
 }
+
+export async function sendVendorOTPEmail({
+  email,
+  businessName,
+  otp,
+}: {
+  email: string;
+  businessName: string;
+  otp: string;
+}) {
+  const html = `
+    <!DOCTYPE html>
+    <html lang="en">
+    <head><meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" /></head>
+    <body style="margin:0;padding:0;background:#f5f5f5;font-family:'Helvetica Neue',Arial,sans-serif;">
+      <table width="100%" cellpadding="0" cellspacing="0" style="background:#f5f5f5;padding:40px 0;">
+        <tr><td align="center">
+          <table width="600" cellpadding="0" cellspacing="0" style="max-width:600px;width:100%;">
+
+            <!-- Header -->
+            <tr>
+              <td style="background:#8B3A3A;border-radius:12px 12px 0 0;padding:36px 40px;text-align:center;">
+                <p style="margin:0 0 6px;color:rgba(255,255,255,0.7);font-size:13px;letter-spacing:2px;text-transform:uppercase;">Verify Your Email</p>
+                <h1 style="margin:0;color:#fff;font-size:26px;font-weight:700;">Complete Your Vendor Registration</h1>
+              </td>
+            </tr>
+
+            <!-- Body -->
+            <tr>
+              <td style="background:#fff;padding:36px 40px;border:1px solid #e8e8e8;border-top:none;">
+                <p style="margin:0 0 20px;font-size:15px;color:#444;">Hi <strong>${businessName}</strong>,</p>
+                <p style="margin:0 0 28px;font-size:15px;color:#444;line-height:1.6;">
+                  Thank you for signing up as a vendor on Andiza! To complete your registration, please verify your email address using the OTP code below:
+                </p>
+
+                <!-- OTP Code -->
+                <table width="100%" cellpadding="0" cellspacing="0">
+                  <tr><td align="center" style="padding:20px 0;">
+                    <div style="background:#fdf8f4;border:2px solid #8B3A3A;border-radius:12px;padding:24px;display:inline-block;">
+                      <p style="margin:0 0 8px;font-size:13px;color:#888;font-weight:600;text-transform:uppercase;letter-spacing:1px;">Your OTP Code</p>
+                      <p style="margin:0;font-size:36px;color:#8B3A3A;font-weight:700;letter-spacing:8px;font-family:monospace;">${otp}</p>
+                    </div>
+                  </td></tr>
+                </table>
+
+                <!-- Expiry notice -->
+                <div style="background:#fef3c7;border:1px solid #fcd34d;border-radius:8px;padding:16px 20px;margin:28px 0;">
+                  <p style="margin:0;font-size:13px;color:#92400e;line-height:1.6;text-align:center;">
+                    <strong>⏰ This code expires in 10 minutes</strong>
+                  </p>
+                </div>
+
+                <p style="margin:0 0 28px;font-size:14px;color:#555;line-height:1.6;text-align:center;">
+                  Enter this code on the verification page to activate your vendor account and start showcasing your services to couples across Rwanda.
+                </p>
+
+                <p style="margin:0;font-size:13px;color:#999;line-height:1.6;border-top:1px solid #f0f0f0;padding-top:20px;text-align:center;">
+                  If you didn't request this code, please ignore this email.
+                </p>
+              </td>
+            </tr>
+
+            <!-- Footer -->
+            <tr>
+              <td style="background:#f9f9f9;border:1px solid #e8e8e8;border-top:none;border-radius:0 0 12px 12px;padding:20px 40px;text-align:center;">
+                <p style="margin:0;font-size:12px;color:#aaa;">Andiza &mdash; Rwanda's Wedding Planning Platform &bull; Norrsken House Kigali</p>
+              </td>
+            </tr>
+
+          </table>
+        </td></tr>
+      </table>
+    </body>
+    </html>
+  `;
+
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
+    to: email,
+    subject: '🔐 Verify Your Email - Andiza Vendor Registration',
+    html,
+  });
+}

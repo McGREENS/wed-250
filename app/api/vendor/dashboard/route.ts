@@ -16,7 +16,7 @@ export async function GET() {
       const [newVendor] = await db.insert(vendors).values({
         userId: session.user.id,
         businessName: session.user.name || 'My Business',
-        categories: JSON.stringify(['Other']),
+        category: 'Other',
         location: 'Kigali, Rwanda',
         description: '',
         rating: 0,
