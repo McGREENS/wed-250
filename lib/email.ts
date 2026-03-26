@@ -2,12 +2,12 @@ import nodemailer from 'nodemailer';
 
 // Create SMTP transporter
 const transporter = nodemailer.createTransport({
-  host: 'mail.cylacon.com',
-  port: 587,
-  secure: false, // true for 465, false for other ports
+  host: process.env.SMTP_HOST || 'mail.cylacon.com',
+  port: parseInt(process.env.SMTP_PORT || '587'),
+  secure: false,
   auth: {
-    user: 'andiza@cylacon.com',
-    pass: '3fGapSreQA7BhVLJemFs',
+    user: process.env.SMTP_USER || 'andiza@cylacon.com',
+    pass: process.env.SMTP_PASSWORD || '3fGapSreQA7BhVLJemFs',
   },
 });
 
