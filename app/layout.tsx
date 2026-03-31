@@ -22,7 +22,7 @@ const lato = Lato({
 export const metadata = {
   title: 'Andiza | Wedding Planner App & Vendor Marketplace Rwanda',
   description: 'Plan your dream wedding in Rwanda with Andiza. Browse top venues, book trusted vendors, and manage your full wedding plan in one beautiful app. Start free today.',
-  icons: { icon: '/favicon.ico' },
+  icons: { icon: '/favicon.png' },
 };
 
 export default async function RootLayout({
