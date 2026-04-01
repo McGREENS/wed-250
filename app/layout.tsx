@@ -6,6 +6,7 @@ import Providers from '@/app/components/providers';
 import { auth } from "@/auth";
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
 import { generateSEOMetadata, generateOrganizationSchema, generateWebsiteSchema, generateLocalBusinessSchema } from '@/lib/seo';
+import GoogleAnalytics from '@/app/components/GoogleAnalytics';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -47,6 +48,7 @@ export default async function RootLayout({
         />
       </head>
       <body className={`min-h-screen bg-cream ${playfair.variable} ${lato.variable} font-sans antialiased`}>
+        <GoogleAnalytics />
         <Providers>
           {children}
         </Providers>
