@@ -4,7 +4,7 @@ const siteConfig = {
   name: 'Andiza',
   title: 'Andiza - Rwanda\'s Premier Wedding Planning Platform',
   description: 'Plan your dream wedding in Rwanda with Andiza. Browse top venues, book trusted vendors, and manage your entire wedding plan in one place. Simple, stress-free, and purely magical.',
-  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://andiza.rw',
+  url: process.env.NEXT_PUBLIC_SITE_URL || 'https://andiza.co.rw',
   ogImage: '/og-image.png',
   keywords: [
     'wedding planning Rwanda',
@@ -136,7 +136,7 @@ export function generateOrganizationSchema() {
       '@type': 'ContactPoint',
       telephone: '+250-788-123-456',
       contactType: 'Customer Service',
-      email: 'support@andiza.rw',
+      email: 'support@andiza.co.rw',
       availableLanguage: ['English', 'French', 'Kinyarwanda'],
     },
     sameAs: [
