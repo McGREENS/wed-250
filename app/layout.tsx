@@ -5,6 +5,7 @@ import Link from 'next/link';
 import Providers from '@/app/components/providers';
 import { auth } from "@/auth";
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
+import { generateSEOMetadata, generateOrganizationSchema, generateWebsiteSchema, generateLocalBusinessSchema } from '@/lib/seo';
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -19,11 +20,7 @@ const lato = Lato({
   display: 'swap',
 });
 
-export const metadata = {
-  title: 'Andiza | Wedding Planner App & Vendor Marketplace Rwanda',
-  description: 'Plan your dream wedding in Rwanda with Andiza. Browse top venues, book trusted vendors, and manage your full wedding plan in one beautiful app. Start free today.',
-  icons: { icon: '/favicon.ico' },
-};
+export const metadata = generateSEOMetadata({});
 
 export default async function RootLayout({
   children,
@@ -34,7 +31,21 @@ export default async function RootLayout({
 
   return (
     <html lang="en">
-      <head />
+      <head>
+        <link rel="icon" href="/logo.png" />
+        <link rel="apple-touch-icon" href="/logo.png" />
+        <meta name="theme-color" content="#8B3A3A" />
+        <script
+          type="application/ld+json"
+          dangerouslySetInnerHTML={{
+            __html: JSON.stringify([
+              generateOrganizationSchema(),
+              generateWebsiteSchema(),
+              generateLocalBusinessSchema(),
+            ]),
+          }}
+        />
+      </head>
       <body className={`min-h-screen bg-cream ${playfair.variable} ${lato.variable} font-sans antialiased`}>
         <Providers>
           {children}

@@ -1,42 +1,57 @@
 import { MetadataRoute } from 'next'
  
 export default function sitemap(): MetadataRoute.Sitemap {
+  const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'https://andiza.rw';
+  const currentDate = new Date();
+
   return [
     {
-      url: 'https://andiza.rw',
-      lastModified: new Date(),
+      url: baseUrl,
+      lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 1,
     },
     {
-      url: 'https://andiza.rw/venues',
-      lastModified: new Date(),
+      url: `${baseUrl}/venues`,
+      lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: 'https://andiza.rw/vendors',
-      lastModified: new Date(),
+      url: `${baseUrl}/vendors`,
+      lastModified: currentDate,
       changeFrequency: 'daily',
       priority: 0.9,
     },
     {
-      url: 'https://andiza.rw/about',
-      lastModified: new Date(),
+      url: `${baseUrl}/about`,
+      lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.8,
     },
     {
-      url: 'https://andiza.rw/contact',
-      lastModified: new Date(),
+      url: `${baseUrl}/contact`,
+      lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.7,
     },
     {
-      url: 'https://andiza.rw/faq',
-      lastModified: new Date(),
+      url: `${baseUrl}/faq`,
+      lastModified: currentDate,
       changeFrequency: 'monthly',
       priority: 0.6,
+    },
+    {
+      url: `${baseUrl}/signup`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.8,
+    },
+    {
+      url: `${baseUrl}/login`,
+      lastModified: currentDate,
+      changeFrequency: 'monthly',
+      priority: 0.5,
     },
   ]
 }
