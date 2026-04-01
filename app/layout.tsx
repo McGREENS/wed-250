@@ -36,6 +36,9 @@ export default async function RootLayout({
         <link rel="icon" href="/logo.png" />
         <link rel="apple-touch-icon" href="/logo.png" />
         <meta name="theme-color" content="#8B3A3A" />
+        {process.env.NEXT_PUBLIC_BING_VERIFICATION && (
+          <meta name="msvalidate.01" content={process.env.NEXT_PUBLIC_BING_VERIFICATION} />
+        )}
         <script
           type="application/ld+json"
           dangerouslySetInnerHTML={{
