@@ -1,8 +1,9 @@
 "use client";
 
-import { Heart, Menu, X } from 'lucide-react';
+import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
+import Image from 'next/image';
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
 
 export default function PublicLayout({
@@ -21,11 +22,8 @@ export default function PublicLayout({
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12">
           <div className="flex justify-between items-center h-20">
             {/* Logo */}
-            <Link href="/" className="flex items-center gap-2">
-              <div className="bg-gradient-to-r from-burgundy to-gold p-2 rounded-full">
-                <Heart className="w-5 h-5 text-white fill-white" />
-              </div>
-              <span className="text-2xl font-bold text-charcoal">Andiza</span>
+            <Link href="/" className="flex items-center">
+              <Image src="/logo.png" alt="Andiza Logo" width={120} height={120} className="object-contain" />
             </Link>
 
             {/* Desktop Nav */}
@@ -62,11 +60,8 @@ export default function PublicLayout({
         <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
           <div className="grid md:grid-cols-4 gap-12">
             <div>
-              <Link href="/" className="flex items-center gap-2 mb-6">
-                <div className="bg-gradient-to-r from-burgundy to-gold p-1.5 rounded-full">
-                  <Heart className="w-4 h-4 text-white fill-white" />
-                </div>
-                <span className="text-xl font-bold text-charcoal">Andiza</span>
+              <Link href="/" className="flex items-center mb-6">
+                <Image src="/logo.png" alt="Andiza Logo" width={120} height={120} className="object-contain" />
               </Link>
               <p className="text-gray-500 text-sm leading-relaxed">
                 Making wedding planning simple, stress-free, and magical for couples in Rwanda.

@@ -2,6 +2,7 @@
 
 import React, { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname, useRouter } from 'next/navigation';
 import { useSession, signOut } from 'next-auth/react';
 import {
@@ -15,7 +16,6 @@ import {
     LogOut,
     Menu,
     X,
-    Heart,
     Star,
     FileText,
     ChevronLeft,
@@ -68,25 +68,17 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     {/* Logo */}
                     <div className="flex items-center justify-between p-6 border-b border-gray-200">
                         {!collapsed ? (
-                            <Link href="/admin" className="flex items-center gap-2">
-                                <div className="bg-gradient-to-r from-burgundy to-gold p-2 rounded-full">
-                                    <Heart className="w-5 h-5 text-white fill-white" />
-                                </div>
-                                <div>
-                                    <span className="text-xl font-bold text-charcoal">Andiza</span>
-                                    <p className="text-xs text-gray-500">Admin Panel</p>
-                                </div>
+                            <Link href="/admin" className="flex items-center justify-center w-full">
+                                <Image src="/logo.png" alt="Andiza Logo" width={80} height={80} className="object-contain" />
                             </Link>
                         ) : (
                             <Link href="/admin" className="mx-auto">
-                                <div className="bg-gradient-to-r from-burgundy to-gold p-2 rounded-full">
-                                    <Heart className="w-5 h-5 text-white fill-white" />
-                                </div>
+                                <Image src="/logo.png" alt="Andiza Logo" width={40} height={40} className="object-contain" />
                             </Link>
                         )}
                         <button
                             onClick={() => setSidebarOpen(false)}
-                            className="lg:hidden text-gray-500 hover:text-gray-700"
+                            className="lg:hidden text-gray-500 hover:text-gray-700 absolute right-4"
                         >
                             <X className="w-5 h-5" />
                         </button>

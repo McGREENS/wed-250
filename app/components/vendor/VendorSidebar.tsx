@@ -1,8 +1,9 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, MessageSquare, Briefcase, Image, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, Calendar, MessageSquare, Briefcase, Image as ImageIcon, Settings, LogOut, ChevronLeft, ChevronRight } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useSidebar } from './SidebarContext';
 
@@ -15,7 +16,7 @@ export default function VendorSidebar() {
         { name: 'Bookings', href: '/vendor/bookings', icon: Briefcase },
         { name: 'Calendar', href: '/vendor/calendar', icon: Calendar },
         { name: 'Services', href: '/vendor/services', icon: Briefcase },
-        { name: 'Portfolio', href: '/vendor/portfolio', icon: Image },
+        { name: 'Portfolio', href: '/vendor/portfolio', icon: ImageIcon },
         { name: 'Settings', href: '/vendor/settings', icon: Settings },
     ];
 
@@ -23,16 +24,19 @@ export default function VendorSidebar() {
 
     return (
         <div className={`${collapsed ? 'w-20' : 'w-64'} bg-white border-r border-gray-200 h-screen fixed left-0 top-0 flex flex-col transition-all duration-300`}>
-            <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-                {!collapsed && (
-                    <div>
-                        <h2 className="text-xl font-bold text-charcoal">Vendor Portal</h2>
-                        <p className="text-sm text-gray-500 mt-1">Manage your business</p>
-                    </div>
+            <div className="p-6 border-b border-gray-200 flex items-center justify-center relative">
+                {!collapsed ? (
+                    <Link href="/vendor/dashboard" className="flex items-center justify-center w-full">
+                        <Image src="/logo-vendor.png" alt="Vendor Logo" width={120} height={120} className="object-contain" />
+                    </Link>
+                ) : (
+                    <Link href="/vendor/dashboard" className="mx-auto">
+                        <Image src="/logo-vendor.png" alt="Vendor Logo" width={50} height={50} className="object-contain" />
+                    </Link>
                 )}
                 <button
                     onClick={() => setCollapsed(!collapsed)}
-                    className="p-2 hover:bg-sand/30 rounded-lg transition-colors"
+                    className="absolute right-2 p-2 hover:bg-sand/30 rounded-lg transition-colors"
                 >
                     {collapsed ? <ChevronRight className="w-5 h-5" /> : <ChevronLeft className="w-5 h-5" />}
                 </button>
