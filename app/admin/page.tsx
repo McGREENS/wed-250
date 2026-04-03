@@ -144,23 +144,23 @@ export default function AdminDashboardPage() {
         <AdminLayout>
             <div className="p-4 sm:p-6 lg:p-8">
                 {/* Header */}
-                <div className="mb-8">
-                    <h1 className="text-3xl font-bold text-charcoal mb-2">
+                <div className="mb-6 sm:mb-8">
+                    <h1 className="text-2xl sm:text-3xl font-bold text-charcoal mb-2">
                         Dashboard Overview
                     </h1>
-                    <p className="text-gray-600">
+                    <p className="text-sm sm:text-base text-gray-600">
                         Welcome back, {session?.user?.name}! Here's what's happening today.
                     </p>
                 </div>
 
                 {/* Stats Grid */}
-                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+                <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     {statCards.map((stat, index) => {
                         const Icon = stat.icon;
                         const TrendIcon = stat.trend === 'up' ? ArrowUp : ArrowDown;
                         return (
                             <Card key={index} className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-                                <CardContent className="p-6">
+                                <CardContent className="p-4 sm:p-6">
                                     <div className="flex items-center justify-between mb-4">
                                         <div className={`w-12 h-12 bg-gradient-to-br ${stat.color} rounded-xl flex items-center justify-center shadow-lg`}>
                                             <Icon className="w-6 h-6 text-white" />
@@ -171,7 +171,7 @@ export default function AdminDashboardPage() {
                                         </div>
                                     </div>
                                     <p className="text-sm text-gray-600 mb-1">{stat.title}</p>
-                                    <p className="text-2xl font-bold text-charcoal">{stat.value}</p>
+                                    <p className="text-xl sm:text-2xl font-bold text-charcoal">{stat.value}</p>
                                 </CardContent>
                             </Card>
                         );
@@ -179,7 +179,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Charts Row */}
-                <div className="grid lg:grid-cols-2 gap-6 mb-8">
+                <div className="grid lg:grid-cols-2 gap-4 sm:gap-6 mb-6 sm:mb-8">
                     {/* User Distribution */}
                     <Card className="border-gray-100 shadow-sm">
                         <CardHeader className="border-b border-gray-100">
@@ -252,7 +252,7 @@ export default function AdminDashboardPage() {
                 </div>
 
                 {/* Data Tables */}
-                <div className="grid lg:grid-cols-3 gap-6">
+                <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
                     {/* Recent Users */}
                     <Card className="border-gray-100 shadow-sm">
                         <CardHeader className="border-b border-gray-100">

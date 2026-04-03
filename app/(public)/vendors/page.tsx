@@ -7,40 +7,35 @@ export const dynamic = 'force-dynamic';
 export const revalidate = 0;
 
 async function getServices() {
-  const rows = await db
-    .select({
-      id: servicePackages.id,
-      serviceType: servicePackages.serviceType,
-      name: servicePackages.name,
-      description: servicePackages.description,
-      price: servicePackages.price,
-      image: servicePackages.image,
-      features: servicePackages.features,
-      metadata: servicePackages.metadata,
-      active: servicePackages.active,
-      createdAt: servicePackages.createdAt,
-      vendorId: vendors.id,
-      vendorName: vendors.businessName,
-      vendorLocation: vendors.location,
-      vendorRating: vendors.rating,
-      vendorVerified: vendors.verified,
-      vendorFeatured: vendors.featured,
-      vendorPortfolio: vendors.portfolio,
-    })
-    .from(servicePackages)
-    .innerJoin(vendors, eq(servicePackages.vendorId, vendors.id))
-    .where(eq(servicePackages.active, true));
+  try {
+    const rows = await db
+      .select({
+        id: servicePackages.id,
+        serviceType: servicePackages.serviceType,
+        name: servicePackages.name,
+        description: servicePackages.description,
+        price: servicePackages.price,
+        image: servicePackages.image,
+        active: servicePackages.active,
+        createdAt: servicePackages.createdAt,
+        vendorId: vendors.id,
+        vendorName: vendors.businessName,
+        vendorLocation: vendors.location,
+        vendorRating: vendors.rating,
+        vendorVerified: vendors.verified,
+        vendorFeatured: vendors.featured,
+      })
+      .from(servicePackages)
+      .innerJoin(vendors, eq(servicePackages.vendorId, vendors.id))
+      .where(eq(servicePackages.active, true));
 
-  const services = rows
-    .filter((r) => r.serviceType !== 'Venue')
-    .map((r) => ({
-      ...r,
-      features: r.features ? JSON.parse(r.features) : {},
-      metadata: r.metadata ? JSON.parse(r.metadata) : {},
-      vendorPortfolio: r.vendorPortfolio ? JSON.parse(r.vendorPortfolio) : [],
-    }));
+    const services = rows.filter((r) => r.serviceType !== 'Venue');
 
-  return services;
+    return services;
+  } catch (error) {
+    console.error('Error fetching services:', error);
+    return [];
+  }
 }
 
 export default async function VendorsPage() {

@@ -286,10 +286,10 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
   return (
     <VendorPageLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="flex justify-between items-center mb-8">
+        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6 sm:mb-8">
           <div>
-            <h1 className="text-3xl font-bold text-[#2C2C2C]">Bookings</h1>
-            <p className="text-gray-600 mt-1">Manage your client bookings and venue visits</p>
+            <h1 className="text-2xl sm:text-3xl font-bold text-[#2C2C2C]">Bookings</h1>
+            <p className="text-sm sm:text-base text-gray-600 mt-1">Manage your client bookings and venue visits</p>
           </div>
           {activeTab === 'bookings' && (
             <button
@@ -298,19 +298,19 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
                 setFormData({ clientName: '', clientEmail: '', clientPhone: '', eventDate: '', eventType: 'Wedding', servicePackage: '', totalAmount: '', depositAmount: '', notes: '' });
                 setShowDialog(true);
               }}
-              className="bg-[#8B3A3A] text-white px-6 py-3 rounded-lg hover:bg-[#6d2e2e] flex items-center gap-2"
+              className="bg-[#8B3A3A] text-white px-4 sm:px-6 py-2.5 sm:py-3 rounded-lg hover:bg-[#6d2e2e] flex items-center justify-center gap-2 text-sm sm:text-base w-full sm:w-auto"
             >
-              <Plus className="w-5 h-5" />
+              <Plus className="w-4 h-4 sm:w-5 sm:h-5" />
               Add Booking
             </button>
           )}
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg w-fit">
+        <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg overflow-x-auto">
           <button
             onClick={() => setActiveTab('bookings')}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
               activeTab === 'bookings' ? 'bg-white text-[#8B3A3A] shadow-sm' : 'text-gray-600 hover:text-gray-800'
             }`}
           >
@@ -321,7 +321,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
           </button>
           <button
             onClick={() => setActiveTab('tours')}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
               activeTab === 'tours' ? 'bg-white text-[#8B3A3A] shadow-sm' : 'text-gray-600 hover:text-gray-800'
             }`}
           >
@@ -334,7 +334,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
           </button>
           <button
             onClick={() => setActiveTab('quotes')}
-            className={`px-5 py-2 rounded-md text-sm font-medium transition-colors ${
+            className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
               activeTab === 'quotes' ? 'bg-white text-[#8B3A3A] shadow-sm' : 'text-gray-600 hover:text-gray-800'
             }`}
           >
@@ -351,57 +351,57 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
         {activeTab === 'bookings' && (
           <div className="grid gap-4">
             {bookings.map((booking) => (
-              <div key={booking.id} className="bg-white rounded-lg shadow-sm p-6 border border-[#E6E2DD]">
-                <div className="flex justify-between items-start">
-                  <div className="flex-1">
-                    <div className="flex items-center gap-3 mb-3">
-                      <h3 className="text-xl font-semibold text-[#2C2C2C]">{booking.clientName}</h3>
-                      <span className={`px-3 py-1 rounded-full text-sm font-medium ${getStatusColor(booking.status)}`}>
+              <div key={booking.id} className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-[#E6E2DD]">
+                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                  <div className="flex-1 min-w-0">
+                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                      <h3 className="text-lg sm:text-xl font-semibold text-[#2C2C2C]">{booking.clientName}</h3>
+                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(booking.status)}`}>
                         {booking.status}
                       </span>
                     </div>
-                    <div className="grid md:grid-cols-2 gap-4 text-sm text-gray-600">
+                    <div className="grid gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
                       <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[#8B3A3A]" />
-                        <span>{new Date(booking.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                        <Calendar className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
+                        <span className="break-words">{new Date(booking.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
                       </div>
                       {booking.clientPhone && (
                         <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-[#8B3A3A]" />
-                          <span>{booking.clientPhone}</span>
+                          <Phone className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
+                          <span className="break-all">{booking.clientPhone}</span>
                         </div>
                       )}
                       {booking.clientEmail && (
                         <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-[#8B3A3A]" />
-                          <span>{booking.clientEmail}</span>
+                          <Mail className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
+                          <span className="break-all">{booking.clientEmail}</span>
                         </div>
                       )}
                       {booking.totalAmount && (
                         <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-[#8B3A3A]" />
+                          <DollarSign className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
                           <span>{booking.totalAmount.toLocaleString()} RWF</span>
                           {booking.depositAmount && <span className="text-gray-400">({booking.depositAmount.toLocaleString()} RWF deposit)</span>}
                         </div>
                       )}
                     </div>
                     {booking.servicePackage && (
-                      <div className="mt-3 text-sm">
+                      <div className="mt-3 text-xs sm:text-sm">
                         <span className="font-medium text-[#2C2C2C]">Service: </span>
                         <span className="text-gray-600">{booking.servicePackage}</span>
                       </div>
                     )}
                     {booking.notes && (
-                      <div className="mt-3 text-sm text-gray-600 bg-gray-50 p-3 rounded">{booking.notes}</div>
+                      <div className="mt-3 text-xs sm:text-sm text-gray-600 bg-gray-50 p-3 rounded break-words">{booking.notes}</div>
                     )}
                   </div>
-                  <div className="flex gap-2 ml-4">
-                    <div className="relative">
+                  <div className="flex sm:flex-col gap-2 sm:ml-4">
+                    <div className="relative flex-1 sm:flex-none">
                       <select
                         value={booking.status}
                         onChange={(e) => handleStatusChange(booking.id, e.target.value)}
                         disabled={updatingStatusId === booking.id}
-                        className="px-3 py-1 border border-gray-300 rounded text-sm disabled:opacity-50"
+                        className="w-full px-2 sm:px-3 py-1 border border-gray-300 rounded text-xs sm:text-sm disabled:opacity-50"
                       >
                         <option value="pending">Pending</option>
                         <option value="confirmed">Confirmed</option>

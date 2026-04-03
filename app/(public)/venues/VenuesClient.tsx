@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useState, useEffect } from 'react';
-import { Search, Filter, MapPin, ChevronDown, ChevronUp, Grid, List, Map, Users } from 'lucide-react';
+import { Search, Filter, MapPin, ChevronDown, ChevronUp, Grid, List, Map, Users, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import VenueCard from '@/app/components/venues/VenueCard';
 import EmptyState from '@/app/components/common/EmptyState';
@@ -29,6 +29,7 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
         features: true
     });
     const [favoriteVenueIds, setFavoriteVenueIds] = useState<string[]>([]);
+    const [showMobileFilters, setShowMobileFilters] = useState(false);
 
     const venues = initialVenues.map((venue: any) => ({
         ...venue,
@@ -239,13 +240,40 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
             </section>
 
             <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
+                {/* Mobile Filter Button */}
+                <button
+                    onClick={() => setShowMobileFilters(true)}
+                    className="lg:hidden fixed bottom-6 right-6 z-40 bg-burgundy text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 font-semibold"
+                >
+                    <Filter className="w-5 h-5" />
+                    Filters
+                </button>
+
+                {/* Mobile Filter Backdrop */}
+                {showMobileFilters && (
+                    <div
+                        className="lg:hidden fixed inset-0 bg-black/50 z-40"
+                        onClick={() => setShowMobileFilters(false)}
+                    />
+                )}
+
                 <div className="grid lg:grid-cols-4 gap-8">
                     {/* Filters Sidebar */}
-                    <div className="lg:col-span-1">
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-24">
-                            <div className="flex items-center gap-2 mb-6">
-                                <Filter className="w-5 h-5 text-burgundy" />
-                                <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
+                    <div className={`lg:col-span-1 ${
+                        showMobileFilters ? 'fixed inset-y-0 left-0 z-50 w-80 transform translate-x-0' : 'hidden lg:block'
+                    }`}>
+                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 lg:sticky lg:top-24 h-full lg:h-auto overflow-y-auto">
+                            <div className="flex items-center justify-between mb-6">
+                                <div className="flex items-center gap-2">
+                                    <Filter className="w-5 h-5 text-burgundy" />
+                                    <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
+                                </div>
+                                <button
+                                    onClick={() => setShowMobileFilters(false)}
+                                    className="lg:hidden text-gray-500 hover:text-gray-700"
+                                >
+                                    <X className="w-5 h-5" />
+                                </button>
                             </div>
 
                             <div className="space-y-4">
@@ -378,10 +406,19 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
                                         setSelectedCapacity('all');
                                         setSelectedFeatures([]);
                                         setSearchQuery('');
+                                        setShowMobileFilters(false);
                                     }}
                                     className="w-full text-sm text-burgundy hover:text-burgundy-light font-medium py-2 border border-burgundy rounded-lg hover:bg-burgundy hover:text-white transition-colors"
                                 >
                                     Clear All Filters
+                                </button>
+                                
+                                {/* Apply button for mobile */}
+                                <button
+                                    onClick={() => setShowMobileFilters(false)}
+                                    className="lg:hidden w-full mt-2 bg-burgundy text-white py-2 rounded-lg font-medium"
+                                >
+                                    Apply Filters
                                 </button>
                             </div>
                         </div>
@@ -389,44 +426,29 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
 
                     {/* Venues Grid */}
                     <div className="lg:col-span-3">
-                        <div className="flex justify-between items-center mb-6">
+                        <div className="flex flex-col sm:flex-row sm:justify-between sm:items-center gap-4 mb-6">
                             <p className="text-charcoal">
                                 <span className="font-semibold">{filteredVenues.length}</span> venues found
                             </p>
-                            <div className="flex items-center gap-4">
-                                <Select value={sortBy} onValueChange={setSortBy}>
-                                    <SelectTrigger className="w-32 border-gray-200">
-                                        <SelectValue />
-                                    </SelectTrigger>
-                                    <SelectContent>
-                                        <SelectItem value="featured">Featured</SelectItem>
-                                        <SelectItem value="price-low">Price: Low to High</SelectItem>
-                                        <SelectItem value="price-high">Price: High to Low</SelectItem>
-                                        <SelectItem value="capacity">Capacity</SelectItem>
-                                        <SelectItem value="name">Name</SelectItem>
-                                    </SelectContent>
-                                </Select>
-                                
-                                <div className="flex items-center border border-gray-200 rounded-lg">
-                                    <button
-                                        onClick={() => setViewMode('grid')}
-                                        className={`p-2 ${viewMode === 'grid' ? 'bg-burgundy text-white' : 'text-gray-600 hover:text-burgundy'}`}
-                                    >
-                                        <Grid className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('list')}
-                                        className={`p-2 ${viewMode === 'list' ? 'bg-burgundy text-white' : 'text-gray-600 hover:text-burgundy'}`}
-                                    >
-                                        <List className="w-4 h-4" />
-                                    </button>
-                                    <button
-                                        onClick={() => setViewMode('map')}
-                                        className={`p-2 ${viewMode === 'map' ? 'bg-burgundy text-white' : 'text-gray-600 hover:text-burgundy'}`}
-                                    >
-                                        <Map className="w-4 h-4" />
-                                    </button>
-                                </div>
+                            <div className="flex items-center border border-gray-200 rounded-lg">
+                                <button
+                                    onClick={() => setViewMode('grid')}
+                                    className={`p-2 ${viewMode === 'grid' ? 'bg-burgundy text-white' : 'text-gray-600 hover:text-burgundy'}`}
+                                >
+                                    <Grid className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('list')}
+                                    className={`p-2 ${viewMode === 'list' ? 'bg-burgundy text-white' : 'text-gray-600 hover:text-burgundy'}`}
+                                >
+                                    <List className="w-4 h-4" />
+                                </button>
+                                <button
+                                    onClick={() => setViewMode('map')}
+                                    className={`p-2 ${viewMode === 'map' ? 'bg-burgundy text-white' : 'text-gray-600 hover:text-burgundy'}`}
+                                >
+                                    <Map className="w-4 h-4" />
+                                </button>
                             </div>
                         </div>
 

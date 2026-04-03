@@ -195,30 +195,30 @@ export default function VendorDashboardPage() {
       <div className="max-w-7xl mx-auto space-y-8">
 
         {/* Header */}
-        <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+        <div className="flex flex-col gap-4">
           <div>
-            <h1 className="text-3xl font-bold text-charcoal">
+            <h1 className="text-2xl sm:text-3xl font-bold text-charcoal">
               {greeting}, {vendor.businessName}!
             </h1>
-            <p className="text-gray-500 mt-1 text-sm">
+            <p className="text-gray-500 mt-1 text-xs sm:text-sm">
               {today.toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}
             </p>
           </div>
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center gap-2">
             {vendor.verified && (
-              <Badge className="bg-green-100 text-green-700 border-green-200 gap-1">
+              <Badge className="bg-green-100 text-green-700 border-green-200 gap-1 text-xs">
                 <CheckCircle className="w-3 h-3" /> Verified
               </Badge>
             )}
             {stats.pendingTours > 0 && (
               <Link href="/vendor/bookings?tab=tours">
-                <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 gap-1 cursor-pointer">
+                <Badge className="bg-yellow-100 text-yellow-700 border-yellow-200 gap-1 cursor-pointer text-xs">
                   <AlertCircle className="w-3 h-3" /> {stats.pendingTours} tour {stats.pendingTours === 1 ? 'request' : 'requests'}
                 </Badge>
               </Link>
             )}
-            <Link href="/vendor/bookings">
-              <Button className="bg-burgundy hover:bg-burgundy/90 text-white">
+            <Link href="/vendor/bookings" className="flex-1 sm:flex-none">
+              <Button className="bg-burgundy hover:bg-burgundy/90 text-white w-full sm:w-auto text-sm">
                 <Plus className="w-4 h-4 mr-2" /> New Booking
               </Button>
             </Link>
@@ -244,17 +244,17 @@ export default function VendorDashboardPage() {
         )}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
           {/* Revenue */}
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-sm text-gray-500">Total Revenue</p>
-                <div className="w-9 h-9 bg-green-50 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-4 h-4 text-green-600" />
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <p className="text-xs sm:text-sm text-gray-500">Total Revenue</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-50 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-charcoal mb-1">
+              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
                 {stats.totalRevenue > 0 ? `${fmt(stats.totalRevenue)} RWF` : '—'}
               </p>
               <ChangeChip value={stats.revenueChange} />
@@ -263,42 +263,42 @@ export default function VendorDashboardPage() {
 
           {/* Bookings */}
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-sm text-gray-500">Total Bookings</p>
-                <div className="w-9 h-9 bg-burgundy/10 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-4 h-4 text-burgundy" />
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <p className="text-xs sm:text-sm text-gray-500">Total Bookings</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-burgundy" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-charcoal mb-1">{stats.totalBookings}</p>
+              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">{stats.totalBookings}</p>
               <span className="text-xs text-yellow-600 font-medium">{stats.pendingBookings} pending</span>
             </CardContent>
           </Card>
 
           {/* Services */}
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-sm text-gray-500">Active Services</p>
-                <div className="w-9 h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Package className="w-4 h-4 text-blue-600" />
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <p className="text-xs sm:text-sm text-gray-500">Active Services</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-50 rounded-lg flex items-center justify-center">
+                  <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-charcoal mb-1">{stats.activeServices}</p>
+              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">{stats.activeServices}</p>
               <Link href="/vendor/services" className="text-xs text-blue-600 hover:underline">Manage services →</Link>
             </CardContent>
           </Card>
 
           {/* Rating */}
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-5">
-              <div className="flex items-start justify-between mb-3">
-                <p className="text-sm text-gray-500">Avg. Rating</p>
-                <div className="w-9 h-9 bg-yellow-50 rounded-lg flex items-center justify-center">
-                  <Star className="w-4 h-4 text-yellow-500" />
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <p className="text-xs sm:text-sm text-gray-500">Avg. Rating</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-yellow-50 rounded-lg flex items-center justify-center">
+                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
                 </div>
               </div>
-              <p className="text-2xl font-bold text-charcoal mb-1">
+              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
                 {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '—'}
               </p>
               <span className="text-xs text-gray-400">{stats.reviewCount} review{stats.reviewCount !== 1 ? 's' : ''}</span>
@@ -307,7 +307,7 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Chart + Profile Score */}
-        <div className="grid lg:grid-cols-3 gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
 
           {/* Revenue Chart */}
           <Card className="lg:col-span-2 border-gray-100 shadow-sm">
@@ -325,7 +325,7 @@ export default function VendorDashboardPage() {
                 </div>
               </div>
             </CardHeader>
-            <CardContent className="pt-4 pb-5 px-5">
+            <CardContent className="pt-4 pb-5 px-3 sm:px-5">
               {maxRevenue === 0 ? (
                 <div className="h-52 flex flex-col items-center justify-center text-gray-400 gap-2">
                   <TrendingUp className="w-10 h-10 text-gray-200" />
@@ -353,10 +353,10 @@ export default function VendorDashboardPage() {
 
           {/* Profile Score */}
           <Card className="border-gray-100 shadow-sm">
-            <CardHeader className="pb-2">
-              <CardTitle className="text-base font-semibold text-charcoal">Profile Strength</CardTitle>
+            <CardHeader className="pb-2 px-4 sm:px-6">
+              <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Profile Strength</CardTitle>
             </CardHeader>
-            <CardContent className="space-y-4">
+            <CardContent className="space-y-4 px-4 sm:px-6">
               <div className="flex flex-col items-center py-2">
                 <div className="relative w-28 h-28">
                   <svg className="w-28 h-28 -rotate-90" viewBox="0 0 100 100">
@@ -399,21 +399,21 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Upcoming Bookings + Recent Activity */}
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Upcoming Bookings */}
           <Card className="border-gray-100 shadow-sm">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 px-4 sm:px-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-charcoal">Upcoming Events</CardTitle>
+                <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Upcoming Events</CardTitle>
                 <Link href="/vendor/calendar">
                   <Button variant="ghost" size="sm" className="text-burgundy text-xs gap-1">
-                    Calendar <ArrowRight className="w-3 h-3" />
+                    <span className="hidden sm:inline">Calendar</span> <ArrowRight className="w-3 h-3" />
                   </Button>
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 px-4 sm:px-6">
               {upcomingBookings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
                   <CalendarDays className="w-10 h-10 text-gray-200" />
@@ -453,17 +453,17 @@ export default function VendorDashboardPage() {
 
           {/* Recent Bookings */}
           <Card className="border-gray-100 shadow-sm">
-            <CardHeader className="pb-3">
+            <CardHeader className="pb-3 px-4 sm:px-6">
               <div className="flex items-center justify-between">
-                <CardTitle className="text-base font-semibold text-charcoal">Recent Bookings</CardTitle>
+                <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Recent Bookings</CardTitle>
                 <Link href="/vendor/bookings">
                   <Button variant="ghost" size="sm" className="text-burgundy text-xs gap-1">
-                    View all <ArrowRight className="w-3 h-3" />
+                    <span className="hidden sm:inline">View all</span> <ArrowRight className="w-3 h-3" />
                   </Button>
                 </Link>
               </div>
             </CardHeader>
-            <CardContent className="space-y-3">
+            <CardContent className="space-y-3 px-4 sm:px-6">
               {recentBookings.length === 0 ? (
                 <div className="flex flex-col items-center justify-center py-10 text-gray-400 gap-2">
                   <Calendar className="w-10 h-10 text-gray-200" />
@@ -513,11 +513,11 @@ export default function VendorDashboardPage() {
 
         {/* Quick Actions */}
         <Card className="border-gray-100 shadow-sm">
-          <CardHeader className="pb-3">
-            <CardTitle className="text-base font-semibold text-charcoal">Quick Actions</CardTitle>
+          <CardHeader className="pb-3 px-4 sm:px-6">
+            <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Quick Actions</CardTitle>
           </CardHeader>
-          <CardContent>
-            <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          <CardContent className="px-4 sm:px-6">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3">
               {[
                 { label: 'New Booking', desc: 'Add a client booking', icon: Plus, href: '/vendor/bookings', color: 'bg-burgundy/10 text-burgundy' },
                 { label: 'Add Service', desc: 'Create a new package', icon: Package, href: '/vendor/services', color: 'bg-blue-50 text-blue-600' },

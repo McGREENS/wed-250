@@ -1,10 +1,12 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight, Building2, Store, UserCog } from 'lucide-react';
+import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight, Building2, Store, UserCog, Menu, X } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useUserSidebar } from './UserSidebarContext';
+import { useState } from 'react';
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
@@ -19,37 +21,92 @@ const navItems = [
 export default function UserSidebar() {
   const pathname = usePathname();
   const { collapsed, setCollapsed } = useUserSidebar();
+  const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-50 ${collapsed ? 'w-20' : 'w-64'}`}>
-      <div className="flex flex-col h-full">
-        <div className="p-6 border-b border-gray-200 flex items-center justify-between">
-          {!collapsed && <h2 className="text-xl font-serif text-burgundy">Andiza</h2>}
-          <button onClick={() => setCollapsed(!collapsed)} className="p-2 hover:bg-sand/30 rounded-lg transition-colors">
-            {collapsed ? <ChevronRight className="w-5 h-5 text-charcoal" /> : <ChevronLeft className="w-5 h-5 text-charcoal" />}
-          </button>
-        </div>
+    <>
+      {/* Mobile Menu Button */}
+      <button
+        onClick={() => setMobileOpen(true)}
+        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+      >
+        <Menu className="w-6 h-6 text-charcoal" />
+      </button>
 
-        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
-          {navItems.map((item) => {
-            const Icon = item.icon;
-            const isActive = pathname === item.href;
-            return (
-              <Link key={item.href} href={item.href} className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${isActive ? 'bg-burgundy text-white' : 'text-charcoal hover:bg-sand/30'}`}>
-                <Icon className="w-5 h-5 flex-shrink-0" />
-                {!collapsed && <span className="text-sm font-medium">{item.label}</span>}
+      {/* Mobile Backdrop */}
+      {mobileOpen && (
+        <div
+          className="lg:hidden fixed inset-0 bg-black/50 z-40"
+          onClick={() => setMobileOpen(false)}
+        />
+      )}
+
+      {/* Sidebar */}
+      <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-50 ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      } lg:translate-x-0 ${
+        collapsed ? 'lg:w-20' : 'lg:w-64'
+      } w-64`}>
+        <div className="flex flex-col h-full">
+          <div className="p-6 border-b border-gray-200 flex items-center justify-center relative">
+            {!collapsed ? (
+              <Link href="/dashboard" className="flex items-center justify-center w-full" onClick={() => setMobileOpen(false)}>
+                <Image src="/logo-couple.png" alt="Andiza Logo" width={120} height={120} className="object-contain" priority />
               </Link>
-            );
-          })}
-        </nav>
+            ) : (
+              <Link href="/dashboard" className="mx-auto" onClick={() => setMobileOpen(false)}>
+                <Image src="/icon-couple.png" alt="Andiza Icon" width={40} height={40} className="object-contain" priority />
+              </Link>
+            )}
+            {/* Close button for mobile */}
+            <button
+              onClick={() => setMobileOpen(false)}
+              className="lg:hidden absolute right-2 p-2 hover:bg-sand/30 rounded-lg transition-colors"
+            >
+              <X className="w-5 h-5" />
+            </button>
+            {/* Collapse button for desktop */}
+            <button
+              onClick={() => setCollapsed(!collapsed)}
+              className="hidden lg:block absolute right-2 p-2 hover:bg-sand/30 rounded-lg transition-colors"
+            >
+              {collapsed ? <ChevronRight className="w-5 h-5 text-charcoal" /> : <ChevronLeft className="w-5 h-5 text-charcoal" />}
+            </button>
+          </div>
 
-        <div className="p-4 border-t border-gray-200">
-          <button onClick={() => signOut({ callbackUrl: '/' })} className="flex items-center gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full">
-            <LogOut className="w-5 h-5 flex-shrink-0" />
-            {!collapsed && <span className="text-sm font-medium">Logout</span>}
-          </button>
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+            {navItems.map((item) => {
+              const Icon = item.icon;
+              const isActive = pathname === item.href;
+              return (
+                <Link
+                  key={item.href}
+                  href={item.href}
+                  onClick={() => setMobileOpen(false)}
+                  className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-lg transition-colors ${
+                    isActive ? 'bg-burgundy text-white' : 'text-charcoal hover:bg-sand/30'
+                  }`}
+                  title={collapsed ? item.label : ''}
+                >
+                  <Icon className="w-5 h-5 flex-shrink-0" />
+                  <span className={`text-sm font-medium ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
+                </Link>
+              );
+            })}
+          </nav>
+
+          <div className="p-4 border-t border-gray-200">
+            <button
+              onClick={() => signOut({ callbackUrl: '/' })}
+              className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full`}
+              title={collapsed ? 'Logout' : ''}
+            >
+              <LogOut className="w-5 h-5 flex-shrink-0" />
+              <span className={`text-sm font-medium ${collapsed ? 'lg:hidden' : ''}`}>Logout</span>
+            </button>
+          </div>
         </div>
-      </div>
-    </aside>
+      </aside>
+    </>
   );
 }

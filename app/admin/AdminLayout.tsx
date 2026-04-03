@@ -32,10 +32,6 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     const navigation = [
         { name: 'Dashboard', href: '/admin', icon: LayoutDashboard },
         { name: 'Users', href: '/admin/users', icon: Users },
-        { name: 'Vendors', href: '/admin/vendors', icon: ShoppingBag },
-        { name: 'Bookings', href: '/admin/bookings', icon: Calendar },
-        { name: 'Venues', href: '/admin/venues', icon: Building2 },
-        { name: 'Reviews', href: '/admin/reviews', icon: Star },
         { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
         { name: 'Reports', href: '/admin/reports', icon: FileText },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
@@ -69,11 +65,11 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                     <div className="flex items-center justify-between p-6 border-b border-gray-200">
                         {!collapsed ? (
                             <Link href="/admin" className="flex items-center justify-center w-full">
-                                <Image src="/logo.png" alt="Andiza Logo" width={80} height={80} className="object-contain" />
+                                <Image src="/logo.png" alt="Andiza Logo" width={120} height={120} className="object-contain" priority />
                             </Link>
                         ) : (
                             <Link href="/admin" className="mx-auto">
-                                <Image src="/logo.png" alt="Andiza Logo" width={40} height={40} className="object-contain" />
+                                <Image src="/logo.png" alt="Andiza Logo" width={50} height={50} className="object-contain" priority />
                             </Link>
                         )}
                         <button

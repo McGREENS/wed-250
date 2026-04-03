@@ -124,19 +124,19 @@ export default function DashboardClient() {
   return (
     <UserPageLayout>
       <div className="max-w-7xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-3xl font-serif text-charcoal mb-2">
+        <div className="mb-6 sm:mb-8">
+          <h1 className="text-2xl sm:text-3xl font-serif text-charcoal mb-2">
             Welcome Back{stats.coupleNames ? `, ${stats.coupleNames}` : ''}!
           </h1>
           {stats.weddingDate ? (
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               Your wedding is on {new Date(stats.weddingDate).toLocaleDateString()} - {stats.daysUntilWedding} days to go!
               <Link href="/dashboard/wedding-settings" className="ml-2 text-burgundy hover:underline text-sm">
                 (Edit)
               </Link>
             </p>
           ) : (
-            <p className="text-gray-600">
+            <p className="text-sm sm:text-base text-gray-600">
               <Link href="/dashboard/wedding-settings" className="text-burgundy hover:underline">
                 Set your wedding date
               </Link> to see countdown and planning timeline.
@@ -144,32 +144,32 @@ export default function DashboardClient() {
           )}
         </div>
 
-        <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 sm:gap-6 mb-6 sm:mb-8">
           {dashboardStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
               <Card key={index} className="border-gray-100 shadow-sm">
-                <CardContent className="p-6">
+                <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start justify-between mb-2">
-                    <p className="text-sm text-gray-600">{stat.label}</p>
-                    <div className={`w-10 h-10 bg-gray-100 rounded-lg flex items-center justify-center ${stat.color}`}>
-                      <Icon className="w-5 h-5" />
+                    <p className="text-xs sm:text-sm text-gray-600">{stat.label}</p>
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center ${stat.color}`}>
+                      <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                   </div>
-                  <p className="text-2xl font-bold text-charcoal">{stat.value}</p>
+                  <p className="text-xl sm:text-2xl font-bold text-charcoal">{stat.value}</p>
                 </CardContent>
               </Card>
             );
           })}
         </div>
 
-        <div className="grid lg:grid-cols-3 gap-6 mb-8">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
           <Card className="lg:col-span-2 border-gray-100 shadow-sm">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-charcoal mb-4">Wedding Countdown</h3>
-              <div className="text-center py-8 bg-gradient-to-br from-burgundy/10 to-gold/10 rounded-lg mb-6">
-                <div className="text-6xl font-bold text-burgundy mb-2">{stats.daysUntilWedding}</div>
-                <p className="text-gray-600">Days Until Your Big Day</p>
+            <CardContent className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Wedding Countdown</h3>
+              <div className="text-center py-6 sm:py-8 bg-gradient-to-br from-burgundy/10 to-gold/10 rounded-lg mb-4 sm:mb-6">
+                <div className="text-4xl sm:text-6xl font-bold text-burgundy mb-2">{stats.daysUntilWedding}</div>
+                <p className="text-sm sm:text-base text-gray-600">Days Until Your Big Day</p>
               </div>
               <div className="space-y-3">
                 <div>
@@ -189,13 +189,13 @@ export default function DashboardClient() {
           </Card>
 
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-6">
-              <h3 className="text-lg font-semibold text-charcoal mb-4">Budget Summary</h3>
-              <div className="text-center mb-6">
-                <div className="text-3xl font-bold text-burgundy mb-1">
+            <CardContent className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Budget Summary</h3>
+              <div className="text-center mb-4 sm:mb-6">
+                <div className="text-2xl sm:text-3xl font-bold text-burgundy mb-1">
                   RWF {(stats.totalSpent / 1000000).toFixed(1)}M
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-xs sm:text-sm text-gray-600">
                   of RWF {(stats.totalBudget / 1000000).toFixed(1)}M {stats.totalBudget > 0 ? 'budgeted' : 'spent'}
                 </p>
               </div>
@@ -225,11 +225,11 @@ export default function DashboardClient() {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-6">
+        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-charcoal">Upcoming Tasks</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-charcoal">Upcoming Tasks</h3>
                 <Link href="/dashboard/checklist">
                   <Button variant="ghost" size="sm" className="text-burgundy">View all</Button>
                 </Link>
@@ -259,9 +259,9 @@ export default function DashboardClient() {
           </Card>
 
           <Card className="border-gray-100 shadow-sm">
-            <CardContent className="p-6">
+            <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
-                <h3 className="text-lg font-semibold text-charcoal">Recent Bookings</h3>
+                <h3 className="text-base sm:text-lg font-semibold text-charcoal">Recent Bookings</h3>
                 <Link href="/dashboard/bookings">
                   <Button variant="ghost" size="sm" className="text-burgundy">View all</Button>
                 </Link>
@@ -296,19 +296,19 @@ export default function DashboardClient() {
           </Card>
         </div>
 
-        <Card className="border-gray-100 shadow-sm mt-6">
-          <CardContent className="p-6">
-            <h3 className="text-lg font-semibold text-charcoal mb-4">Quick Actions</h3>
-            <div className="grid md:grid-cols-3 gap-3">
+        <Card className="border-gray-100 shadow-sm mt-4 sm:mt-6">
+          <CardContent className="p-4 sm:p-6">
+            <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Quick Actions</h3>
+            <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
               {quickActions.map((action, i) => {
                 const Icon = action.icon;
                 return (
                   <Link key={i} href={action.href}>
-                    <button className="w-full flex items-center gap-3 p-4 bg-sand/20 rounded-lg hover:bg-sand/40 transition-colors text-left">
-                      <div className={`w-12 h-12 ${action.color} rounded-lg flex items-center justify-center`}>
-                        <Icon className="w-6 h-6 text-white" />
+                    <button className="w-full flex items-center gap-3 p-3 sm:p-4 bg-sand/20 rounded-lg hover:bg-sand/40 transition-colors text-left">
+                      <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
+                        <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>
-                      <span className="font-medium text-charcoal">{action.title}</span>
+                      <span className="text-sm sm:text-base font-medium text-charcoal">{action.title}</span>
                     </button>
                   </Link>
                 );
