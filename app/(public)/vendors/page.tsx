@@ -26,8 +26,7 @@ async function getServices() {
         vendorFeatured: vendors.featured,
       })
       .from(servicePackages)
-      .innerJoin(vendors, eq(servicePackages.vendorId, vendors.id))
-      .where(eq(servicePackages.active, true));
+      .innerJoin(vendors, eq(servicePackages.vendorId, vendors.id));
 
     const services = rows.filter((r) => r.serviceType !== 'Venue');
 

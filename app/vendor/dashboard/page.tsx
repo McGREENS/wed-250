@@ -389,7 +389,7 @@ export default function VendorDashboardPage() {
                 </div>
               )}
 
-              <Link href="/vendor/profile">
+              <Link href="/vendor/settings">
                 <Button className="w-full bg-burgundy hover:bg-burgundy/90 text-white text-sm mt-2">
                   {profileScore === 100 ? 'View Profile' : 'Complete Profile'}
                 </Button>
@@ -522,7 +522,7 @@ export default function VendorDashboardPage() {
                 { label: 'New Booking', desc: 'Add a client booking', icon: Plus, href: '/vendor/bookings', color: 'bg-burgundy/10 text-burgundy' },
                 { label: 'Add Service', desc: 'Create a new package', icon: Package, href: '/vendor/services', color: 'bg-blue-50 text-blue-600' },
                 { label: 'View Calendar', desc: 'Manage availability', icon: CalendarDays, href: '/vendor/calendar', color: 'bg-green-50 text-green-600' },
-                { label: 'Edit Profile', desc: 'Update your listing', icon: Eye, href: '/vendor/profile', color: 'bg-yellow-50 text-yellow-600' },
+                { label: 'Edit Profile', desc: 'Update your listing', icon: Eye, href: '/vendor/settings', color: 'bg-yellow-50 text-yellow-600' },
               ].map(a => {
                 const Icon = a.icon;
                 return (
