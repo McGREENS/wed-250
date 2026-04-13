@@ -124,6 +124,9 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
             venue.location?.toLowerCase().includes(searchQuery.toLowerCase());
         const matchesType = selectedVenueType === 'all' || venue.venue_type?.toLowerCase() === selectedVenueType.toLowerCase();
         
+        const matchesLocation = selectedLocation === 'all-kigali' || 
+            venue.location?.toLowerCase().includes(selectedLocation.toLowerCase());
+        
         const matchesPrice = selectedPriceRange === 'all' || (() => {
             const range = priceRanges.find(r => r.id === selectedPriceRange);
             if (!range) return true;
@@ -141,7 +144,7 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
         const matchesFeatures = selectedFeatures.length === 0 ||
             selectedFeatures.every(f => venue.features?.includes(f));
         
-        return matchesSearch && matchesType && matchesPrice && matchesCapacity && matchesFeatures;
+        return matchesSearch && matchesType && matchesLocation && matchesPrice && matchesCapacity && matchesFeatures;
     });
 
     const toggleSection = (section: string) => {
@@ -171,24 +174,24 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
                     backdrop for your special day.
                 </p>
 
-                <div className="mt-10 flex justify-center">
-                    <div className="flex items-center space-x-4 p-2 bg-white rounded-full shadow-lg max-w-2xl w-full">
+                <div className="mt-10 flex justify-center px-4">
+                    <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 sm:gap-0 sm:space-x-4 p-3 sm:p-2 bg-white rounded-2xl sm:rounded-full shadow-lg max-w-2xl w-full">
                         <div className="flex items-center flex-grow">
-                            <Search className="h-5 w-5 text-gray-400 ml-3" />
+                            <Search className="h-5 w-5 text-gray-400 ml-3 flex-shrink-0" />
                             <input
                                 type="text"
-                                placeholder="Search for venues by name or location..."
+                                placeholder="Search venues..."
                                 value={searchQuery}
                                 onChange={(e) => setSearchQuery(e.target.value)}
-                                className="flex-grow border-none focus:ring-0 px-3 py-2 text-gray-700 rounded-full"
+                                className="flex-grow border-none focus:ring-0 px-3 py-2 text-gray-700 rounded-full bg-transparent outline-none"
                             />
                         </div>
-                        <div className="flex items-center border-l border-gray-200 pl-4">
-                            <MapPin className="h-5 w-5 text-gray-400" />
+                        <div className="flex items-center sm:border-l sm:border-gray-200 sm:pl-4 border-t sm:border-t-0 border-gray-200 pt-3 sm:pt-0">
+                            <MapPin className="h-5 w-5 text-gray-400 ml-3 sm:ml-0 flex-shrink-0" />
                             <select 
                                 value={selectedLocation}
                                 onChange={(e) => setSelectedLocation(e.target.value)}
-                                className="border-none focus:ring-0 pr-3 py-2 text-gray-700 bg-transparent"
+                                className="border-none focus:ring-0 px-3 py-2 text-gray-700 bg-transparent flex-grow outline-none"
                             >
                                 <option value="all-kigali">All Kigali</option>
                                 <option value="nyarutarama">Nyarutarama</option>
@@ -200,7 +203,7 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
                             </select>
                         </div>
                         <button 
-                            className="bg-burgundy text-white px-6 py-3 rounded-full font-semibold shadow-md hover:bg-burgundy-light transition-colors"
+                            className="bg-burgundy text-white px-6 py-3 rounded-full font-semibold shadow-md hover:bg-burgundy-light transition-colors w-full sm:w-auto"
                         >
                             Search
                         </button>
@@ -404,6 +407,7 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
                                         setSelectedVenueType('all');
                                         setSelectedPriceRange('all');
                                         setSelectedCapacity('all');
+                                        setSelectedLocation('all-kigali');
                                         setSelectedFeatures([]);
                                         setSearchQuery('');
                                         setShowMobileFilters(false);
@@ -474,6 +478,7 @@ export default function VenuesClient({ initialVenues }: VenuesClientProps) {
                                     setSelectedVenueType('all');
                                     setSelectedPriceRange('all');
                                     setSelectedCapacity('all');
+                                    setSelectedLocation('all-kigali');
                                     setSelectedFeatures([]);
                                     setSearchQuery('');
                                 }}
