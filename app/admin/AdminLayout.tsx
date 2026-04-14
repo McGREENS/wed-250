@@ -20,6 +20,7 @@ import {
     FileText,
     ChevronLeft,
     ChevronRight,
+    Trash2,
 } from 'lucide-react';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
@@ -35,6 +36,10 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
         { name: 'Messages', href: '/admin/messages', icon: MessageSquare },
         { name: 'Reports', href: '/admin/reports', icon: FileText },
         { name: 'Settings', href: '/admin/settings', icon: Settings },
+    ];
+
+    const dangerZone = [
+        { name: 'Clear Data', href: '/admin/clear-data', icon: Trash2 },
     ];
 
     const handleSignOut = async () => {
@@ -105,6 +110,34 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
                                 );
                             })}
                         </ul>
+
+                        {/* Danger Zone */}
+                        <div className="mt-6 pt-6 border-t border-gray-200">
+                            {!collapsed && <p className="text-xs font-semibold text-red-600 uppercase tracking-wider px-4 mb-2">Danger Zone</p>}
+                            <ul className="space-y-1">
+                                {dangerZone.map((item) => {
+                                    const Icon = item.icon;
+                                    const isActive = pathname === item.href;
+                                    return (
+                                        <li key={item.name}>
+                                            <Link
+                                                href={item.href}
+                                                onClick={() => setSidebarOpen(false)}
+                                                className={`flex items-center gap-3 px-4 py-3 rounded-lg transition-colors ${
+                                                    isActive
+                                                        ? 'bg-red-600 text-white'
+                                                        : 'text-red-600 hover:bg-red-50'
+                                                } ${collapsed ? 'justify-center' : ''}`}
+                                                title={collapsed ? item.name : ''}
+                                            >
+                                                <Icon className="w-5 h-5 flex-shrink-0" />
+                                                {!collapsed && <span className="font-medium">{item.name}</span>}
+                                            </Link>
+                                        </li>
+                                    );
+                                })}
+                            </ul>
+                        </div>
                     </nav>
 
                     {/* User info & logout */}
