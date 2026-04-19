@@ -5,6 +5,7 @@ import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
+import { CookieConsent } from '@/app/components/CookieConsent';
 
 export default function PublicLayout({
   children,
@@ -86,11 +87,11 @@ export default function PublicLayout({
             </div>
 
             <div>
-              <h4 className="font-serif text-lg text-charcoal mb-6">Contact</h4>
+              <h4 className="font-serif text-lg text-charcoal mb-6">Legal</h4>
               <ul className="space-y-4 text-sm text-gray-500">
-                <li>support@andiza.rw</li>
-                <li>+250 788 123 456</li>
-                <li>Kigali, Rwanda</li>
+                <li><Link href="/privacy" className="hover:text-burgundy">Privacy Policy</Link></li>
+                <li><Link href="/cookies" className="hover:text-burgundy">Cookie Policy</Link></li>
+                <li><Link href="/terms" className="hover:text-burgundy">Terms of Service</Link></li>
               </ul>
             </div>
           </div>
@@ -100,6 +101,9 @@ export default function PublicLayout({
           </div>
         </div>
       </footer>
+
+      {/* Cookie Consent Banner */}
+      <CookieConsent />
     </>
   );
 }
