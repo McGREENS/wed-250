@@ -125,7 +125,7 @@ export async function PUT(req: NextRequest) {
               totalAmount: Number(rawTotal),
               depositAmount: rawDeposit ? Number(rawDeposit) : null,
               servicePackage: updateData.servicePackage ?? booking.servicePackage,
-              dashboardUrl: `${process.env.NEXTAUTH_URL || 'http://localhost:3000'}/dashboard/bookings`,
+              dashboardUrl: `${process.env.NEXTAUTH_URL || 'https://www.andiza.co.rw'}/dashboard/bookings`,
             });
           } catch (e) { console.error('Quote accepted email failed:', e); }
         }

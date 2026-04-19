@@ -64,7 +64,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date(),
     } as any);
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'http://localhost:3000';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.andiza.co.rw';
 
     // Send emails — never throw, just log
     await Promise.allSettled([
