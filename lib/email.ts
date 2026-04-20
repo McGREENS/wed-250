@@ -43,7 +43,7 @@ export async function sendWelcomeEmail(email: string, name: string, role: "COUPL
           <li>Build your portfolio and collect reviews</li>
           <li>Connect with couples planning their special day</li>
         </ul>
-        <p>Get started now: <a href="http://andiza.co.rw/vendor/dashboard" style="color: #8B3A3A;">Visit your vendor dashboard</a></p>
+        <p>Get started now: <a href="https://andiza.co.rw/login" style="color: #8B3A3A;">Visit your vendor dashboard</a></p>
         <p>Best regards,<br/>The Andiza Team<br/>Norrsken House Kigali</p>
       </div>
     `;

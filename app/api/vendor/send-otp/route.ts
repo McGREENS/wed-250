@@ -8,7 +8,10 @@ import { sendVendorOTPEmail } from '@/lib/email';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { businessName, email, phone, serviceCategory, password } = body;
+    const { businessName, email, phone, serviceCategory, otherCategory, password } = body;
+
+    // Use otherCategory if serviceCategory is "Other"
+    const finalCategory = serviceCategory === "Other" && otherCategory ? otherCategory : serviceCategory;
 
     // Check if email already exists
     const [existingUser] = await db.select().from(users).where(eq(users.email, email)).limit(1);
@@ -31,7 +34,7 @@ export async function POST(req: NextRequest) {
       businessName,
       email,
       phone,
-      serviceCategory,
+      serviceCategory: finalCategory,
       password: hashedPassword,
       otp,
       expiresAt,

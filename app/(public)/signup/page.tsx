@@ -31,11 +31,20 @@ const VendorSignupSchema = z.object({
     email: z.string().email("Invalid email address"),
     phone: z.string().min(10, "Valid phone number is required"),
     serviceCategory: z.string().min(1, "Service category is required"),
+    otherCategory: z.string().optional(),
     password: z.string().min(6, "Password must be at least 6 characters"),
     confirmPassword: z.string().min(6, "Confirm Password is required"),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
+}).refine((data) => {
+    if (data.serviceCategory === "Other" && !data.otherCategory) {
+        return false;
+    }
+    return true;
+}, {
+    message: "Please specify your service category",
+    path: ["otherCategory"],
 });
 
 type CoupleFormValues = z.infer<typeof CoupleSignupSchema>;
@@ -60,8 +69,10 @@ export default function SignupPage() {
 
     const vendorForm = useForm<VendorFormValues>({
         resolver: zodResolver(VendorSignupSchema),
-        defaultValues: { businessName: "", email: "", phone: "", serviceCategory: "", password: "", confirmPassword: "" },
+        defaultValues: { businessName: "", email: "", phone: "", serviceCategory: "", otherCategory: "", password: "", confirmPassword: "" },
     });
+
+    const selectedCategory = vendorForm.watch("serviceCategory");
 
     const onCoupleSubmit = (values: CoupleFormValues) => {
         setError(null);
@@ -273,11 +284,26 @@ export default function SignupPage() {
                                         <option value="Attire">Attire & Fashion</option>
                                         <option value="Transport">Transportation</option>
                                         <option value="Multi Service Provider">Multi Service Provider</option>
+                                        <option value="Other">Other</option>
                                     </select>
                                     {vendorForm.formState.errors.serviceCategory && (
                                         <p className="text-xs text-red-500">{vendorForm.formState.errors.serviceCategory.message}</p>
                                     )}
                                 </div>
+
+                                {selectedCategory === "Other" && (
+                                    <div className="space-y-2">
+                                        <Label htmlFor="other-category">Specify Your Service Category</Label>
+                                        <Input 
+                                            id="other-category" 
+                                            placeholder="e.g., Florist, Invitations, etc." 
+                                            {...vendorForm.register("otherCategory")} 
+                                        />
+                                        {vendorForm.formState.errors.otherCategory && (
+                                            <p className="text-xs text-red-500">{vendorForm.formState.errors.otherCategory.message}</p>
+                                        )}
+                                    </div>
+                                )}
 
                                 <div className="space-y-2">
                                     <Label htmlFor="vendor-password">Password</Label>

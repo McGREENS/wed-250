@@ -121,7 +121,7 @@ function EditableField({
             </>
           ) : (
             <Button size="sm" variant="ghost" onClick={() => { setDraft(value); setEditing(true); }}
-              className="h-8 px-2 text-gray-300 hover:text-burgundy opacity-0 group-hover:opacity-100 transition-opacity">
+              className="h-8 px-2 text-gray-400 hover:text-burgundy md:opacity-0 md:group-hover:opacity-100 transition-opacity">
               <Pencil className="w-3.5 h-3.5" />
             </Button>
           )}
