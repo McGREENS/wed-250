@@ -69,7 +69,7 @@ export default function ContactPage() {
         {
             icon: Phone,
             title: 'Call Us',
-            value: '+250 789 118 823',
+            value: '+250 792 247 504',
             description: 'Mon-Fri 9am-6pm EAT'
         },
         {
@@ -169,7 +169,7 @@ export default function ContactPage() {
                                                 </label>
                                                 <Input
                                                     type="tel"
-                                                    placeholder="+250 789 118 823"
+                                                    placeholder="+250 792 247 504"
                                                     value={formData.phone}
                                                     onChange={(e) => handleInputChange('phone', e.target.value)}
                                                     className="border-gray-200"

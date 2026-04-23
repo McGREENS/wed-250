@@ -23,6 +23,7 @@ const SERVICE_TYPES = [
     { value: "Makeup",       label: "Hair & Makeup",         icon: Sparkles, border: "border-rose-200",   bg: "bg-rose-50",   iconCls: "bg-rose-100 text-rose-700",    desc: "Bridal beauty & grooming services" },
     { value: "Attire",       label: "Attire & Fashion",      icon: Shirt,    border: "border-teal-200",   bg: "bg-teal-50",   iconCls: "bg-teal-100 text-teal-700",    desc: "Bridal gowns, suits & accessories" },
     { value: "Transport",    label: "Transport",             icon: Car,      border: "border-slate-200",  bg: "bg-slate-50",  iconCls: "bg-slate-100 text-slate-700",  desc: "Wedding cars, buses & chauffeurs" },
+    { value: "Other",        label: "Other Services",        icon: Sparkles, border: "border-gray-200",   bg: "bg-gray-50",   iconCls: "bg-gray-100 text-gray-700",    desc: "Custom or specialized services" },
 ];
 
 // Shared image-upload hook
@@ -135,11 +136,16 @@ export default function ServiceCreationWizard({ onComplete, onCancel, editMode =
         amenities: initialData?.metadata ? JSON.parse(initialData.metadata).amenities : '',
     } : {});
     const [isSubmitting, setIsSubmitting] = useState(false);
+    const [customServiceType, setCustomServiceType] = useState("");
 
     const handleTypeSelect = (type: string) => {
         setSelectedType(type);
         setCurrentStep(1);
-        setFormData({ serviceType: type });
+        if (type === "Other" && customServiceType) {
+            setFormData({ serviceType: customServiceType });
+        } else {
+            setFormData({ serviceType: type });
+        }
     };
 
     const handleBack = () => {
@@ -220,18 +226,38 @@ export default function ServiceCreationWizard({ onComplete, onCancel, editMode =
                     <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
                         {SERVICE_TYPES.map((type) => {
                             const Icon = type.icon;
+                            const isOther = type.value === "Other";
                             return (
-                                <button
-                                    key={type.value}
-                                    onClick={() => handleTypeSelect(type.value)}
-                                    className={`p-4 border-2 ${type.border} ${type.bg} rounded-xl hover:border-burgundy hover:shadow-md transition-all text-left group`}
-                                >
-                                    <div className={`inline-flex p-2.5 rounded-lg ${type.iconCls} mb-3`}>
-                                        <Icon className="w-5 h-5" />
-                                    </div>
-                                    <h3 className="font-semibold text-sm text-charcoal group-hover:text-burgundy transition-colors leading-tight">{type.label}</h3>
-                                    <p className="text-[11px] text-gray-500 mt-1 leading-tight">{type.desc}</p>
-                                </button>
+                                <div key={type.value} className="relative">
+                                    <button
+                                        onClick={() => !isOther && handleTypeSelect(type.value)}
+                                        disabled={isOther}
+                                        className={`w-full p-4 border-2 ${type.border} ${type.bg} rounded-xl hover:border-burgundy hover:shadow-md transition-all text-left group ${isOther ? 'cursor-default' : ''}`}
+                                    >
+                                        <div className={`inline-flex p-2.5 rounded-lg ${type.iconCls} mb-3`}>
+                                            <Icon className="w-5 h-5" />
+                                        </div>
+                                        <h3 className="font-semibold text-sm text-charcoal group-hover:text-burgundy transition-colors leading-tight">{type.label}</h3>
+                                        <p className="text-[11px] text-gray-500 mt-1 leading-tight">{type.desc}</p>
+                                    </button>
+                                    {isOther && (
+                                        <div className="mt-2 space-y-2">
+                                            <Input
+                                                value={customServiceType}
+                                                onChange={(e) => setCustomServiceType(e.target.value)}
+                                                placeholder="Enter service type"
+                                                className="text-sm"
+                                            />
+                                            <Button
+                                                onClick={() => customServiceType && handleTypeSelect("Other")}
+                                                disabled={!customServiceType}
+                                                className="w-full bg-burgundy hover:bg-burgundy/90 text-white text-sm h-9"
+                                            >
+                                                Continue
+                                            </Button>
+                                        </div>
+                                    )}
+                                </div>
                             );
                         })}
                     </div>

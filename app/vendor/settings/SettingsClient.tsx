@@ -17,6 +17,7 @@ const PRICE_LABELS: Record<string, string> = {
   moderate: "Moderate (RWF 500K – 2M)",
   premium: "Premium (RWF 2M – 5M)",
   luxury: "Luxury (RWF 5M+)",
+  custom: "Custom",
 };
 
 const CATEGORY_LABELS: Record<string, string> = {
@@ -26,6 +27,7 @@ const CATEGORY_LABELS: Record<string, string> = {
   decoration: "Decoration",
   music: "Music / DJ",
   planning: "Wedding Planning",
+  other: "Other",
 };
 
 // ── Password strength ──────────────────────────────────────────────────────
@@ -151,6 +153,9 @@ export default function VendorSettingsClient({ initialData }: any) {
     location: v?.location || "",
     priceRange: v?.priceRange || "",
   });
+
+  const [otherCategory, setOtherCategory] = useState("");
+  const [customPriceRange, setCustomPriceRange] = useState("");
 
   const saveField = async (field: string, value: string) => {
     const res = await fetch("/api/vendor/settings", {
@@ -315,17 +320,28 @@ export default function VendorSettingsClient({ initialData }: any) {
 
               <EditableField
                 label="Service Category" icon={Tag} value={profile.category}
-                onSave={v => saveField("category", v)}
+                onSave={v => saveField("category", v === "other" && otherCategory ? otherCategory : v)}
                 renderDisplay={val => val
                   ? <span className="inline-flex items-center gap-1.5 px-2.5 py-1 bg-burgundy/8 text-burgundy text-xs font-medium rounded-full">{CATEGORY_LABELS[val] || val}</span>
                   : <span className="text-gray-300 italic">Not set</span>}
               >
                 {(draft, setDraft) => (
-                  <select value={draft} onChange={e => setDraft(e.target.value)} autoFocus
-                    className="w-full h-9 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30">
-                    <option value="">Select a category</option>
-                    {Object.entries(CATEGORY_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                  </select>
+                  <div className="space-y-2">
+                    <select value={draft} onChange={e => setDraft(e.target.value)} autoFocus
+                      className="w-full h-9 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30">
+                      <option value="">Select a category</option>
+                      {Object.entries(CATEGORY_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                    </select>
+                    {draft === "other" && (
+                      <Input
+                        type="text"
+                        placeholder="Enter your custom category"
+                        value={otherCategory}
+                        onChange={e => setOtherCategory(e.target.value)}
+                        className="text-sm h-9"
+                      />
+                    )}
+                  </div>
                 )}
               </EditableField>
 
@@ -339,17 +355,28 @@ export default function VendorSettingsClient({ initialData }: any) {
 
               <EditableField
                 label="Price Range" icon={BadgeDollarSign} value={profile.priceRange}
-                onSave={v => saveField("priceRange", v)}
+                onSave={v => saveField("priceRange", v === "custom" && customPriceRange ? customPriceRange : v)}
                 renderDisplay={val => val
                   ? <span className="flex items-center gap-1.5 text-sm text-charcoal"><CreditCard className="w-3.5 h-3.5 text-gray-400" />{PRICE_LABELS[val] || val}</span>
                   : <span className="text-gray-300 italic">Not set</span>}
               >
                 {(draft, setDraft) => (
-                  <select value={draft} onChange={e => setDraft(e.target.value)} autoFocus
-                    className="w-full h-9 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30">
-                    <option value="">Select price range</option>
-                    {Object.entries(PRICE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
-                  </select>
+                  <div className="space-y-2">
+                    <select value={draft} onChange={e => setDraft(e.target.value)} autoFocus
+                      className="w-full h-9 px-3 rounded-md border border-gray-200 bg-white text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30">
+                      <option value="">Select price range</option>
+                      {Object.entries(PRICE_LABELS).map(([k, l]) => <option key={k} value={k}>{l}</option>)}
+                    </select>
+                    {draft === "custom" && (
+                      <Input
+                        type="text"
+                        placeholder="Enter your custom price range (e.g., RWF 1M - 3M)"
+                        value={customPriceRange}
+                        onChange={e => setCustomPriceRange(e.target.value)}
+                        className="text-sm h-9"
+                      />
+                    )}
+                  </div>
                 )}
               </EditableField>
 
