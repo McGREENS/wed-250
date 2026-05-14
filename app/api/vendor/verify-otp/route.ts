@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, vendors, pendingVendorSignups } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { users, vendors, pendingVendorSignups, referrals } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 import { sendWelcomeEmail } from '@/lib/email';
 
 export async function POST(req: NextRequest) {
@@ -50,6 +50,39 @@ export async function POST(req: NextRequest) {
 
     // Delete pending signup
     await db.delete(pendingVendorSignups).where(eq(pendingVendorSignups.email, email));
+
+    // Handle referral if exists
+    if (pending.metadata) {
+      try {
+        const metadata = JSON.parse(pending.metadata);
+        if (metadata.referralCode && user) {
+          const [referral] = await db
+            .select()
+            .from(referrals)
+            .where(
+              and(
+                eq(referrals.referralCode, metadata.referralCode),
+                eq(referrals.status, 'PENDING')
+              )
+            )
+            .limit(1);
+
+          if (referral) {
+            await db
+              .update(referrals)
+              .set({
+                status: 'ACCEPTED' as const,
+                referredUserId: user.id,
+                acceptedAt: new Date(),
+                updatedAt: new Date(),
+              } as any)
+              .where(eq(referrals.id, referral.id));
+          }
+        }
+      } catch (e) {
+        console.error('Error handling referral:', e);
+      }
+    }
 
     // Send welcome email
     try {

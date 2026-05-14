@@ -8,7 +8,7 @@ import { sendVendorOTPEmail } from '@/lib/email';
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json();
-    const { businessName, email, phone, serviceCategory, otherCategory, password } = body;
+    const { businessName, email, phone, serviceCategory, otherCategory, password, referralCode } = body;
 
     // Use otherCategory if serviceCategory is "Other"
     const finalCategory = serviceCategory === "Other" && otherCategory ? otherCategory : serviceCategory;
@@ -38,6 +38,7 @@ export async function POST(req: NextRequest) {
       password: hashedPassword,
       otp,
       expiresAt,
+      metadata: referralCode ? JSON.stringify({ referralCode }) : null,
     } as any);
 
     // Send OTP email

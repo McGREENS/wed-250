@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight, Building2, Store, UserCog, Menu, X } from 'lucide-react';
+import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight, Building2, Store, UserCog, Menu, X, MessageSquare, UserPlus } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useUserSidebar } from './UserSidebarContext';
 import { useState } from 'react';
@@ -11,8 +11,10 @@ import { useState } from 'react';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/bookings', label: 'My Bookings', icon: Calendar },
+  { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/favorites', label: 'Favorites', icon: Heart },
   { href: '/dashboard/wedding-settings', label: 'Wedding Settings', icon: UserCog },
+  { href: '/dashboard/referrals', label: 'Referrals', icon: UserPlus },
   { href: '/venues', label: 'Browse Venues', icon: Building2 },
   { href: '/vendors', label: 'Browse Vendors', icon: Store },
   { href: '/dashboard/settings', label: 'Account Settings', icon: Settings },

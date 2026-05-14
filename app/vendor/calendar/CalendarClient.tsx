@@ -27,11 +27,25 @@ export default function CalendarClient({ initialData }: any) {
         return { daysInMonth, startingDayOfWeek };
     };
 
-    const formatDate = (date: Date) => date.toISOString().split('T')[0];
+    const formatDate = (date: Date) => {
+        const year = date.getFullYear();
+        const month = String(date.getMonth() + 1).padStart(2, '0');
+        const day = String(date.getDate()).padStart(2, '0');
+        return `${year}-${month}-${day}`;
+    };
 
-    const isDateBooked = (dateStr: string) => bookedDates.some((d: any) => formatDate(new Date(d.eventDate)) === dateStr);
+    const isDateBooked = (dateStr: string) => bookedDates.some((d: any) => {
+        // Parse the stored date and format it consistently
+        const storedDate = new Date(d.eventDate);
+        const storedDateStr = formatDate(storedDate);
+        return storedDateStr === dateStr;
+    });
     const isDateBlocked = (dateStr: string) => blockedDates.includes(dateStr);
-    const getEventForDate = (dateStr: string) => bookedDates.find((d: any) => formatDate(new Date(d.eventDate)) === dateStr);
+    const getEventForDate = (dateStr: string) => bookedDates.find((d: any) => {
+        const storedDate = new Date(d.eventDate);
+        const storedDateStr = formatDate(storedDate);
+        return storedDateStr === dateStr;
+    });
 
     const handleBlockDate = async () => {
         if (!selectedDate) return;

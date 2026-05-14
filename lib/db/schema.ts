@@ -215,7 +215,48 @@ export const pendingVendorSignups = sqliteTable("pending_vendor_signups", {
   password: text("password").notNull(), // hashed
   otp: text("otp").notNull(),
   expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  metadata: text("metadata"), // JSON for referral code
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Conversations table (chat threads between vendor and couple)
+export const conversations = sqliteTable("conversations", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  coupleId: text("couple_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  bookingId: text("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+  lastMessageAt: integer("last_message_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Messages table
+export const messages = sqliteTable("messages", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  conversationId: text("conversation_id").notNull().references(() => conversations.id, { onDelete: "cascade" }),
+  senderId: text("sender_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  content: text("content").notNull(),
+  read: integer("read", { mode: "boolean" }).default(false),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Referrals table
+export const referrals = sqliteTable("referrals", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  referrerId: text("referrer_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  referralCode: text("referral_code").notNull().unique(),
+  referredEmail: text("referred_email").notNull(),
+  referredName: text("referred_name"),
+  referredRole: text("referred_role", { enum: ["COUPLE", "VENDOR"] }).notNull(),
+  referredUserId: text("referred_user_id").references(() => users.id, { onDelete: "set null" }),
+  status: text("status", { enum: ["PENDING", "ACCEPTED", "EXPIRED", "CANCELLED"] }).default("PENDING").notNull(),
+  emailSent: integer("email_sent", { mode: "boolean" }).default(false),
+  emailSentAt: integer("email_sent_at", { mode: "timestamp" }),
+  acceptedAt: integer("accepted_at", { mode: "timestamp" }),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  metadata: text("metadata"), // JSON for additional data
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
 // Relations
@@ -229,6 +270,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   vendor: many(vendors),
   venueTours: many(venueTours),
   tasks: many(tasks),
+  invoices: many(invoices),
 }));
 
 export const vendorsRelations = relations(vendors, ({ one, many }) => ({
@@ -237,6 +279,7 @@ export const vendorsRelations = relations(vendors, ({ one, many }) => ({
   bookings: many(bookings),
   reviews: many(reviews),
   servicePackages: many(servicePackages),
+  invoices: many(invoices),
 }));
 
 export const venuesRelations = relations(venues, ({ one, many }) => ({
@@ -279,4 +322,56 @@ export const servicePackagesRelations = relations(servicePackages, ({ one }) => 
 
 export const tasksRelations = relations(tasks, ({ one }) => ({
   user: one(users, { fields: [tasks.userId], references: [users.id] }),
+}));
+
+export const conversationsRelations = relations(conversations, ({ one, many }) => ({
+  vendor: one(vendors, { fields: [conversations.vendorId], references: [vendors.id] }),
+  couple: one(users, { fields: [conversations.coupleId], references: [users.id] }),
+  booking: one(bookings, { fields: [conversations.bookingId], references: [bookings.id] }),
+  messages: many(messages),
+}));
+
+export const messagesRelations = relations(messages, ({ one }) => ({
+  conversation: one(conversations, { fields: [messages.conversationId], references: [conversations.id] }),
+  sender: one(users, { fields: [messages.senderId], references: [users.id] }),
+}));
+
+export const referralsRelations = relations(referrals, ({ one }) => ({
+  referrer: one(users, { fields: [referrals.referrerId], references: [users.id] }),
+  referredUser: one(users, { fields: [referrals.referredUserId], references: [users.id] }),
+}));
+
+// Invoices table
+export const invoices = sqliteTable("invoices", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  invoiceNumber: text("invoice_number").notNull().unique(),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  bookingId: text("booking_id").references(() => bookings.id, { onDelete: "set null" }),
+  clientId: text("client_id").references(() => users.id, { onDelete: "set null" }),
+  clientName: text("client_name").notNull(),
+  clientEmail: text("client_email").notNull(),
+  clientPhone: text("client_phone"),
+  clientAddress: text("client_address"),
+  issueDate: integer("issue_date", { mode: "timestamp" }).notNull(),
+  dueDate: integer("due_date", { mode: "timestamp" }).notNull(),
+  subtotal: real("subtotal").notNull(),
+  taxRate: real("tax_rate").default(18),
+  taxAmount: real("tax_amount").notNull(),
+  discount: real("discount").default(0),
+  total: real("total").notNull(),
+  status: text("status", { enum: ["DRAFT", "SENT", "PAID", "OVERDUE", "CANCELLED"] }).default("DRAFT").notNull(),
+  color: text("color").default("#8B4513"),
+  notes: text("notes"),
+  terms: text("terms"),
+  items: text("items").notNull(), // JSON array of invoice items
+  paidAt: integer("paid_at", { mode: "timestamp" }),
+  sentAt: integer("sent_at", { mode: "timestamp" }),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+export const invoicesRelations = relations(invoices, ({ one }) => ({
+  vendor: one(vendors, { fields: [invoices.vendorId], references: [vendors.id] }),
+  booking: one(bookings, { fields: [invoices.bookingId], references: [bookings.id] }),
+  client: one(users, { fields: [invoices.clientId], references: [users.id] }),
 }));

@@ -55,6 +55,7 @@ export default function ServiceDetailPage() {
     const [service, setService] = useState<any>(null);
     const [vendor, setVendor] = useState<any>(null);
     const [otherServices, setOtherServices] = useState<any[]>([]);
+    const [bookedDates, setBookedDates] = useState<string[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
     const [favLoading, setFavLoading] = useState(false);
@@ -65,6 +66,9 @@ export default function ServiceDetailPage() {
     const [bookingLoading, setBookingLoading] = useState(false);
     const [bookingForm, setBookingForm] = useState({ clientName: '', clientEmail: '', clientPhone: '', eventDate: '', notes: '' });
     const [bookingError, setBookingError] = useState('');
+    const [showMessageModal, setShowMessageModal] = useState(false);
+    const [messageText, setMessageText] = useState('');
+    const [sendingMessage, setSendingMessage] = useState(false);
 
     const handleBook = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -85,10 +89,50 @@ export default function ServiceDetailPage() {
             if (!res.ok) { setBookingError(data.error || 'Failed to submit booking'); return; }
             setBookingDone(true);
             toast.success('Booking request sent!');
+            // Clear the form after successful submission
+            setBookingForm({ 
+                clientName: session?.user?.name || '', 
+                clientEmail: session?.user?.email || '', 
+                clientPhone: '', 
+                eventDate: '', 
+                notes: '' 
+            });
         } catch {
             setBookingError('Something went wrong. Please try again.');
         } finally {
             setBookingLoading(false);
+        }
+    };
+
+    const handleSendMessage = async () => {
+        if (!messageText.trim()) return;
+        if (!session?.user) {
+            toast.error('Please login to send messages');
+            return;
+        }
+
+        setSendingMessage(true);
+        try {
+            const res = await fetch('/api/messages', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    vendorId,
+                    content: messageText.trim(),
+                }),
+            });
+
+            if (res.ok) {
+                toast.success('Message sent successfully!');
+                setMessageText('');
+                setShowMessageModal(false);
+            } else {
+                toast.error('Failed to send message');
+            }
+        } catch {
+            toast.error('Something went wrong');
+        } finally {
+            setSendingMessage(false);
         }
     };
 
@@ -103,6 +147,19 @@ export default function ServiceDetailPage() {
             .catch(console.error)
             .finally(() => setIsLoading(false));
     }, [serviceId]);
+
+    // Fetch vendor's booked dates
+    useEffect(() => {
+        if (!vendorId) return;
+        fetch(`/api/vendors/booked-dates?vendorId=${vendorId}`)
+            .then((r) => r.json())
+            .then((d) => {
+                if (d.bookedDates) {
+                    setBookedDates(d.bookedDates);
+                }
+            })
+            .catch(console.error);
+    }, [vendorId]);
 
     useEffect(() => {
         if (!session?.user) return;
@@ -457,6 +514,13 @@ export default function ServiceDetailPage() {
                                 >
                                     Book This Package
                                 </Button>
+                                <Button
+                                    onClick={() => setShowMessageModal(true)}
+                                    variant="outline"
+                                    className="w-full rounded-xl h-11 border-burgundy text-burgundy hover:bg-burgundy hover:text-white text-sm"
+                                >
+                                    Contact Vendor
+                                </Button>
                                 <Link href={`/vendors/${vendorId}`}>
                                     <Button variant="outline" className="w-full rounded-xl h-11 border-gray-200 text-charcoal hover:border-burgundy hover:text-burgundy text-sm">
                                         View Vendor Profile
@@ -609,9 +673,19 @@ export default function ServiceDetailPage() {
                                             type="date"
                                             min={new Date().toISOString().split('T')[0]}
                                             value={bookingForm.eventDate}
-                                            onChange={(e) => setBookingForm({ ...bookingForm, eventDate: e.target.value })}
+                                            onChange={(e) => {
+                                                const selectedDate = e.target.value;
+                                                if (bookedDates.includes(selectedDate)) {
+                                                    toast.error('This date is already booked. Please select another date.');
+                                                    return;
+                                                }
+                                                setBookingForm({ ...bookingForm, eventDate: selectedDate });
+                                            }}
                                             className="w-full px-4 py-2.5 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy"
                                         />
+                                        {bookedDates.length > 0 && (
+                                            <p className="text-xs text-gray-400 mt-1.5">Some dates are unavailable (already booked)</p>
+                                        )}
                                     </div>
                                     <div className="col-span-2">
                                         <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1.5">Notes <span className="text-gray-300 normal-case font-normal">optional</span></label>
@@ -646,6 +720,49 @@ export default function ServiceDetailPage() {
                                 <p className="text-xs text-gray-400 text-center">You&apos;ll receive a confirmation email. The vendor will contact you to finalise details.</p>
                             </form>
                         )}
+                    </div>
+                </div>
+            )}
+
+            {/* Message Modal */}
+            {showMessageModal && (
+                <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-sm flex items-center justify-center p-4" onClick={() => setShowMessageModal(false)}>
+                    <div className="bg-white rounded-2xl shadow-2xl w-full max-w-lg" onClick={(e) => e.stopPropagation()}>
+                        <div className="bg-gradient-to-br from-burgundy to-burgundy/80 px-6 py-5">
+                            <div className="flex items-start justify-between">
+                                <div>
+                                    <p className="text-white/70 text-xs font-semibold uppercase tracking-widest mb-1">Contact Vendor</p>
+                                    <h2 className="text-white font-bold text-lg leading-tight">{vendor.businessName}</h2>
+                                    <p className="text-white/70 text-sm mt-0.5">{service.name}</p>
+                                </div>
+                                <button onClick={() => setShowMessageModal(false)} className="text-white/70 hover:text-white text-xl leading-none mt-0.5">✕</button>
+                            </div>
+                        </div>
+                        <div className="px-6 py-5">
+                            <label className="block text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">Your Message *</label>
+                            <textarea
+                                rows={6}
+                                value={messageText}
+                                onChange={(e) => setMessageText(e.target.value)}
+                                placeholder="Hi! I'm interested in your services. Can we discuss...?"
+                                className="w-full px-4 py-3 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-burgundy/30 focus:border-burgundy resize-none"
+                            />
+                            <div className="flex gap-3 mt-4">
+                                <Button
+                                    onClick={handleSendMessage}
+                                    disabled={!messageText.trim() || sendingMessage}
+                                    className="flex-1 bg-burgundy hover:bg-burgundy/90 text-white rounded-xl h-11 font-semibold"
+                                >
+                                    {sendingMessage ? (
+                                        <span className="flex items-center gap-2"><span className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin" /> Sending...</span>
+                                    ) : 'Send Message'}
+                                </Button>
+                                <Button type="button" variant="outline" onClick={() => setShowMessageModal(false)} className="rounded-xl h-11 border-gray-200 text-gray-600">
+                                    Cancel
+                                </Button>
+                            </div>
+                            <p className="text-xs text-gray-400 mt-3 text-center">The vendor will receive your message and respond via the messaging system</p>
+                        </div>
                     </div>
                 </div>
             )}

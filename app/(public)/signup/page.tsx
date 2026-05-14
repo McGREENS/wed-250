@@ -61,6 +61,41 @@ export default function SignupPage() {
     const [otp, setOtp] = useState('');
     const [vendorEmail, setVendorEmail] = useState('');
     const [verifyingOTP, setVerifyingOTP] = useState(false);
+    const [referralCode, setReferralCode] = useState<string | null>(null);
+    const [referralInfo, setReferralInfo] = useState<any>(null);
+
+    // Check for referral code in URL
+    React.useEffect(() => {
+        const params = new URLSearchParams(window.location.search);
+        const ref = params.get('ref');
+        if (ref) {
+            setReferralCode(ref);
+            // Verify referral code
+            fetch(`/api/referrals/${ref}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.valid) {
+                        setReferralInfo(data.referral);
+                        // Pre-fill email if available
+                        if (data.referral.referredEmail) {
+                            if (data.referral.referredRole === 'COUPLE') {
+                                coupleForm.setValue('email', data.referral.referredEmail);
+                                setActiveTab('couple');
+                            } else {
+                                vendorForm.setValue('email', data.referral.referredEmail);
+                                setActiveTab('vendor');
+                            }
+                        }
+                        toast.success(`Invitation from ${data.referral.referrerName}`);
+                    } else {
+                        toast.error(data.error || 'Invalid referral code');
+                    }
+                })
+                .catch(() => {
+                    toast.error('Failed to verify referral code');
+                });
+        }
+    }, []);
 
     const coupleForm = useForm<CoupleFormValues>({
         resolver: zodResolver(CoupleSignupSchema),
@@ -81,7 +116,7 @@ export default function SignupPage() {
                 const res = await fetch("/api/signup", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "couple", ...values }),
+                    body: JSON.stringify({ type: "couple", ...values, referralCode }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
@@ -116,7 +151,7 @@ export default function SignupPage() {
                 const res = await fetch("/api/vendor/send-otp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ ...values }),
+                    body: JSON.stringify({ ...values, referralCode }),
                 });
                 const data = await res.json();
                 if (!res.ok) {

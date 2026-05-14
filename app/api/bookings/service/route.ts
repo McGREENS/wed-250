@@ -40,7 +40,11 @@ export async function POST(req: NextRequest) {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
 
-    // Insert booking
+    // Parse the date string and create a date object at local midnight
+    // The date input gives us YYYY-MM-DD, we need to treat it as a local date
+    const [year, month, day] = eventDate.split('-').map(Number);
+    const eventDateObj = new Date(year, month - 1, day, 0, 0, 0, 0);
+    
     await db.insert(bookings).values({
       id: bookingId,
       vendorId,
@@ -49,7 +53,7 @@ export async function POST(req: NextRequest) {
       clientName,
       clientEmail,
       clientPhone: clientPhone || null,
-      eventDate: new Date(eventDate),
+      eventDate: eventDateObj,
       eventType: 'Wedding',
       servicePackage: service.name,
       serviceType: service.serviceType,

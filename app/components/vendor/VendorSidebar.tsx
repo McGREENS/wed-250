@@ -3,7 +3,7 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { usePathname } from 'next/navigation';
-import { LayoutDashboard, Calendar, MessageSquare, Briefcase, Image as ImageIcon, Settings, LogOut, ChevronLeft, ChevronRight, Menu, X } from 'lucide-react';
+import { LayoutDashboard, Calendar, MessageSquare, Briefcase, Image as ImageIcon, Settings, LogOut, ChevronLeft, ChevronRight, Menu, X, UserPlus, FileText } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useSidebar } from './SidebarContext';
 import { useState } from 'react';
@@ -17,8 +17,11 @@ export default function VendorSidebar() {
         { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
         { name: 'Bookings', href: '/vendor/bookings', icon: Briefcase },
         { name: 'Calendar', href: '/vendor/calendar', icon: Calendar },
+        { name: 'Messages', href: '/vendor/messages', icon: MessageSquare },
+        { name: 'Invoices', href: '/vendor/invoices', icon: FileText },
         { name: 'Services', href: '/vendor/services', icon: Briefcase },
         { name: 'Portfolio', href: '/vendor/portfolio', icon: ImageIcon },
+        { name: 'Referrals', href: '/vendor/referrals', icon: UserPlus },
         { name: 'Settings', href: '/vendor/settings', icon: Settings },
     ];
 
