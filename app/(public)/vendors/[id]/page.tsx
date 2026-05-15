@@ -8,6 +8,7 @@ import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { toast } from 'sonner';
 import { useSession } from 'next-auth/react';
+import VendorDetailsSidebar from '@/app/components/vendors/VendorDetailsSidebar';
 
 const TYPE_COLORS: Record<string, string> = {
     Photography:  "bg-blue-100 text-blue-700",
@@ -32,13 +33,17 @@ export default function VendorDetailPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [isFavorite, setIsFavorite] = useState(false);
     const [favLoading, setFavLoading] = useState(false);
+    const [calendarPublished, setCalendarPublished] = useState(false);
 
     useEffect(() => {
         fetch(`/api/vendors/${vendorId}`)
             .then((r) => r.json())
             .then((d) => {
+                console.log('Vendor data:', d.vendor);
+                console.log('Calendar published:', d.vendor?.calendarPublished);
                 setVendor(d.vendor);
                 setServices(d.services || []);
+                setCalendarPublished(d.vendor?.calendarPublished === 1 || d.vendor?.calendarPublished === true);
             })
             .catch(console.error)
             .finally(() => setIsLoading(false));
@@ -242,9 +247,8 @@ export default function VendorDetailPage() {
                         <PortfolioSection services={activeServices} vendorPortfolio={portfolio} />
                     </div>
                     <div className="lg:col-span-1">
-                        {/* Step 5 sidebar goes here */}
-                        <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 text-gray-400 text-sm sticky top-24">
-                            Sidebar coming in step 5...
+                        <div className="sticky top-24">
+                            <VendorDetailsSidebar vendorId={vendorId} vendorName={vendor.businessName} calendarPublished={calendarPublished} />
                         </div>
                     </div>
                 </div>
@@ -480,9 +484,9 @@ function ServicesSection({ services, vendorId, vendorName }: { services: any[]; 
                                         </div>
                                     )}
                                     {/* CTA */}
-                                    <Link href={`/booking?vendorId=${vendorId}&serviceId=${svc.id}`}>
+                                    <Link href={`/vendors/${vendorId}/services/${svc.id}`}>
                                         <Button className="w-full bg-burgundy hover:bg-burgundy/90 text-white rounded-xl">
-                                            Book This Package
+                                            View Details
                                         </Button>
                                     </Link>
                                 </div>

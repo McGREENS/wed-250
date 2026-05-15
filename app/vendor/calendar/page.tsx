@@ -17,13 +17,35 @@ export default async function VendorCalendarPage() {
         redirect('/dashboard');
     }
 
-    const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
+    const [vendor] = await db.select({
+        id: vendors.id,
+        userId: vendors.userId,
+        businessName: vendors.businessName,
+        category: vendors.category,
+        description: vendors.description,
+        location: vendors.location,
+        priceRange: vendors.priceRange,
+        rating: vendors.rating,
+        reviewCount: vendors.reviewCount,
+        featured: vendors.featured,
+        verified: vendors.verified,
+        images: vendors.images,
+        portfolio: vendors.portfolio,
+        services: vendors.services,
+        availability: vendors.availability,
+        calendarPublished: vendors.calendarPublished,
+    }).from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
+    
     const availability = vendor?.availability ? JSON.parse(vendor.availability) : { blocked: [] };
     const vendorBookings = vendor ? await db.select().from(bookings).where(eq(bookings.vendorId, vendor.id)) : [];
 
     return (
         <VendorPageLayout>
-            <CalendarClient initialData={{ availability, bookings: vendorBookings }} />
+            <CalendarClient initialData={{ 
+                availability, 
+                bookings: vendorBookings,
+                calendarPublished: vendor?.calendarPublished || false
+            }} />
         </VendorPageLayout>
     );
 }

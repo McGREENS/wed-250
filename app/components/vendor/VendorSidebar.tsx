@@ -6,12 +6,14 @@ import { usePathname } from 'next/navigation';
 import { LayoutDashboard, Calendar, MessageSquare, Briefcase, Image as ImageIcon, Settings, LogOut, ChevronLeft, ChevronRight, Menu, X, UserPlus, FileText } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useSidebar } from './SidebarContext';
+import { useUnreadMessages } from '@/app/contexts/UnreadMessagesContext';
 import { useState } from 'react';
 
 export default function VendorSidebar() {
     const pathname = usePathname();
     const { collapsed, setCollapsed } = useSidebar();
     const [mobileOpen, setMobileOpen] = useState(false);
+    const unreadCount = useUnreadMessages();
 
     const navItems = [
         { name: 'Dashboard', href: '/vendor/dashboard', icon: LayoutDashboard },
@@ -80,12 +82,13 @@ export default function VendorSidebar() {
                 <nav className="flex-1 p-4 space-y-1 overflow-y-auto">
                     {navItems.map((item) => {
                         const Icon = item.icon;
+                        const isMessagesLink = item.href === '/vendor/messages';
                         return (
                             <Link
                                 key={item.href}
                                 href={item.href}
                                 onClick={() => setMobileOpen(false)}
-                                className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors ${
+                                className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg transition-colors relative ${
                                     isActive(item.href)
                                         ? 'bg-burgundy text-white'
                                         : 'text-gray-700 hover:bg-sand/30'
@@ -94,6 +97,11 @@ export default function VendorSidebar() {
                             >
                                 <Icon className="w-5 h-5" />
                                 {!collapsed && <span className="font-medium">{item.name}</span>}
+                                {isMessagesLink && unreadCount > 0 && (
+                                    <span className={`absolute ${collapsed ? 'right-1 top-1' : 'right-2'} bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center`}>
+                                        {unreadCount > 9 ? '9+' : unreadCount}
+                                    </span>
+                                )}
                             </Link>
                         );
                     })}

@@ -8,9 +8,11 @@ import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
 import { Search, Send, Loader2 } from "lucide-react";
 import { toast } from "sonner";
+import { useRefreshUnreadMessages } from "@/app/contexts/UnreadMessagesContext";
 
 export default function VendorMessagesClient() {
     const { data: session } = useSession();
+    const refreshUnreadMessages = useRefreshUnreadMessages();
     const [conversations, setConversations] = useState<any[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
     const [messages, setMessages] = useState<any[]>([]);
@@ -28,7 +30,21 @@ export default function VendorMessagesClient() {
     // Auto-scroll to bottom when new messages arrive
     useEffect(() => {
         messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        // Mark messages as read when conversation is selected
+        if (selectedConversation) {
+            markMessagesAsRead(selectedConversation);
+        }
     }, [selectedConversation, conversations]);
+
+    const markMessagesAsRead = async (conversationId: string) => {
+        try {
+            await fetch(`/api/messages?conversationId=${conversationId}`);
+            // Refresh unread count after marking as read
+            await refreshUnreadMessages();
+        } catch (error) {
+            console.error('Error marking messages as read:', error);
+        }
+    };
 
     const fetchConversations = async () => {
         try {
@@ -39,6 +55,8 @@ export default function VendorMessagesClient() {
                 if (data.conversations?.length > 0 && !selectedConversation) {
                     setSelectedConversation(data.conversations[0].id);
                 }
+                // Refresh unread count in sidebar
+                await refreshUnreadMessages();
             }
         } catch (error) {
             console.error('Error fetching conversations:', error);

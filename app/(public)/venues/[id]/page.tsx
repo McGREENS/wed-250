@@ -858,10 +858,24 @@ export default function VenueDetailPage() {
                                         <div className="font-semibold text-charcoal">{venue.vendorName}</div>
                                         <div className="text-sm text-gray-600">Venue Manager</div>
                                     </div>
-                                    <Button variant="outline" size="icon" className="rounded-full shrink-0" aria-label="Message venue manager">
-                                        <MessageCircle className="h-5 w-5 text-burgundy" />
-                                    </Button>
                                 </div>
+                                <Button 
+                                    onClick={() => {
+                                        if (!session?.user) {
+                                            toast.error('Please login to chat with vendors');
+                                            return;
+                                        }
+                                        if (session.user.role === 'VENDOR') {
+                                            toast.error('Vendors cannot chat with other vendors');
+                                            return;
+                                        }
+                                        window.location.href = `/dashboard/messages?vendorId=${vendorId}`;
+                                    }}
+                                    className="w-full mt-3 bg-burgundy hover:bg-burgundy/90 text-white"
+                                >
+                                    <MessageCircle className="h-4 w-4 mr-2" />
+                                    Chat with Vendor
+                                </Button>
                             </CardContent>
                         </Card>
 

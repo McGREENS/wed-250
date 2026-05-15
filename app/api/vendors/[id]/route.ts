@@ -24,7 +24,11 @@ export async function GET(req: NextRequest, { params }: { params: Promise<{ id: 
     const services = await db.select().from(servicePackages).where(eq(servicePackages.vendorId, id));
 
     return NextResponse.json({
-      vendor: { ...row.vendor, profileImage: row.profileImage },
+      vendor: { 
+        ...row.vendor, 
+        profileImage: row.profileImage,
+        calendarPublished: !!row.vendor.calendarPublished
+      },
       services,
     });
   } catch (error) {

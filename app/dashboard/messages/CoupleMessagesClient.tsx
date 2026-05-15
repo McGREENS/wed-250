@@ -1,7 +1,10 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useSearchParams } from "next/navigation";
 import { Send, Search, MessageSquare, Loader2 } from "lucide-react";
+import { toast } from "sonner";
+import { useRefreshUnreadMessages } from "@/app/contexts/UnreadMessagesContext";
 
 interface Message {
   id: string;
@@ -23,6 +26,9 @@ interface Conversation {
 }
 
 export default function CoupleMessagesClient({ userId }: { userId: string }) {
+  const searchParams = useSearchParams();
+  const vendorIdParam = searchParams.get('vendorId');
+  const refreshUnreadMessages = useRefreshUnreadMessages();
   const [conversations, setConversations] = useState<Conversation[]>([]);
   const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
   const [messageText, setMessageText] = useState("");
@@ -36,10 +42,32 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
   }, []);
 
   useEffect(() => {
+    // Auto-select conversation if vendorId is provided
+    if (vendorIdParam && conversations.length > 0) {
+      const conversation = conversations.find(c => c.vendorId === vendorIdParam);
+      if (conversation) {
+        setSelectedConversation(conversation.id);
+      }
+    }
+  }, [vendorIdParam, conversations]);
+
+  useEffect(() => {
     if (selectedConversation) {
       messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      // Mark messages as read when conversation is selected
+      markMessagesAsRead(selectedConversation);
     }
   }, [selectedConversation, conversations]);
+
+  const markMessagesAsRead = async (conversationId: string) => {
+    try {
+      await fetch(`/api/messages?conversationId=${conversationId}`);
+      // Refresh unread count after marking as read
+      await refreshUnreadMessages();
+    } catch (error) {
+      console.error('Error marking messages as read:', error);
+    }
+  };
 
   const fetchConversations = async () => {
     try {
@@ -47,9 +75,12 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
       if (res.ok) {
         const data = await res.json();
         setConversations(data.conversations || []);
+        // Refresh unread count in sidebar
+        await refreshUnreadMessages();
       }
     } catch (error) {
       console.error("Error fetching conversations:", error);
+      toast.error("Failed to load conversations");
     } finally {
       setLoading(false);
     }
@@ -61,7 +92,10 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
     setSending(true);
     try {
       const conversation = conversations.find((c) => c.id === selectedConversation);
-      if (!conversation) return;
+      if (!conversation) {
+        toast.error("Conversation not found");
+        return;
+      }
 
       const res = await fetch("/api/messages", {
         method: "POST",
@@ -76,9 +110,14 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
       if (res.ok) {
         setMessageText("");
         await fetchConversations();
+        toast.success("Message sent");
+      } else {
+        const data = await res.json();
+        toast.error(data.error || "Failed to send message");
       }
     } catch (error) {
       console.error("Error sending message:", error);
+      toast.error("Failed to send message. Please try again.");
     } finally {
       setSending(false);
     }
@@ -166,32 +205,42 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
             </div>
 
             <div className="flex-1 overflow-y-auto p-4 space-y-4">
-              {activeConversation.messages.map((msg) => (
-                <div
-                  key={msg.id}
-                  className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
-                >
-                  <div
-                    className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
-                      msg.senderId === userId
-                        ? "bg-burgundy text-white"
-                        : "bg-gray-100 text-charcoal"
-                    }`}
-                  >
-                    <p className="text-sm">{msg.content}</p>
-                    <p
-                      className={`text-xs mt-1 ${
-                        msg.senderId === userId ? "text-white/70" : "text-gray-500"
-                      }`}
-                    >
-                      {new Date(msg.createdAt).toLocaleTimeString([], {
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </p>
+              {activeConversation.messages.length === 0 ? (
+                <div className="flex items-center justify-center h-full text-gray-400">
+                  <div className="text-center">
+                    <MessageSquare className="w-12 h-12 mx-auto mb-3 text-gray-300" />
+                    <p className="text-sm">No messages yet</p>
+                    <p className="text-xs mt-1">Start the conversation below</p>
                   </div>
                 </div>
-              ))}
+              ) : (
+                activeConversation.messages.map((msg) => (
+                  <div
+                    key={msg.id}
+                    className={`flex ${msg.senderId === userId ? "justify-end" : "justify-start"}`}
+                  >
+                    <div
+                      className={`max-w-xs lg:max-w-md px-4 py-2 rounded-lg ${
+                        msg.senderId === userId
+                          ? "bg-burgundy text-white"
+                          : "bg-gray-100 text-charcoal"
+                      }`}
+                    >
+                      <p className="text-sm">{msg.content}</p>
+                      <p
+                        className={`text-xs mt-1 ${
+                          msg.senderId === userId ? "text-white/70" : "text-gray-500"
+                        }`}
+                      >
+                        {new Date(msg.createdAt).toLocaleTimeString([], {
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </p>
+                    </div>
+                  </div>
+                ))
+              )}
               <div ref={messagesEndRef} />
             </div>
 

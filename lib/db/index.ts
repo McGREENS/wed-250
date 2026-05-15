@@ -14,7 +14,7 @@ const client = createClient({
 
 export const db = drizzle(client, { schema });
 
-// Migration function for tasks table
+// Migration function for tasks table and calendar_published column
 export async function migrateTasks() {
   try {
     await client.execute(`
@@ -31,6 +31,19 @@ export async function migrateTasks() {
       );
     `);
     console.log('Tasks table created successfully!');
+
+    try {
+      await client.execute(`
+        ALTER TABLE vendors ADD COLUMN calendar_published INTEGER DEFAULT 0;
+      `);
+      console.log('calendar_published column added to vendors table!');
+    } catch (error: any) {
+      if (error.message?.includes('duplicate column')) {
+        console.log('calendar_published column already exists!');
+      } else {
+        throw error;
+      }
+    }
   } catch (error) {
     console.error('Migration failed:', error);
     throw error;

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import { Copy, Mail, Check, UserPlus, Users, Clock, CheckCircle, XCircle, Loader2 } from "lucide-react";
+import { Copy, Mail, Check, UserPlus, Users, Clock, CheckCircle, XCircle, Loader2, MessageCircle, Edit2, Save, X } from "lucide-react";
 import { toast } from "sonner";
 
 interface Referral {
@@ -24,11 +24,15 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [sending, setSending] = useState(false);
+  const [editingId, setEditingId] = useState<string | null>(null);
+  const [editingEmail, setEditingEmail] = useState("");
   const [formData, setFormData] = useState({
     referredEmail: "",
     referredName: "",
     referredRole: "COUPLE" as "COUPLE" | "VENDOR",
   });
+
+  const baseUrl = process.env.NEXT_PUBLIC_APP_URL || window.location.origin;
 
   useEffect(() => {
     fetchReferrals();
@@ -79,9 +83,55 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
   };
 
   const copyReferralLink = (code: string) => {
-    const link = `${window.location.origin}/signup?ref=${code}`;
+    const link = `${baseUrl}/signup?ref=${code}`;
     navigator.clipboard.writeText(link);
     toast.success("Referral link copied to clipboard!");
+  };
+
+  const shareOnWhatsApp = (code: string) => {
+    const link = `${baseUrl}/signup?ref=${code}`;
+    const message = `Check out this amazing platform! Join using my referral link: ${link}`;
+    const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
+    window.open(whatsappUrl, "_blank");
+  };
+
+  const startEditing = (referral: Referral) => {
+    setEditingId(referral.id);
+    setEditingEmail(referral.referredEmail);
+  };
+
+  const cancelEditing = () => {
+    setEditingId(null);
+    setEditingEmail("");
+  };
+
+  const saveEmail = async (referralId: string) => {
+    if (!editingEmail.trim()) {
+      toast.error("Email cannot be empty");
+      return;
+    }
+
+    try {
+      const res = await fetch(`/api/referrals/${referralId}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ referredEmail: editingEmail }),
+      });
+
+      const data = await res.json();
+
+      if (res.ok) {
+        toast.success("Email updated successfully");
+        setEditingId(null);
+        setEditingEmail("");
+        await fetchReferrals();
+      } else {
+        toast.error(data.error || "Failed to update email");
+      }
+    } catch (error) {
+      console.error("Error updating email:", error);
+      toast.error("Failed to update email");
+    }
   };
 
   const resendEmail = async (referralId: string, email: string) => {
@@ -240,7 +290,18 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
                         <div className="text-sm font-medium text-charcoal">
                           {referral.referredName || "N/A"}
                         </div>
-                        <div className="text-sm text-gray-500">{referral.referredEmail}</div>
+                        {editingId === referral.id ? (
+                          <div className="flex items-center gap-2 mt-1">
+                            <input
+                              type="email"
+                              value={editingEmail}
+                              onChange={(e) => setEditingEmail(e.target.value)}
+                              className="text-sm px-2 py-1 border border-gray-300 rounded focus:ring-2 focus:ring-burgundy focus:border-transparent"
+                            />
+                          </div>
+                        ) : (
+                          <div className="text-sm text-gray-500">{referral.referredEmail}</div>
+                        )}
                       </div>
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap">
@@ -272,24 +333,63 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
                       {new Date(referral.expiresAt).toLocaleDateString()}
                     </td>
                     <td className="px-6 py-4 whitespace-nowrap text-sm">
-                      <div className="flex items-center gap-2">
-                        <button
-                          onClick={() => copyReferralLink(referral.referralCode)}
-                          className="text-burgundy hover:text-burgundy/80 flex items-center gap-1"
-                          title="Copy referral link"
-                        >
-                          <Copy className="w-4 h-4" />
-                          Copy Link
-                        </button>
-                        {referral.status === "PENDING" && (
-                          <button
-                            onClick={() => resendEmail(referral.id, referral.referredEmail)}
-                            className="text-blue-600 hover:text-blue-800 flex items-center gap-1 ml-2"
-                            title="Resend invitation email"
-                          >
-                            <Mail className="w-4 h-4" />
-                            Resend
-                          </button>
+                      <div className="flex items-center gap-2 flex-wrap">
+                        {editingId === referral.id ? (
+                          <>
+                            <button
+                              onClick={() => saveEmail(referral.id)}
+                              className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                              title="Save email"
+                            >
+                              <Save className="w-4 h-4" />
+                              Save
+                            </button>
+                            <button
+                              onClick={cancelEditing}
+                              className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                              title="Cancel"
+                            >
+                              <X className="w-4 h-4" />
+                              Cancel
+                            </button>
+                          </>
+                        ) : (
+                          <>
+                            <button
+                              onClick={() => copyReferralLink(referral.referralCode)}
+                              className="text-burgundy hover:text-burgundy/80 flex items-center gap-1"
+                              title="Copy referral link"
+                            >
+                              <Copy className="w-4 h-4" />
+                              Copy Link
+                            </button>
+                            <button
+                              onClick={() => shareOnWhatsApp(referral.referralCode)}
+                              className="text-green-600 hover:text-green-800 flex items-center gap-1"
+                              title="Share on WhatsApp"
+                            >
+                              <MessageCircle className="w-4 h-4" />
+                              WhatsApp
+                            </button>
+                            <button
+                              onClick={() => startEditing(referral)}
+                              className="text-orange-600 hover:text-orange-800 flex items-center gap-1"
+                              title="Edit email"
+                            >
+                              <Edit2 className="w-4 h-4" />
+                              Edit
+                            </button>
+                            {referral.status === "PENDING" && (
+                              <button
+                                onClick={() => resendEmail(referral.id, referral.referredEmail)}
+                                className="text-blue-600 hover:text-blue-800 flex items-center gap-1"
+                                title="Resend invitation email"
+                              >
+                                <Mail className="w-4 h-4" />
+                                Resend
+                              </button>
+                            )}
+                          </>
                         )}
                       </div>
                     </td>

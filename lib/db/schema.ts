@@ -64,6 +64,7 @@ export const vendors = sqliteTable("vendors", {
   portfolio: text("portfolio"), // JSON array
   services: text("services"), // JSON array - DEPRECATED, use servicePackages table
   availability: text("availability"), // JSON object
+  calendarPublished: integer("calendar_published", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

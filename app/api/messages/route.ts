@@ -32,7 +32,7 @@ export async function GET(req: NextRequest) {
         .where(eq(messages.conversationId, conversationId))
         .orderBy(messages.createdAt);
 
-      // Mark messages as read if the current user is the recipient
+      // Mark messages as read only if the current user is NOT the sender
       await db
         .update(messages)
         .set({ read: true } as any)
@@ -40,8 +40,7 @@ export async function GET(req: NextRequest) {
           and(
             eq(messages.conversationId, conversationId),
             eq(messages.read, false),
-            // Only mark as read if current user is NOT the sender
-            // We'll do this in a separate query to avoid complexity
+            sql`${messages.senderId} != ${session.user.id}`
           )
         );
 
@@ -129,20 +128,7 @@ export async function GET(req: NextRequest) {
         return 0;
       });
     } else {
-      // For couples, get conversations with vendors they've booked
-      const coupleBookings = await db
-        .select({
-          vendorId: bookings.vendorId,
-          vendorName: vendors.businessName,
-          vendorCategory: vendors.category,
-          bookingId: bookings.id,
-        })
-        .from(bookings)
-        .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
-        .where(eq(bookings.userId, session.user.id))
-        .groupBy(bookings.vendorId, vendors.businessName, vendors.category, bookings.id);
-
-      // Get existing conversations
+      // For couples, get all existing conversations
       const existingConversations = await db
         .select({
           id: conversations.id,
@@ -158,9 +144,23 @@ export async function GET(req: NextRequest) {
         .innerJoin(vendors, eq(conversations.vendorId, vendors.id))
         .where(eq(conversations.coupleId, session.user.id));
 
-      const conversationMap = new Map(existingConversations.map(c => [c.vendorId, c]));
+      // Get bookings to merge with conversations
+      const coupleBookings = await db
+        .select({
+          vendorId: bookings.vendorId,
+          vendorName: vendors.businessName,
+          vendorCategory: vendors.category,
+          bookingId: bookings.id,
+        })
+        .from(bookings)
+        .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
+        .where(eq(bookings.userId, session.user.id))
+        .groupBy(bookings.vendorId, vendors.businessName, vendors.category, bookings.id);
 
+      const conversationMap = new Map(existingConversations.map(c => [c.vendorId, c]));
       const uniqueVendors = new Map<string, any>();
+
+      // Add vendors from bookings
       coupleBookings.forEach(booking => {
         if (!uniqueVendors.has(booking.vendorId)) {
           uniqueVendors.set(booking.vendorId, {
@@ -168,6 +168,18 @@ export async function GET(req: NextRequest) {
             vendorName: booking.vendorName,
             vendorCategory: booking.vendorCategory,
             bookingId: booking.bookingId,
+          });
+        }
+      });
+
+      // Add vendors from existing conversations (even without bookings)
+      existingConversations.forEach(conv => {
+        if (!uniqueVendors.has(conv.vendorId)) {
+          uniqueVendors.set(conv.vendorId, {
+            vendorId: conv.vendorId,
+            vendorName: conv.vendorName,
+            vendorCategory: conv.vendorCategory,
+            bookingId: conv.bookingId,
           });
         }
       });
@@ -258,6 +270,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { vendorId, coupleId, bookingId, content } = body;
 
+    console.log('[Messages POST] Request:', { vendorId, coupleId, bookingId, contentLength: content?.length, userId: session.user.id, userRole: session.user.role });
+
     if (!content || !content.trim()) {
       return NextResponse.json({ error: 'Message content is required' }, { status: 400 });
     }
@@ -270,6 +284,7 @@ export async function POST(req: NextRequest) {
       // Vendor is sending message
       const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
       if (!vendor) {
+        console.error('[Messages POST] Vendor not found for userId:', session.user.id);
         return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
       }
       finalVendorId = vendor.id;
@@ -282,7 +297,16 @@ export async function POST(req: NextRequest) {
       if (!finalVendorId) {
         return NextResponse.json({ error: 'Vendor ID is required' }, { status: 400 });
       }
+      
+      // Verify vendor exists
+      const [vendor] = await db.select().from(vendors).where(eq(vendors.id, finalVendorId)).limit(1);
+      if (!vendor) {
+        console.error('[Messages POST] Target vendor not found:', finalVendorId);
+        return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
+      }
     }
+
+    console.log('[Messages POST] Final participants:', { finalVendorId, finalCoupleId });
 
     // Check if conversation already exists
     const [existingConversation] = await db
@@ -300,6 +324,7 @@ export async function POST(req: NextRequest) {
 
     if (existingConversation) {
       conversationId = existingConversation.id;
+      console.log('[Messages POST] Using existing conversation:', conversationId);
       // Update last message timestamp
       await db
         .update(conversations)
@@ -307,6 +332,7 @@ export async function POST(req: NextRequest) {
         .where(eq(conversations.id, conversationId));
     } else {
       // Create new conversation
+      console.log('[Messages POST] Creating new conversation');
       const [newConversation] = await db
         .insert(conversations)
         .values({
@@ -316,6 +342,7 @@ export async function POST(req: NextRequest) {
         } as any)
         .returning();
       conversationId = newConversation.id;
+      console.log('[Messages POST] Created conversation:', conversationId);
     }
 
     // Insert the message
@@ -328,9 +355,10 @@ export async function POST(req: NextRequest) {
       })
       .returning();
 
+    console.log('[Messages POST] Message sent successfully:', newMessage.id);
     return NextResponse.json({ success: true, message: newMessage, conversationId });
   } catch (error) {
-    console.error('Error sending message:', error);
-    return NextResponse.json({ error: 'Failed to send message' }, { status: 500 });
+    console.error('[Messages POST] Error sending message:', error);
+    return NextResponse.json({ error: 'Failed to send message', details: error instanceof Error ? error.message : 'Unknown error' }, { status: 500 });
   }
 }

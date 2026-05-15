@@ -6,6 +6,7 @@ import { usePathname } from 'next/navigation';
 import { Home, Calendar, Heart, CheckSquare, DollarSign, Users, Settings, LogOut, ChevronLeft, ChevronRight, Building2, Store, UserCog, Menu, X, MessageSquare, UserPlus } from 'lucide-react';
 import { signOut } from 'next-auth/react';
 import { useUserSidebar } from './UserSidebarContext';
+import { useUnreadMessages } from '@/app/contexts/UnreadMessagesContext';
 import { useState } from 'react';
 
 const navItems = [
@@ -24,6 +25,7 @@ export default function UserSidebar() {
   const pathname = usePathname();
   const { collapsed, setCollapsed } = useUserSidebar();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const unreadCount = useUnreadMessages();
 
   return (
     <>
@@ -80,18 +82,24 @@ export default function UserSidebar() {
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
+              const isMessagesLink = item.href === '/dashboard/messages';
               return (
                 <Link
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-lg transition-colors ${
+                  className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-lg transition-colors relative ${
                     isActive ? 'bg-burgundy text-white' : 'text-charcoal hover:bg-sand/30'
                   }`}
                   title={collapsed ? item.label : ''}
                 >
                   <Icon className="w-5 h-5 flex-shrink-0" />
                   <span className={`text-sm font-medium ${collapsed ? 'lg:hidden' : ''}`}>{item.label}</span>
+                  {isMessagesLink && unreadCount > 0 && (
+                    <span className={`absolute ${collapsed ? 'lg:right-1 lg:top-1' : 'right-2'} bg-red-500 text-white text-xs font-bold w-5 h-5 rounded-full flex items-center justify-center`}>
+                      {unreadCount > 9 ? '9+' : unreadCount}
+                    </span>
+                  )}
                 </Link>
               );
             })}

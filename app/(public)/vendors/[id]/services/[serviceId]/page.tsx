@@ -515,11 +515,21 @@ export default function ServiceDetailPage() {
                                     Book This Package
                                 </Button>
                                 <Button
-                                    onClick={() => setShowMessageModal(true)}
+                                    onClick={() => {
+                                        if (!session?.user) {
+                                            toast.error('Please login to chat with vendors');
+                                            return;
+                                        }
+                                        if (session.user.role === 'VENDOR') {
+                                            toast.error('Vendors cannot chat with other vendors');
+                                            return;
+                                        }
+                                        window.location.href = `/dashboard/messages?vendorId=${vendorId}`;
+                                    }}
                                     variant="outline"
                                     className="w-full rounded-xl h-11 border-burgundy text-burgundy hover:bg-burgundy hover:text-white text-sm"
                                 >
-                                    Contact Vendor
+                                    Chat with Vendor
                                 </Button>
                                 <Link href={`/vendors/${vendorId}`}>
                                     <Button variant="outline" className="w-full rounded-xl h-11 border-gray-200 text-charcoal hover:border-burgundy hover:text-burgundy text-sm">

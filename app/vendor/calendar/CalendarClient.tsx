@@ -5,7 +5,7 @@ import { useRouter } from "next/navigation";
 import { Card, CardContent, CardHeader, CardTitle } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
-import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, Plus, Ban, Loader2 } from "lucide-react";
+import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, Plus, Ban, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
 
 export default function CalendarClient({ initialData }: any) {
@@ -15,6 +15,8 @@ export default function CalendarClient({ initialData }: any) {
     const [blockedDates, setBlockedDates] = useState<string[]>(initialData.availability?.blocked || []);
     const [blockingLoading, setBlockingLoading] = useState(false);
     const [navigatingDate, setNavigatingDate] = useState<string | null>(null);
+    const [calendarPublished, setCalendarPublished] = useState(!!initialData.calendarPublished);
+    const [publishLoading, setPublishLoading] = useState(false);
     const bookedDates = initialData.bookings || [];
 
     const getDaysInMonth = (date: Date) => {
@@ -35,7 +37,6 @@ export default function CalendarClient({ initialData }: any) {
     };
 
     const isDateBooked = (dateStr: string) => bookedDates.some((d: any) => {
-        // Parse the stored date and format it consistently
         const storedDate = new Date(d.eventDate);
         const storedDateStr = formatDate(storedDate);
         return storedDateStr === dateStr;
@@ -75,6 +76,36 @@ export default function CalendarClient({ initialData }: any) {
         }
     };
 
+    const handlePublishCalendar = async () => {
+        setPublishLoading(true);
+        try {
+            const res = await fetch("/api/vendor/calendar", {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ action: calendarPublished ? "unpublish" : "publish" }),
+            });
+
+            const data = await res.json();
+
+            if (res.ok) {
+                setCalendarPublished(!calendarPublished);
+                toast.success(calendarPublished ? "Calendar unpublished" : "Calendar published successfully");
+                
+                // Refetch to verify
+                const getRes = await fetch("/api/vendor/calendar");
+                const getData = await getRes.json();
+                console.log("Refetched calendar published status:", getData.calendarPublished);
+            } else {
+                toast.error(data.error || "Failed to update calendar visibility");
+            }
+        } catch (error) {
+            console.error("Error publishing calendar:", error);
+            toast.error("Failed to update calendar visibility");
+        } finally {
+            setPublishLoading(false);
+        }
+    };
+
     const { daysInMonth, startingDayOfWeek } = getDaysInMonth(currentDate);
     const monthName = currentDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
     const weekDays = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
@@ -86,10 +117,38 @@ export default function CalendarClient({ initialData }: any) {
 
     return (
         <div className="max-w-7xl mx-auto">
-            <div className="mb-8">
-                <h1 className="text-3xl font-bold text-charcoal mb-2">Calendar</h1>
-                <p className="text-gray-600">Manage your availability and upcoming events</p>
+            <div className="mb-8 flex items-center justify-between">
+                <div>
+                    <h1 className="text-3xl font-bold text-charcoal mb-2">Calendar</h1>
+                    <p className="text-gray-600">Manage your availability and upcoming events</p>
+                </div>
+                <button
+                    onClick={handlePublishCalendar}
+                    disabled={publishLoading}
+                    className={`flex items-center gap-2 px-4 py-2 rounded-lg font-medium transition-colors ${
+                        calendarPublished
+                            ? "bg-green-100 text-green-700 hover:bg-green-200"
+                            : "bg-gray-100 text-gray-700 hover:bg-gray-200"
+                    } disabled:opacity-50`}
+                >
+                    {publishLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin" />
+                    ) : calendarPublished ? (
+                        <Eye className="w-4 h-4" />
+                    ) : (
+                        <EyeOff className="w-4 h-4" />
+                    )}
+                    {calendarPublished ? "Published" : "Not Published"}
+                </button>
             </div>
+
+            {calendarPublished && (
+                <div className="mb-6 p-4 bg-green-50 border border-green-200 rounded-lg">
+                    <p className="text-sm text-green-800">
+                        ✓ Your calendar is now visible on your public profile. Couples can see your availability and booked dates.
+                    </p>
+                </div>
+            )}
 
             <div className="grid lg:grid-cols-3 gap-6">
                 <div className="lg:col-span-2">
