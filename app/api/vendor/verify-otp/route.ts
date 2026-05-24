@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, vendors, pendingVendorSignups, referrals } from '@/lib/db/schema';
+import { users, vendors, pendingVendorSignups, referrals, publicReferralLinks } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { sendWelcomeEmail } from '@/lib/email';
 
@@ -56,27 +56,45 @@ export async function POST(req: NextRequest) {
       try {
         const metadata = JSON.parse(pending.metadata);
         if (metadata.referralCode && user) {
-          const [referral] = await db
+          // First check public referral link
+          const [publicLink] = await db
             .select()
-            .from(referrals)
-            .where(
-              and(
-                eq(referrals.referralCode, metadata.referralCode),
-                eq(referrals.status, 'PENDING')
-              )
-            )
+            .from(publicReferralLinks)
+            .where(eq(publicReferralLinks.referralCode, metadata.referralCode))
             .limit(1);
 
-          if (referral) {
+          if (publicLink) {
             await db
-              .update(referrals)
+              .update(publicReferralLinks)
               .set({
-                status: 'ACCEPTED' as const,
-                referredUserId: user.id,
-                acceptedAt: new Date(),
+                usageCount: (publicLink.usageCount || 0) + 1,
                 updatedAt: new Date(),
               } as any)
-              .where(eq(referrals.id, referral.id));
+              .where(eq(publicReferralLinks.id, publicLink.id));
+          } else {
+            // Fall back to regular referral
+            const [referral] = await db
+              .select()
+              .from(referrals)
+              .where(
+                and(
+                  eq(referrals.referralCode, metadata.referralCode),
+                  eq(referrals.status, 'PENDING')
+                )
+              )
+              .limit(1);
+
+            if (referral) {
+              await db
+                .update(referrals)
+                .set({
+                  status: 'ACCEPTED' as const,
+                  referredUserId: user.id,
+                  acceptedAt: new Date(),
+                  updatedAt: new Date(),
+                } as any)
+                .where(eq(referrals.id, referral.id));
+            }
           }
         }
       } catch (e) {

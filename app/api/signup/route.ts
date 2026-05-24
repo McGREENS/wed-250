@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, vendors, weddings, referrals } from "@/lib/db/schema";
+import { users, vendors, weddings, referrals, publicReferralLinks } from "@/lib/db/schema";
 import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
 import { sendWelcomeEmail } from "@/lib/email";
@@ -13,6 +13,8 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { type, email, password, referralCode } = body;
 
+    console.log(`[SIGNUP] Starting signup for ${email}, type: ${type}, referralCode: ${referralCode}`);
+
     // Check if user exists
     const existingUser = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existingUser.length > 0) {
@@ -21,49 +23,83 @@ export async function POST(req: NextRequest) {
 
     // Validate referral code if provided
     let referralRecord = null;
+    let publicLinkRecord = null;
     if (referralCode) {
-      const [referral] = await db
+      console.log(`[SIGNUP] Looking for public link with code: ${referralCode}`);
+      
+      // First try to find a public referral link
+      const allPublicLinks = await db
         .select()
-        .from(referrals)
-        .where(
-          and(
-            eq(referrals.referralCode, referralCode),
-            eq(referrals.status, 'PENDING')
-          )
-        )
+        .from(publicReferralLinks)
+        .where(eq(publicReferralLinks.referralCode, referralCode))
         .limit(1);
 
-      if (!referral) {
-        return NextResponse.json(
-          { error: "Invalid or expired referral code" },
-          { status: 400 }
-        );
-      }
+      console.log(`[SIGNUP] Found ${allPublicLinks.length} public links with this code`);
 
-      // Check if referral email matches
-      if (referral.referredEmail !== email) {
-        return NextResponse.json(
-          { error: "This referral code is for a different email address" },
-          { status: 400 }
-        );
-      }
-
-      // Check if referral has expired
-      const now = new Date();
-      const expiresAt = new Date(referral.expiresAt);
-      if (now > expiresAt) {
-        await db
-          .update(referrals)
-          .set({ status: 'EXPIRED' as const, updatedAt: new Date() } as any)
-          .where(eq(referrals.id, referral.id));
+      if (allPublicLinks.length > 0) {
+        const publicLink = allPublicLinks[0];
+        const isActive = typeof publicLink.isActive === 'boolean' ? publicLink.isActive : !!publicLink.isActive;
+        console.log(`[SIGNUP] Public link found - ID: ${publicLink.id}, Active: ${isActive}, Current usage: ${publicLink.usageCount}`);
         
-        return NextResponse.json(
-          { error: "This referral link has expired" },
-          { status: 400 }
-        );
-      }
+        if (isActive) {
+          publicLinkRecord = publicLink;
+        } else {
+          console.log(`[SIGNUP] Public link is inactive`);
+          return NextResponse.json(
+            { error: "This referral link is no longer active" },
+            { status: 400 }
+          );
+        }
+      } else {
+        console.log(`[SIGNUP] No public link found, checking regular referrals`);
+        
+        // Fall back to regular referral
+        const [referral] = await db
+          .select()
+          .from(referrals)
+          .where(
+            and(
+              eq(referrals.referralCode, referralCode),
+              eq(referrals.status, 'PENDING')
+            )
+          )
+          .limit(1);
 
-      referralRecord = referral;
+        if (!referral) {
+          console.log(`[SIGNUP] No referral found either`);
+          return NextResponse.json(
+            { error: "Invalid or expired referral code" },
+            { status: 400 }
+          );
+        }
+
+        // Check if referral email matches
+        if (referral.referredEmail !== email) {
+          console.log(`[SIGNUP] Referral email mismatch`);
+          return NextResponse.json(
+            { error: "This referral code is for a different email address" },
+            { status: 400 }
+          );
+        }
+
+        // Check if referral has expired
+        const now = new Date();
+        const expiresAt = new Date(referral.expiresAt);
+        if (now > expiresAt) {
+          await db
+            .update(referrals)
+            .set({ status: 'EXPIRED' as const, updatedAt: new Date() } as any)
+            .where(eq(referrals.id, referral.id));
+          
+          console.log(`[SIGNUP] Referral expired`);
+          return NextResponse.json(
+            { error: "This referral link has expired" },
+            { status: 400 }
+          );
+        }
+
+        referralRecord = referral;
+      }
     }
 
     // Hash password
@@ -83,8 +119,15 @@ export async function POST(req: NextRequest) {
       // Get the created user
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
+      if (!user) {
+        console.log(`[SIGNUP] Failed to create user`);
+        return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
+      }
+
+      console.log(`[SIGNUP] User created: ${user.id}`);
+
       // Create wedding if date provided
-      if (weddingDate && user) {
+      if (weddingDate) {
         await db.insert(weddings).values({
           userId: user.id,
           coupleNames: name,
@@ -100,11 +143,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Update referral if exists
-      if (referralRecord && user) {
+      if (referralRecord) {
+        console.log(`[SIGNUP] Updating regular referral`);
         await db
           .update(referrals)
           .set({
-            status: 'ACCEPTED' as const,
+            status: 'ACCEPTED',
             referredUserId: user.id,
             acceptedAt: new Date(),
             updatedAt: new Date(),
@@ -112,7 +156,24 @@ export async function POST(req: NextRequest) {
           .where(eq(referrals.id, referralRecord.id));
       }
 
-      return NextResponse.json({ success: true, user: { id: user?.id, email, role: "COUPLE" } });
+      // Update public link usage if exists
+      if (publicLinkRecord) {
+        const currentCount = publicLinkRecord.usageCount || 0;
+        console.log(`[SIGNUP] Updating public link ${publicLinkRecord.id}: ${currentCount} -> ${currentCount + 1}`);
+        
+        await db
+          .update(publicReferralLinks)
+          .set({
+            usageCount: currentCount + 1,
+            updatedAt: new Date(),
+          } as any)
+          .where(eq(publicReferralLinks.id, publicLinkRecord.id));
+        
+        console.log(`[SIGNUP] Public link updated successfully`);
+      }
+
+      console.log(`[SIGNUP] Couple signup completed for ${email}`);
+      return NextResponse.json({ success: true, user: { id: user.id, email, role: "COUPLE" } });
     } else if (type === "vendor") {
       const { businessName, phone, serviceCategory } = body;
 
@@ -128,14 +189,19 @@ export async function POST(req: NextRequest) {
       // Get the created user
       const [user] = await db.select().from(users).where(eq(users.email, email)).limit(1);
 
-      // Create vendor profile
-      if (user) {
-        await db.insert(vendors).values({
-          userId: user.id,
-          businessName,
-          category: serviceCategory,
-        } as any);
+      if (!user) {
+        console.log(`[SIGNUP] Failed to create user`);
+        return NextResponse.json({ error: "Failed to create user" }, { status: 500 });
       }
+
+      console.log(`[SIGNUP] User created: ${user.id}`);
+
+      // Create vendor profile
+      await db.insert(vendors).values({
+        userId: user.id,
+        businessName,
+        category: serviceCategory,
+      } as any);
 
       // Send welcome email
       try {
@@ -145,11 +211,12 @@ export async function POST(req: NextRequest) {
       }
 
       // Update referral if exists
-      if (referralRecord && user) {
+      if (referralRecord) {
+        console.log(`[SIGNUP] Updating regular referral`);
         await db
           .update(referrals)
           .set({
-            status: 'ACCEPTED' as const,
+            status: 'ACCEPTED',
             referredUserId: user.id,
             acceptedAt: new Date(),
             updatedAt: new Date(),
@@ -157,7 +224,24 @@ export async function POST(req: NextRequest) {
           .where(eq(referrals.id, referralRecord.id));
       }
 
-      return NextResponse.json({ success: true, user: { id: user?.id, email, role: "VENDOR" } });
+      // Update public link usage if exists
+      if (publicLinkRecord) {
+        const currentCount = publicLinkRecord.usageCount || 0;
+        console.log(`[SIGNUP] Updating public link ${publicLinkRecord.id}: ${currentCount} -> ${currentCount + 1}`);
+        
+        await db
+          .update(publicReferralLinks)
+          .set({
+            usageCount: currentCount + 1,
+            updatedAt: new Date(),
+          } as any)
+          .where(eq(publicReferralLinks.id, publicLinkRecord.id));
+        
+        console.log(`[SIGNUP] Public link updated successfully`);
+      }
+
+      console.log(`[SIGNUP] Vendor signup completed for ${email}`);
+      return NextResponse.json({ success: true, user: { id: user.id, email, role: "VENDOR" } });
     }
 
     return NextResponse.json({ error: "Invalid signup type" }, { status: 400 });

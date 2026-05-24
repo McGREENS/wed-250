@@ -241,6 +241,30 @@ export const messages = sqliteTable("messages", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Public Referral Links table (reusable links)
+export const publicReferralLinks = sqliteTable("public_referral_links", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  referralCode: text("referral_code").notNull().unique(),
+  referralRole: text("referral_role", { enum: ["COUPLE", "VENDOR"] }).notNull(),
+  title: text("title"),
+  description: text("description"),
+  usageCount: integer("usage_count").default(0),
+  isActive: integer("is_active", { mode: "boolean" }).default(true),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Booking Payments table
+export const bookingPayments = sqliteTable("booking_payments", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  bookingId: text("booking_id").notNull().references(() => bookings.id, { onDelete: "cascade" }),
+  amount: real("amount").notNull(),
+  note: text("note"),
+  paidAt: integer("paid_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Referrals table
 export const referrals = sqliteTable("referrals", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -255,24 +279,13 @@ export const referrals = sqliteTable("referrals", {
   emailSentAt: integer("email_sent_at", { mode: "timestamp" }),
   acceptedAt: integer("accepted_at", { mode: "timestamp" }),
   expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
-  metadata: text("metadata"), // JSON for additional data
+  publicLinkId: text("public_link_id").references(() => publicReferralLinks.id, { onDelete: "set null" }),
+  metadata: text("metadata"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
-// Relations
-export const usersRelations = relations(users, ({ many }) => ({
-  accounts: many(accounts),
-  sessions: many(sessions),
-  weddings: many(weddings),
-  bookings: many(bookings),
-  reviews: many(reviews),
-  favorites: many(favorites),
-  vendor: many(vendors),
-  venueTours: many(venueTours),
-  tasks: many(tasks),
-  invoices: many(invoices),
-}));
+
 
 export const vendorsRelations = relations(vendors, ({ one, many }) => ({
   user: one(users, { fields: [vendors.userId], references: [users.id] }),
@@ -295,10 +308,15 @@ export const weddingsRelations = relations(weddings, ({ one, many }) => ({
   bookings: many(bookings),
 }));
 
-export const bookingsRelations = relations(bookings, ({ one }) => ({
+export const bookingPaymentsRelations = relations(bookingPayments, ({ one }) => ({
+  booking: one(bookings, { fields: [bookingPayments.bookingId], references: [bookings.id] }),
+}));
+
+export const bookingsRelations = relations(bookings, ({ one, many }) => ({
   wedding: one(weddings, { fields: [bookings.weddingId], references: [weddings.id] }),
   vendor: one(vendors, { fields: [bookings.vendorId], references: [vendors.id] }),
   user: one(users, { fields: [bookings.userId], references: [users.id] }),
+  payments: many(bookingPayments),
 }));
 
 export const reviewsRelations = relations(reviews, ({ one }) => ({
@@ -337,9 +355,29 @@ export const messagesRelations = relations(messages, ({ one }) => ({
   sender: one(users, { fields: [messages.senderId], references: [users.id] }),
 }));
 
+export const publicReferralLinksRelations = relations(publicReferralLinks, ({ one, many }) => ({
+  user: one(users, { fields: [publicReferralLinks.userId], references: [users.id] }),
+  referrals: many(referrals),
+}));
+
 export const referralsRelations = relations(referrals, ({ one }) => ({
   referrer: one(users, { fields: [referrals.referrerId], references: [users.id] }),
   referredUser: one(users, { fields: [referrals.referredUserId], references: [users.id] }),
+  publicLink: one(publicReferralLinks, { fields: [referrals.publicLinkId], references: [publicReferralLinks.id] }),
+}));
+
+export const usersRelations = relations(users, ({ many }) => ({
+  accounts: many(accounts),
+  sessions: many(sessions),
+  weddings: many(weddings),
+  bookings: many(bookings),
+  reviews: many(reviews),
+  favorites: many(favorites),
+  vendor: many(vendors),
+  venueTours: many(venueTours),
+  tasks: many(tasks),
+  invoices: many(invoices),
+  publicReferralLinks: many(publicReferralLinks),
 }));
 
 // Invoices table

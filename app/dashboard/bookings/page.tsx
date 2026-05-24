@@ -5,10 +5,14 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Badge } from "@/app/components/ui/badge";
-import { Calendar, MapPin, Phone, Mail, DollarSign, Clock, CheckCircle, AlertCircle, Heart, Eye } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Clock, CheckCircle, AlertCircle, Heart, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
+import PaymentPanel from '@/app/components/dashboard/PaymentPanel';
+import PaymentHistory from '@/app/components/dashboard/PaymentHistory';
+import PaymentProgress from '@/app/components/dashboard/PaymentProgress';
+import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
 
 export default function BookingsPage() {
     const router = useRouter();
@@ -152,97 +156,164 @@ export default function BookingsPage() {
         return bookings.filter(b => b.status === status);
     };
 
-    const BookingCard = ({ booking }: { booking: any }) => (
-        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
-            <CardContent className="p-6">
-                <div className="flex items-start justify-between mb-4">
-                    <div className="flex items-start gap-3">
-                        <div className="w-12 h-12 bg-burgundy/10 rounded-lg flex items-center justify-center flex-shrink-0">
-                            {getStatusIcon(booking.status)}
-                        </div>
-                        <div>
-                            <h3 className="font-semibold text-charcoal text-lg">{booking.vendorName || 'Vendor'}</h3>
-                            <p className="text-sm text-gray-600">{booking.serviceType || booking.servicePackage}</p>
-                        </div>
-                    </div>
-                    <div className="text-right">
-                        <p className="font-bold text-burgundy text-lg">{booking.amount?.toLocaleString() || booking.totalAmount?.toLocaleString()} RWF</p>
-                        <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${getPaymentBadge(booking.paymentStatus)}`}>
-                            {booking.paymentStatus?.replace('_', ' ')}
-                        </span>
-                    </div>
-                </div>
+    const BookingCard = ({ booking }: { booking: any }) => {
+        const totalAmount = booking.totalAmount || booking.amount || 0;
+        const [totalPaid, setTotalPaid] = useState<number>(booking.depositAmount || 0);
+        const [paymentStatus, setPaymentStatus] = useState<string>(booking.paymentStatus || 'UNPAID');
+        const [refreshTrigger, setRefreshTrigger] = useState(0);
+        const [showPayments, setShowPayments] = useState(false);
 
-                <div className="grid md:grid-cols-2 gap-4 mb-4 p-4 bg-sand/20 rounded-lg">
-                    <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
-                        <div>
-                            <p className="text-xs text-gray-500">Event Date</p>
-                            <p className="text-sm font-medium text-charcoal">{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Not set'}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
-                        <div>
-                            <p className="text-xs text-gray-500">Booked On</p>
-                            <p className="text-sm font-medium text-charcoal">{booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString() : 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <MapPin className="w-4 h-4 text-gray-500" />
-                        <div>
-                            <p className="text-xs text-gray-500">Location</p>
-                            <p className="text-sm font-medium text-charcoal">{booking.vendorLocation || 'N/A'}</p>
-                        </div>
-                    </div>
-                    <div className="flex items-center gap-2">
-                        <DollarSign className="w-4 h-4 text-gray-500" />
-                        <div>
-                            <p className="text-xs text-gray-500">Deposit Paid</p>
-                            <p className="text-sm font-medium text-charcoal">{booking.depositAmount?.toLocaleString() || 0} RWF</p>
-                        </div>
-                    </div>
-                </div>
+        const handlePaymentAdded = (newTotalPaid: number, newStatus: string) => {
+            setTotalPaid(newTotalPaid);
+            setPaymentStatus(newStatus);
+            setRefreshTrigger(t => t + 1);
+            setShowPayments(true);
+        };
 
-                {booking.notes && (
-                    <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-1">Booking Notes</p>
-                        <p className="text-sm text-gray-700">{booking.notes}</p>
-                    </div>
-                )}
+        const handlePaymentDeleted = (newTotalPaid: number, newStatus: string) => {
+            setTotalPaid(newTotalPaid);
+            setPaymentStatus(newStatus);
+        };
 
-                <div className="flex items-center gap-4 mb-4 p-3 bg-white rounded-lg border border-gray-100">
-                    {booking.vendorPhone && (
-                        <div className="flex items-center gap-2 flex-1">
-                            <Phone className="w-4 h-4 text-burgundy" />
-                            <span className="text-sm text-charcoal">{booking.vendorPhone}</span>
+        return (
+            <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+                <CardContent className="p-6">
+                    {/* Header */}
+                    <div className="flex items-start justify-between mb-4">
+                        <div className="flex items-start gap-3">
+                            <div className="w-12 h-12 bg-burgundy/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                                {getStatusIcon(booking.status)}
+                            </div>
+                            <div>
+                                <h3 className="font-semibold text-charcoal text-lg">{booking.vendorName || 'Vendor'}</h3>
+                                <p className="text-sm text-gray-600">{booking.serviceType || booking.servicePackage}</p>
+                            </div>
+                        </div>
+                        <div className="text-right">
+                            <p className="font-bold text-burgundy text-lg">{totalAmount.toLocaleString()} RWF</p>
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${getPaymentBadge(paymentStatus)}`}>
+                                {paymentStatus?.replace('_', ' ')}
+                            </span>
+                        </div>
+                    </div>
+
+                    {/* Booking details grid */}
+                    <div className="grid md:grid-cols-2 gap-4 mb-4 p-4 bg-sand/20 rounded-lg">
+                        <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-gray-500" />
+                            <div>
+                                <p className="text-xs text-gray-500">Event Date</p>
+                                <p className="text-sm font-medium text-charcoal">{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Not set'}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <Clock className="w-4 h-4 text-gray-500" />
+                            <div>
+                                <p className="text-xs text-gray-500">Booked On</p>
+                                <p className="text-sm font-medium text-charcoal">{booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString() : 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <MapPin className="w-4 h-4 text-gray-500" />
+                            <div>
+                                <p className="text-xs text-gray-500">Location</p>
+                                <p className="text-sm font-medium text-charcoal">{booking.vendorLocation || 'N/A'}</p>
+                            </div>
+                        </div>
+                        <div className="flex items-center gap-2">
+                            <CheckCircle className="w-4 h-4 text-gray-500" />
+                            <div>
+                                <p className="text-xs text-gray-500">Booking Status</p>
+                                <p className="text-sm font-medium text-charcoal capitalize">{booking.status}</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    {booking.notes && (
+                        <div className="mb-4">
+                            <p className="text-xs text-gray-500 mb-1">Booking Notes</p>
+                            <p className="text-sm text-gray-700">{booking.notes}</p>
                         </div>
                     )}
-                    {booking.vendorEmail && (
-                        <div className="flex items-center gap-2 flex-1">
-                            <Mail className="w-4 h-4 text-burgundy" />
-                            <span className="text-sm text-charcoal">{booking.vendorEmail}</span>
+
+                    {(booking.vendorPhone || booking.vendorEmail) && (
+                        <div className="flex items-center gap-4 mb-4 p-3 bg-white rounded-lg border border-gray-100">
+                            {booking.vendorPhone && (
+                                <div className="flex items-center gap-2 flex-1">
+                                    <Phone className="w-4 h-4 text-burgundy" />
+                                    <span className="text-sm text-charcoal">{booking.vendorPhone}</span>
+                                </div>
+                            )}
+                            {booking.vendorEmail && (
+                                <div className="flex items-center gap-2 flex-1">
+                                    <Mail className="w-4 h-4 text-burgundy" />
+                                    <span className="text-sm text-charcoal">{booking.vendorEmail}</span>
+                                </div>
+                            )}
                         </div>
                     )}
-                </div>
 
-                <div className="flex gap-2">
-                    <Button 
-                        variant="outline" 
-                        className="flex-1 border-burgundy text-burgundy hover:bg-burgundy hover:text-white"
-                        onClick={() => router.push(`/vendors/${booking.vendorId}`)}
-                    >
-                        View Vendor
-                    </Button>
-                    {booking.status === 'pending' && (
-                        <Button variant="outline" className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
-                            Cancel Booking
+                    {/* ── Payment section ── */}
+                    {totalAmount > 0 && (
+                        <div className="border-t border-gray-100 pt-4 mt-2">
+                            {/* Payment Progress */}
+                            <PaymentProgress
+                                totalAmount={totalAmount}
+                                totalPaid={totalPaid}
+                                paymentStatus={paymentStatus}
+                            />
+
+                            {/* Add Payment form */}
+                            <PaymentPanel
+                                bookingId={booking.id}
+                                totalAmount={totalAmount}
+                                totalPaid={totalPaid}
+                                onPaymentAdded={handlePaymentAdded}
+                            />
+
+                            {/* Payment History toggle */}
+                            <button
+                                type="button"
+                                onClick={() => setShowPayments(v => !v)}
+                                className="flex items-center justify-between w-full mt-3 px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-600"
+                            >
+                                <span>Payment History</span>
+                                {showPayments
+                                    ? <ChevronUp className="w-4 h-4" />
+                                    : <ChevronDown className="w-4 h-4" />}
+                            </button>
+
+                            {showPayments && (
+                                <div className="mt-2">
+                                    <PaymentHistory
+                                        bookingId={booking.id}
+                                        refreshTrigger={refreshTrigger}
+                                        onPaymentDeleted={handlePaymentDeleted}
+                                    />
+                                </div>
+                            )}
+                        </div>
+                    )}
+
+                    {/* Actions */}
+                    <div className="flex gap-2 mt-4">
+                        <Button
+                            variant="outline"
+                            className="flex-1 border-burgundy text-burgundy hover:bg-burgundy hover:text-white"
+                            onClick={() => router.push(`/vendors/${booking.vendorId}`)}
+                        >
+                            View Vendor
                         </Button>
-                    )}
-                </div>
-            </CardContent>
-        </Card>
-    );
+                        {booking.status === 'pending' && (
+                            <Button variant="outline" className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                                Cancel Booking
+                            </Button>
+                        )}
+                    </div>
+                </CardContent>
+            </Card>
+        );
+    };
 
     const FavoriteCard = ({ favorite }: { favorite: any }) => {
         const images = favorite.vendorImages ? JSON.parse(favorite.vendorImages) : [];
@@ -296,6 +367,8 @@ export default function BookingsPage() {
                     <h1 className="text-3xl font-serif text-charcoal mb-2">My Bookings & Tours</h1>
                     <p className="text-gray-600">Manage all your vendor bookings, venue tours and saved items</p>
                 </div>
+
+                <DiscoverBanner />
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
                     <TabsList className="bg-white border border-gray-100">

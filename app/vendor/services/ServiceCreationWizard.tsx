@@ -311,6 +311,7 @@ function GeneralServiceForm({ serviceType, currentStep, formData, updateFormData
     if (serviceType === "Makeup") return <MakeupForm {...props} />;
     if (serviceType === "Decoration") return <DecorationForm {...props} />;
     if (serviceType === "Attire") return <AttireForm {...props} />;
+    if (serviceType === "Other") return <OtherServiceForm {...props} />;
     return (
         <Card className="border-gray-100 shadow-sm">
             <CardHeader className="border-b border-gray-100">
@@ -1230,6 +1231,90 @@ function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onS
                     <Field label="Cancellation Policy" required><Textarea value={formData.cancellationPolicy || ""} onChange={(e) => updateFormData("cancellationPolicy", e.target.value)} rows={3} placeholder="e.g., 50% refund if cancelled 30+ days before." /></Field>
                     <Field label="What's Included" hint="comma-separated"><Input value={formData.features || ""} onChange={(e) => updateFormData("features", e.target.value)} placeholder="e.g., Bridal trial, on-location, touch-up kit, 5 people" /></Field>
                     <Field label="Add-ons Available"><Input value={formData.addons || ""} onChange={(e) => updateFormData("addons", e.target.value)} placeholder="e.g., Extra bridesmaids, lashes, airbrush upgrade" /></Field>
+                </div>
+            )}
+        </WizardShell>
+    );
+}
+
+function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+    const steps = ["Basic Info", "Details", "Pricing"];
+    const handleImage = useImageUpload(updateFormData);
+
+    return (
+        <WizardShell
+            title="Custom Service Setup"
+            badgeLabel={`Step ${currentStep} of ${steps.length}`}
+            badgeCls="bg-gray-100 text-gray-700"
+            steps={steps}
+            currentStep={currentStep}
+            onBack={onBack}
+            onNext={onNext}
+            onSubmit={onSubmit}
+            isSubmitting={isSubmitting}
+            isLastStep={currentStep === steps.length}
+            submitLabel={editMode ? "Update Service" : "Create Service"}
+        >
+            {currentStep === 1 && (
+                <div className="space-y-5">
+                    <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
+                    <Field label="Service Type" required>
+                        <Input value={formData.serviceType || ""} onChange={(e) => updateFormData("serviceType", e.target.value)} placeholder="e.g., Florist, Invitations, Honeymoon Planning" />
+                    </Field>
+                    <Field label="Package Name" required>
+                        <Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Premium Floral Arrangement" />
+                    </Field>
+                    <Field label="Description" required>
+                        <Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your service, what you offer, and what makes you unique..." />
+                    </Field>
+                    <Field label="Years of Experience">
+                        <Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 5" />
+                    </Field>
+                    <Field label="Package Image">
+                        <Input type="file" accept="image/*" onChange={handleImage} />
+                        {formData.image && <img src={formData.image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg border" />}
+                    </Field>
+                </div>
+            )}
+
+            {currentStep === 2 && (
+                <div className="space-y-5">
+                    <h3 className="font-semibold text-lg text-charcoal">Service Details</h3>
+                    <Field label="Service Area">
+                        <Input value={formData.serviceArea || ""} onChange={(e) => updateFormData("serviceArea", e.target.value)} placeholder="e.g., Kigali & all Rwanda, nationwide delivery" />
+                    </Field>
+                    <Field label="What's Included" hint="comma-separated" required>
+                        <Input value={formData.features || ""} onChange={(e) => updateFormData("features", e.target.value)} placeholder="e.g., Design consultation, custom arrangements, delivery & setup" />
+                    </Field>
+                    <Field label="Add-ons Available">
+                        <Input value={formData.addons || ""} onChange={(e) => updateFormData("addons", e.target.value)} placeholder="e.g., Rush delivery, premium flowers, extended consultation" />
+                    </Field>
+                    <Field label="Delivery/Service Timeline">
+                        <Input value={formData.deliveryTimeline || ""} onChange={(e) => updateFormData("deliveryTimeline", e.target.value)} placeholder="e.g., 2-3 weeks for custom orders, same-day delivery available" />
+                    </Field>
+                    <Field label="Cancellation Policy" required>
+                        <Textarea value={formData.cancellationPolicy || ""} onChange={(e) => updateFormData("cancellationPolicy", e.target.value)} rows={3} placeholder="e.g., Deposit non-refundable. Full refund if cancelled 30+ days before." />
+                    </Field>
+                </div>
+            )}
+
+            {currentStep === 3 && (
+                <div className="space-y-5">
+                    <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
+                    <div className="grid grid-cols-2 gap-4">
+                        <Field label="Package Price (RWF)" required>
+                            <Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500000" />
+                        </Field>
+                        <Field label="Deposit Required">
+                            <Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30%, 150,000 RWF" />
+                        </Field>
+                    </div>
+                    <Field label="Payment Schedule">
+                        <Input value={formData.paymentSchedule || ""} onChange={(e) => updateFormData("paymentSchedule", e.target.value)} placeholder="e.g., 30% deposit, 70% on delivery" />
+                    </Field>
+                    <Field label="Overtime/Extra Charges">
+                        <Input value={formData.extraCharges || ""} onChange={(e) => updateFormData("extraCharges", e.target.value)} placeholder="e.g., Rush fee: +20%, Extra items: +10,000 RWF each" />
+                    </Field>
                 </div>
             )}
         </WizardShell>

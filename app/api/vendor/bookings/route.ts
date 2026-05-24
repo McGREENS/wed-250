@@ -12,6 +12,11 @@ export async function GET(req: NextRequest) {
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+    
+    // CRITICAL: Check if user is a VENDOR
+    if (session.user.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
+    }
 
     const vendor = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
     if (!vendor.length) {
@@ -34,6 +39,11 @@ export async function POST(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // CRITICAL: Check if user is a VENDOR
+    if (session.user.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
     }
 
     const vendor = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
@@ -85,6 +95,11 @@ export async function PUT(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // CRITICAL: Check if user is a VENDOR
+    if (session.user.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
     }
 
     const vendor = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
@@ -178,6 +193,11 @@ export async function DELETE(req: NextRequest) {
     const session = await auth();
     if (!session?.user?.email) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+    
+    // CRITICAL: Check if user is a VENDOR
+    if (session.user.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
     }
 
     const vendor = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);

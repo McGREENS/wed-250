@@ -1,6 +1,8 @@
 'use client';
 
 import { useEffect, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useSession } from 'next-auth/react';
 import Link from 'next/link';
 import VendorPageLayout from '@/app/components/vendor/VendorPageLayout';
 import { Card, CardContent, CardHeader, CardTitle } from '@/app/components/ui/card';
@@ -16,12 +18,14 @@ import {
 interface DashboardData {
   vendor: { businessName: string; rating: number; reviewCount: number; verified: boolean };
   stats: {
-    totalRevenue: number; thisMonthRevenue: number; revenueChange: number | null;
+    totalRevenue: number; projectedRevenue: number; actualRevenue: number;
+    thisMonthRevenue: number; thisMonthProjected: number; thisMonthActual: number;
+    revenueChange: number | null; actualRevenueChange: number | null;
     pendingBookings: number; confirmedBookings: number; bookingChange: number | null;
     totalBookings: number; activeServices: number; pendingTours: number; pendingQuotes: number;
     avgRating: number; reviewCount: number;
   };
-  monthlyRevenue: { label: string; revenue: number; count: number }[];
+  monthlyRevenue: { label: string; revenue: number; actual: number; count: number }[];
   statusBreakdown: { pending: number; confirmed: number; completed: number; cancelled: number };
   upcomingBookings: any[];
   recentBookings: any[];
@@ -56,84 +60,114 @@ function StatusDot({ status }: { status: string }) {
   return <span className={`inline-block w-2 h-2 rounded-full ${map[status] ?? 'bg-gray-400'}`} />;
 }
 
-function RevenueChart({ months, max }: { months: { label: string; revenue: number; count: number }[]; max: number }) {
+function RevenueChart({ months, max }: { months: { label: string; revenue: number; actual: number; count: number }[]; max: number }) {
   const [hovered, setHovered] = useState<number | null>(null);
 
-  // Compute 4 evenly-spaced Y-axis ticks from 0 to max
   const rawStep = max / 4;
-  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep)));
-  const step = Math.ceil(rawStep / magnitude) * magnitude;
-  const ticks = Array.from({ length: 5 }, (_, i) => i * step); // 0, step, 2*step, 3*step, 4*step
-  const chartMax = ticks[4];
+  const magnitude = Math.pow(10, Math.floor(Math.log10(rawStep || 1)));
+  const step = Math.ceil((rawStep || 1) / magnitude) * magnitude;
+  const ticks = Array.from({ length: 5 }, (_, i) => i * step);
+  const chartMax = ticks[4] || 1;
 
   return (
-    <div className="flex gap-3 mt-2">
-      {/* Y-axis */}
-      <div className="flex flex-col justify-between items-end pb-6" style={{ minWidth: 44 }}>
-        {[...ticks].reverse().map(t => (
-          <span key={t} className="text-[10px] text-gray-400 leading-none">{fmt(t)}</span>
-        ))}
+    <div>
+      {/* Legend */}
+      <div className="flex items-center gap-4 mb-3">
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-burgundy/25 inline-block" />
+          <span className="text-xs text-gray-500">Projected</span>
+        </div>
+        <div className="flex items-center gap-1.5">
+          <span className="w-3 h-3 rounded-sm bg-burgundy inline-block" />
+          <span className="text-xs text-gray-500">Actual Received</span>
+        </div>
       </div>
 
-      {/* Chart area */}
-      <div className="flex-1 relative">
-        {/* Horizontal gridlines */}
-        <div className="absolute inset-0 bottom-6 flex flex-col justify-between pointer-events-none">
-          {ticks.map(t => (
-            <div key={t} className="w-full border-t border-gray-100" />
+      <div className="flex gap-3 mt-2">
+        {/* Y-axis */}
+        <div className="flex flex-col justify-between items-end pb-6" style={{ minWidth: 44 }}>
+          {[...ticks].reverse().map(t => (
+            <span key={t} className="text-[10px] text-gray-400 leading-none">{fmt(t)}</span>
           ))}
         </div>
 
-        {/* Bars */}
-        <div className="flex items-end gap-1.5 h-full pb-6">
-          {months.map((m, i) => {
-            const pct = chartMax > 0 ? (m.revenue / chartMax) * 100 : 0;
-            const isCurrent = i === months.length - 1;
-            const isHovered = hovered === i;
-            return (
-              <div
-                key={m.label}
-                className="flex-1 flex flex-col items-center gap-1 relative group cursor-default"
-                onMouseEnter={() => setHovered(i)}
-                onMouseLeave={() => setHovered(null)}
-              >
-                {/* Tooltip */}
-                {isHovered && (
-                  <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-charcoal text-white rounded-lg px-3 py-2 z-20 shadow-lg pointer-events-none" style={{ minWidth: 120 }}>
-                    <p className="text-[11px] font-semibold whitespace-nowrap">{m.label}</p>
-                    <p className="text-xs font-bold whitespace-nowrap mt-0.5">
-                      {m.revenue > 0 ? `${fmt(m.revenue)} RWF` : 'No revenue'}
-                    </p>
-                    <p className="text-[10px] text-gray-300 whitespace-nowrap">
-                      {m.count} booking{m.count !== 1 ? 's' : ''}
-                    </p>
-                    {/* Arrow */}
-                    <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-charcoal" />
-                  </div>
-                )}
+        {/* Chart area */}
+        <div className="flex-1 relative">
+          {/* Gridlines */}
+          <div className="absolute inset-0 bottom-6 flex flex-col justify-between pointer-events-none">
+            {ticks.map(t => <div key={t} className="w-full border-t border-gray-100" />)}
+          </div>
 
-                {/* Bar */}
-                <div className="w-full flex items-end" style={{ height: 160 }}>
-                  {m.revenue > 0 ? (
-                    <div
-                      className={`w-full rounded-t-md transition-all duration-200 ${
-                        isCurrent
-                          ? isHovered ? 'bg-burgundy' : 'bg-burgundy/80'
-                          : isHovered ? 'bg-burgundy/60' : 'bg-burgundy/25'
-                      }`}
-                      style={{ height: `${pct}%` }}
-                    />
-                  ) : (
-                    <div className="w-full rounded-t-sm bg-gray-100" style={{ height: 3 }} />
+          {/* Bars */}
+          <div className="flex items-end gap-1.5 h-full pb-6">
+            {months.map((m, i) => {
+              const projPct  = chartMax > 0 ? (m.revenue / chartMax) * 100 : 0;
+              const actPct   = chartMax > 0 ? (m.actual  / chartMax) * 100 : 0;
+              const isCurrent = i === months.length - 1;
+              const isHovered = hovered === i;
+              return (
+                <div
+                  key={m.label}
+                  className="flex-1 flex flex-col items-center gap-1 relative cursor-default"
+                  onMouseEnter={() => setHovered(i)}
+                  onMouseLeave={() => setHovered(null)}
+                >
+                  {/* Tooltip */}
+                  {isHovered && (
+                    <div className="absolute bottom-full mb-2 left-1/2 -translate-x-1/2 bg-charcoal text-white rounded-lg px-3 py-2 z-20 shadow-lg pointer-events-none" style={{ minWidth: 148 }}>
+                      <p className="text-[11px] font-semibold">{m.label}</p>
+                      <div className="mt-1 space-y-0.5">
+                        <p className="text-[11px] flex justify-between gap-3">
+                          <span className="text-gray-300">Projected</span>
+                          <span className="font-bold">{m.revenue > 0 ? `${fmt(m.revenue)} RWF` : '—'}</span>
+                        </p>
+                        <p className="text-[11px] flex justify-between gap-3">
+                          <span className="text-gray-300">Received</span>
+                          <span className="font-bold text-green-400">{m.actual > 0 ? `${fmt(m.actual)} RWF` : '—'}</span>
+                        </p>
+                        <p className="text-[10px] text-gray-400">{m.count} booking{m.count !== 1 ? 's' : ''}</p>
+                      </div>
+                      <div className="absolute top-full left-1/2 -translate-x-1/2 border-4 border-transparent border-t-charcoal" />
+                    </div>
                   )}
-                </div>
 
-                <span className={`text-[11px] leading-none ${
-                  isCurrent ? 'text-burgundy font-semibold' : 'text-gray-400'
-                }`}>{m.label}</span>
-              </div>
-            );
-          })}
+                  {/* Dual bars side by side */}
+                  <div className="w-full flex items-end gap-0.5" style={{ height: 160 }}>
+                    {/* Projected bar */}
+                    {m.revenue > 0 ? (
+                      <div
+                        className={`flex-1 rounded-t-md transition-all duration-200 ${
+                          isCurrent
+                            ? isHovered ? 'bg-burgundy/50' : 'bg-burgundy/30'
+                            : isHovered ? 'bg-burgundy/40' : 'bg-burgundy/20'
+                        }`}
+                        style={{ height: `${projPct}%` }}
+                      />
+                    ) : (
+                      <div className="flex-1 rounded-t-sm bg-gray-100" style={{ height: 3 }} />
+                    )}
+                    {/* Actual bar */}
+                    {m.actual > 0 ? (
+                      <div
+                        className={`flex-1 rounded-t-md transition-all duration-200 ${
+                          isCurrent
+                            ? isHovered ? 'bg-burgundy' : 'bg-burgundy/90'
+                            : isHovered ? 'bg-burgundy/70' : 'bg-burgundy/55'
+                        }`}
+                        style={{ height: `${actPct}%` }}
+                      />
+                    ) : (
+                      <div className="flex-1 rounded-t-sm bg-gray-100" style={{ height: 3 }} />
+                    )}
+                  </div>
+
+                  <span className={`text-[11px] leading-none ${
+                    isCurrent ? 'text-burgundy font-semibold' : 'text-gray-400'
+                  }`}>{m.label}</span>
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>
@@ -144,8 +178,16 @@ export default function VendorDashboardPage() {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [greeting, setGreeting] = useState('Good morning');
+  const router = useRouter();
+  const { data: session } = useSession();
 
   useEffect(() => {
+    // Check if user is a vendor
+    if (session && session.user.role !== 'VENDOR') {
+      router.push('/dashboard');
+      return;
+    }
+
     const h = new Date().getHours();
     if (h >= 12 && h < 17) setGreeting('Good afternoon');
     else if (h >= 17) setGreeting('Good evening');
@@ -161,7 +203,7 @@ export default function VendorDashboardPage() {
       })
       .catch(err => console.error('Fetch error:', err))
       .finally(() => setLoading(false));
-  }, []);
+  }, [session, router]);
 
   if (loading) {
     return (
@@ -187,7 +229,7 @@ export default function VendorDashboardPage() {
   }
 
   const { vendor, stats, monthlyRevenue = [], statusBreakdown, upcomingBookings, recentBookings, profileScore, profileTips } = data;
-  const maxRevenue = Math.max(...monthlyRevenue.map(m => m.revenue), 0);
+  const maxRevenue = Math.max(...monthlyRevenue.map(m => Math.max(m.revenue, m.actual)), 0);
   const today = new Date();
 
   return (
@@ -244,20 +286,36 @@ export default function VendorDashboardPage() {
         )}
 
         {/* KPI Cards */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 sm:gap-4">
-          {/* Revenue */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
+        {/* Projected Revenue */}
           <Card className="border-gray-100 shadow-sm">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm text-gray-500">Total Revenue</p>
+                <p className="text-xs sm:text-sm text-gray-500">Projected Revenue</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-burgundy" />
+                </div>
+              </div>
+              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
+                {stats.projectedRevenue > 0 ? `${fmt(stats.projectedRevenue)} RWF` : '—'}
+              </p>
+              <p className="text-xs text-gray-400">Confirmed &amp; completed bookings</p>
+            </CardContent>
+          </Card>
+
+          {/* Actual Revenue */}
+          <Card className="border-l-4 border-l-green-500 border-gray-100 shadow-sm">
+            <CardContent className="p-4 sm:p-5">
+              <div className="flex items-start justify-between mb-2 sm:mb-3">
+                <p className="text-xs sm:text-sm text-gray-500">Actual Revenue</p>
                 <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-50 rounded-lg flex items-center justify-center">
                   <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
                 </div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
-                {stats.totalRevenue > 0 ? `${fmt(stats.totalRevenue)} RWF` : '—'}
+              <p className="text-xl sm:text-2xl font-bold text-green-700 mb-1">
+                {stats.actualRevenue > 0 ? `${fmt(stats.actualRevenue)} RWF` : '—'}
               </p>
-              <ChangeChip value={stats.revenueChange} />
+              <ChangeChip value={stats.actualRevenueChange} />
             </CardContent>
           </Card>
 
@@ -317,11 +375,19 @@ export default function VendorDashboardPage() {
                   <CardTitle className="text-base font-semibold text-charcoal">Revenue Overview</CardTitle>
                   <p className="text-xs text-gray-400 mt-0.5">Last 6 months · confirmed &amp; completed bookings</p>
                 </div>
-                <div className="text-right">
-                  <p className="text-lg font-bold text-burgundy leading-none">
-                    {stats.thisMonthRevenue > 0 ? `${fmt(stats.thisMonthRevenue)} RWF` : '—'}
-                  </p>
-                  <p className="text-[11px] text-gray-400 mt-0.5">this month</p>
+                <div className="text-right space-y-1">
+                  <div>
+                    <p className="text-xs text-gray-400">Projected this month</p>
+                    <p className="text-base font-bold text-burgundy/70 leading-tight">
+                      {stats.thisMonthProjected > 0 ? `${fmt(stats.thisMonthProjected)} RWF` : '—'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-xs text-gray-400">Received this month</p>
+                    <p className="text-base font-bold text-green-600 leading-tight">
+                      {stats.thisMonthActual > 0 ? `${fmt(stats.thisMonthActual)} RWF` : '—'}
+                    </p>
+                  </div>
                 </div>
               </div>
             </CardHeader>

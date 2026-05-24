@@ -70,11 +70,28 @@ export default function SignupPage() {
         const ref = params.get('ref');
         if (ref) {
             setReferralCode(ref);
-            // Verify referral code
-            fetch(`/api/referrals/${ref}`)
+            // Try public referral first, then fall back to regular referral
+            fetch(`/api/referrals/public/${ref}`)
                 .then(res => res.json())
                 .then(data => {
                     if (data.valid) {
+                        setReferralInfo(data.referral);
+                        // Set active tab based on referral role
+                        if (data.referral.referredRole === 'COUPLE') {
+                            setActiveTab('couple');
+                        } else {
+                            setActiveTab('vendor');
+                        }
+                        toast.success(`Invitation from ${data.referral.referrerName}`);
+                    } else {
+                        // Try regular referral endpoint
+                        return fetch(`/api/referrals/${ref}`).then(res => res.json());
+                    }
+                })
+                .then(data => {
+                    if (data && !data.valid) {
+                        toast.error(data.error || 'Invalid referral code');
+                    } else if (data && data.valid) {
                         setReferralInfo(data.referral);
                         // Pre-fill email if available
                         if (data.referral.referredEmail) {
@@ -87,8 +104,6 @@ export default function SignupPage() {
                             }
                         }
                         toast.success(`Invitation from ${data.referral.referrerName}`);
-                    } else {
-                        toast.error(data.error || 'Invalid referral code');
                     }
                 })
                 .catch(() => {

@@ -6,40 +6,66 @@ import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Badge } from "@/app/components/ui/badge";
 import { Button } from "@/app/components/ui/button";
-import { Search, Send, Loader2 } from "lucide-react";
+import { Search, Send, Loader2, ArrowLeft } from "lucide-react";
 import { toast } from "sonner";
 import { useRefreshUnreadMessages } from "@/app/contexts/UnreadMessagesContext";
+import { useRealtimeMessaging } from "@/app/contexts/RealtimeMessagingContext";
 
 export default function VendorMessagesClient() {
     const { data: session } = useSession();
     const refreshUnreadMessages = useRefreshUnreadMessages();
+    const { subscribeToConversation, unsubscribeFromConversation, messages: realtimeMessages } = useRealtimeMessaging();
+    
     const [conversations, setConversations] = useState<any[]>([]);
     const [selectedConversation, setSelectedConversation] = useState<string | null>(null);
-    const [messages, setMessages] = useState<any[]>([]);
     const [replyText, setReplyText] = useState("");
     const [searchQuery, setSearchQuery] = useState("");
     const [loading, setLoading] = useState(true);
     const [sending, setSending] = useState(false);
+    const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+    
+    const messagesContainerRef = useRef<HTMLDivElement>(null);
     const messagesEndRef = useRef<HTMLDivElement>(null);
 
-    // Fetch conversations
+    // Define displayMessages before useEffect
+    const selectedConv = conversations.find(c => c.id === selectedConversation);
+    const displayMessages = realtimeMessages.get(selectedConversation || "") || selectedConv?.messages || [];
+
     useEffect(() => {
         fetchConversations();
     }, []);
 
-    // Auto-scroll to bottom when new messages arrive
+    // Subscribe to real-time updates when conversation is selected
     useEffect(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-        // Mark messages as read when conversation is selected
         if (selectedConversation) {
+            subscribeToConversation(selectedConversation);
             markMessagesAsRead(selectedConversation);
+            setShouldAutoScroll(true);
+            return () => {
+                unsubscribeFromConversation(selectedConversation);
+            };
         }
-    }, [selectedConversation, conversations]);
+    }, [selectedConversation, subscribeToConversation, unsubscribeFromConversation]);
+
+    // Auto-scroll when messages update
+    useEffect(() => {
+        if (shouldAutoScroll) {
+            setTimeout(() => {
+                messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+            }, 0);
+        }
+    }, [displayMessages, shouldAutoScroll]);
+
+    const handleScroll = () => {
+        if (!messagesContainerRef.current) return;
+        const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
+        const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
+        setShouldAutoScroll(isNearBottom);
+    };
 
     const markMessagesAsRead = async (conversationId: string) => {
         try {
             await fetch(`/api/messages?conversationId=${conversationId}`);
-            // Refresh unread count after marking as read
             await refreshUnreadMessages();
         } catch (error) {
             console.error('Error marking messages as read:', error);
@@ -55,7 +81,6 @@ export default function VendorMessagesClient() {
                 if (data.conversations?.length > 0 && !selectedConversation) {
                     setSelectedConversation(data.conversations[0].id);
                 }
-                // Refresh unread count in sidebar
                 await refreshUnreadMessages();
             }
         } catch (error) {
@@ -84,6 +109,7 @@ export default function VendorMessagesClient() {
 
             if (res.ok) {
                 setReplyText("");
+                setShouldAutoScroll(true);
                 await fetchConversations();
             } else {
                 toast.error('Failed to send message');
@@ -101,9 +127,6 @@ export default function VendorMessagesClient() {
          c.vendorBusinessName?.toLowerCase().includes(searchQuery.toLowerCase()))
     );
 
-    const selectedConv = conversations.find(c => c.id === selectedConversation);
-    const selectedMessages = selectedConv?.messages || [];
-
     if (loading) {
         return (
             <div className="flex items-center justify-center h-96">
@@ -113,9 +136,9 @@ export default function VendorMessagesClient() {
     }
 
     return (
-        <div className="flex h-[calc(100vh-200px)] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
+        <div className="flex flex-col md:flex-row h-[calc(100vh-200px)] bg-white rounded-2xl shadow-sm border border-gray-100 overflow-hidden">
             {/* Conversations List */}
-            <div className="w-96 border-r border-gray-200 flex flex-col">
+            <div className={`w-full md:w-96 border-b md:border-b-0 md:border-r border-gray-200 flex flex-col ${selectedConversation ? 'hidden md:flex' : 'flex'}`}>
                 <div className="p-4 border-b border-gray-200">
                     <h1 className="text-2xl font-bold text-charcoal mb-4">Messages</h1>
                     <div className="relative">
@@ -187,12 +210,18 @@ export default function VendorMessagesClient() {
             </div>
 
             {/* Conversation View */}
-            <div className="flex-1 flex flex-col">
+            <div className={`flex-1 flex flex-col ${!selectedConversation ? 'hidden md:flex' : 'flex'}`}>
                 {selectedConv ? (
                     <>
                         {/* Header */}
                         <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                             <div className="flex items-center gap-3">
+                                <button
+                                    onClick={() => setSelectedConversation(null)}
+                                    className="md:hidden text-gray-500 hover:text-charcoal"
+                                >
+                                    <ArrowLeft className="w-5 h-5" />
+                                </button>
                                 <div className="w-10 h-10 bg-burgundy/10 rounded-full flex items-center justify-center">
                                     <span className="text-sm font-semibold text-burgundy">
                                         {(selectedConv.coupleName || selectedConv.vendorName || 'U').split(' ').map((n: string) => n[0]).join('').toUpperCase().slice(0, 2)}
@@ -208,20 +237,24 @@ export default function VendorMessagesClient() {
                         </div>
 
                         {/* Messages */}
-                        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-cream/30">
-                            {selectedMessages.length === 0 ? (
+                        <div 
+                            ref={messagesContainerRef}
+                            onScroll={handleScroll}
+                            className="flex-1 overflow-y-auto p-4 md:p-6 space-y-4 bg-cream/30"
+                        >
+                            {displayMessages.length === 0 ? (
                                 <div className="flex items-center justify-center h-full text-gray-500">
                                     <p className="text-sm">No messages yet. Start the conversation!</p>
                                 </div>
                             ) : (
-                                selectedMessages.map((msg: any) => {
+                                displayMessages.map((msg: any) => {
                                     const isCurrentUser = msg.senderId === session?.user?.id;
                                     return (
                                         <div
                                             key={msg.id}
                                             className={`flex ${isCurrentUser ? "justify-end" : "justify-start"}`}
                                         >
-                                            <div className={`max-w-lg ${isCurrentUser ? "order-2" : "order-1"}`}>
+                                            <div className={`max-w-xs md:max-w-lg ${isCurrentUser ? "order-2" : "order-1"}`}>
                                                 <div
                                                     className={`rounded-2xl px-4 py-3 ${
                                                         isCurrentUser
@@ -264,7 +297,7 @@ export default function VendorMessagesClient() {
                                     className="bg-burgundy hover:bg-burgundy-light text-white mb-2"
                                 >
                                     {sending ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Send className="w-4 h-4 mr-2" />}
-                                    Send
+                                    <span className="hidden md:inline">Send</span>
                                 </Button>
                             </div>
                             <p className="text-xs text-gray-500 mt-2">Press Enter to send, Shift+Enter for new line</p>

@@ -1,7 +1,7 @@
 "use client";
 
-import { useState, useEffect } from "react";
-import { Plus, Send, Eye, Edit, Trash2, FileText, DollarSign, Clock, CheckCircle, XCircle, Loader2, Download, Palette } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
+import { Plus, Send, Eye, Edit, Trash2, FileText, DollarSign, Clock, CheckCircle, XCircle, Loader2, Download, Palette, ChevronDown } from "lucide-react";
 import { toast } from "sonner";
 
 interface InvoiceItem {
@@ -311,6 +311,113 @@ export default function InvoicesClient() {
       default:
         return <FileText className="w-4 h-4" />;
     }
+  };
+
+  const ColorPicker = ({ value, onChange }: { value: string; onChange: (c: string) => void }) => {
+    const [open, setOpen] = useState(false);
+    const [hex, setHex] = useState(value);
+    const ref = useRef<HTMLDivElement>(null);
+
+    useEffect(() => { setHex(value); }, [value]);
+
+    useEffect(() => {
+      const handler = (e: MouseEvent) => {
+        if (ref.current && !ref.current.contains(e.target as Node)) setOpen(false);
+      };
+      document.addEventListener('mousedown', handler);
+      return () => document.removeEventListener('mousedown', handler);
+    }, []);
+
+    const swatches = [
+      // Reds & Pinks
+      '#dc2626','#ef4444','#f87171','#fca5a5',
+      '#be185d','#db2777','#ec4899','#f9a8d4',
+      // Oranges & Yellows
+      '#c2410c','#ea580c','#f97316','#fdba74',
+      '#a16207','#ca8a04','#eab308','#fde047',
+      // Greens
+      '#14532d','#15803d','#16a34a','#4ade80',
+      '#065f46','#047857','#10b981','#6ee7b7',
+      // Blues
+      '#1e3a8a','#1e40af','#2563eb','#93c5fd',
+      '#0c4a6e','#0369a1','#0ea5e9','#7dd3fc',
+      // Purples & Violets
+      '#4c1d95','#6d28d9','#7c3aed','#c4b5fd',
+      '#701a75','#a21caf','#c026d3','#e879f9',
+      // Neutrals & Browns
+      '#8B4513','#92400e','#78350f','#d97706',
+      '#1f2937','#374151','#6b7280','#9ca3af',
+    ];
+
+    const applyHex = (raw: string) => {
+      const val = raw.startsWith('#') ? raw : `#${raw}`;
+      if (/^#[0-9a-fA-F]{6}$/.test(val)) { onChange(val); setHex(val); }
+    };
+
+    return (
+      <div ref={ref} className="relative">
+        <button
+          type="button"
+          onClick={() => setOpen(o => !o)}
+          className="flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg hover:border-gray-400 transition-colors"
+        >
+          <span className="w-6 h-6 rounded border border-gray-200 flex-shrink-0" style={{ backgroundColor: value }} />
+          <span className="text-sm font-mono text-gray-700 uppercase">{value}</span>
+          <ChevronDown className={`w-4 h-4 text-gray-500 transition-transform ${open ? 'rotate-180' : ''}`} />
+        </button>
+
+        {open && (
+          <div className="absolute z-50 mt-2 p-4 bg-white border border-gray-200 rounded-xl shadow-xl w-72">
+            {/* Swatch grid */}
+            <div className="grid grid-cols-8 gap-1.5 mb-4">
+              {swatches.map(c => (
+                <button
+                  key={c}
+                  type="button"
+                  onClick={() => { onChange(c); setHex(c); }}
+                  className="w-7 h-7 rounded-md transition-transform hover:scale-110 focus:outline-none"
+                  style={{
+                    backgroundColor: c,
+                    boxShadow: value === c ? '0 0 0 2px white, 0 0 0 4px #1f2937' : 'none',
+                  }}
+                  title={c}
+                />
+              ))}
+            </div>
+
+            {/* Divider */}
+            <div className="border-t border-gray-100 mb-3" />
+
+            {/* Custom color row */}
+            <div className="flex items-center gap-2">
+              <label className="text-xs text-gray-500 flex-shrink-0">Custom:</label>
+              <div className="relative flex-shrink-0">
+                <input
+                  type="color"
+                  value={value}
+                  onChange={e => { onChange(e.target.value); setHex(e.target.value); }}
+                  className="w-8 h-8 rounded cursor-pointer border border-gray-300 p-0.5"
+                />
+              </div>
+              <span className="text-xs text-gray-400">#</span>
+              <input
+                type="text"
+                maxLength={6}
+                value={hex.replace('#', '')}
+                onChange={e => setHex(`#${e.target.value}`)}
+                onBlur={e => applyHex(e.target.value)}
+                onKeyDown={e => e.key === 'Enter' && applyHex(hex)}
+                className="flex-1 px-2 py-1 border border-gray-300 rounded text-xs font-mono uppercase"
+                placeholder="e.g. ff5733"
+              />
+            </div>
+
+            {/* Preview */}
+            <div className="mt-3 rounded-lg h-8 border border-gray-200 transition-colors" style={{ backgroundColor: value }} />
+          </div>
+        )}
+      </div>
+    );
   };
 
   const { subtotal, taxAmount, total } = calculateTotals();
@@ -682,7 +789,7 @@ export default function InvoicesClient() {
                             onChange={(e) => updateItem(index, "taxable", e.target.checked)}
                             className="rounded"
                           />
-                          Tax
+                          Tax Included
                         </label>
                       </div>
                       <div className="col-span-1">
@@ -755,27 +862,10 @@ export default function InvoicesClient() {
                   <Palette className="w-4 h-4 inline mr-1" />
                   Invoice Color
                 </label>
-                <div className="flex gap-3">
-                  {[
-                    { name: "Burgundy", value: "#8B4513" },
-                    { name: "Blue", value: "#1e40af" },
-                    { name: "Green", value: "#15803d" },
-                    { name: "Purple", value: "#7e22ce" },
-                    { name: "Red", value: "#dc2626" },
-                    { name: "Gray", value: "#4b5563" },
-                  ].map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, color: color.value })}
-                      className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                        formData.color === color.value ? "border-gray-900 scale-110" : "border-gray-300"
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
+                <ColorPicker
+                  value={formData.color}
+                  onChange={(c) => setFormData({ ...formData, color: c })}
+                />
               </div>
 
               <div className="flex gap-3">
@@ -1023,27 +1113,10 @@ export default function InvoicesClient() {
                   <Palette className="w-4 h-4 inline mr-1" />
                   Invoice Color
                 </label>
-                <div className="flex gap-3">
-                  {[
-                    { name: "Burgundy", value: "#8B4513" },
-                    { name: "Blue", value: "#1e40af" },
-                    { name: "Green", value: "#15803d" },
-                    { name: "Purple", value: "#7e22ce" },
-                    { name: "Red", value: "#dc2626" },
-                    { name: "Gray", value: "#4b5563" },
-                  ].map((color) => (
-                    <button
-                      key={color.value}
-                      type="button"
-                      onClick={() => setFormData({ ...formData, color: color.value })}
-                      className={`w-12 h-12 rounded-lg border-2 transition-all ${
-                        formData.color === color.value ? "border-gray-900 scale-110" : "border-gray-300"
-                      }`}
-                      style={{ backgroundColor: color.value }}
-                      title={color.name}
-                    />
-                  ))}
-                </div>
+                <ColorPicker
+                  value={formData.color}
+                  onChange={(c) => setFormData({ ...formData, color: c })}
+                />
               </div>
 
               <div className="flex gap-3">

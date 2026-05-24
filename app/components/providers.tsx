@@ -4,6 +4,7 @@ import { SessionProvider } from 'next-auth/react';
 import { Toaster } from '@/app/components/ui/sonner';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { UnreadMessagesProvider } from '@/app/contexts/UnreadMessagesContext';
+import { RealtimeMessagingProvider } from '@/app/contexts/RealtimeMessagingContext';
 import { useState } from 'react';
 
 export default function Providers({ children }: { children: React.ReactNode }) {
@@ -13,8 +14,10 @@ export default function Providers({ children }: { children: React.ReactNode }) {
     <SessionProvider>
       <QueryClientProvider client={queryClient}>
         <UnreadMessagesProvider>
-          {children}
-          <Toaster position="top-center" richColors closeButton />
+          <RealtimeMessagingProvider>
+            {children}
+            <Toaster position="top-center" richColors closeButton />
+          </RealtimeMessagingProvider>
         </UnreadMessagesProvider>
       </QueryClientProvider>
     </SessionProvider>

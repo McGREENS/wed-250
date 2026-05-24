@@ -11,6 +11,11 @@ export async function GET() {
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
+    
+    // CRITICAL: Check if user is a VENDOR
+    if (session.user.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
+    }
 
     const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
     
@@ -32,6 +37,11 @@ export async function POST(req: NextRequest) {
     
     if (!session?.user?.id) {
       return NextResponse.json({ error: "Unauthorized", message: "Please log in to create services" }, { status: 401 });
+    }
+    
+    // CRITICAL: Check if user is a VENDOR
+    if (session.user.role !== 'VENDOR') {
+      return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
     }
 
     const body = await req.json();
@@ -79,6 +89,11 @@ export async function PUT(req: NextRequest) {
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
   }
+  
+  // CRITICAL: Check if user is a VENDOR
+  if (session.user.role !== 'VENDOR') {
+    return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
+  }
 
   const body = await req.json();
   const { id, action, data } = body;
@@ -120,6 +135,11 @@ export async function DELETE(req: NextRequest) {
   
   if (!session?.user?.id) {
     return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+  
+  // CRITICAL: Check if user is a VENDOR
+  if (session.user.role !== 'VENDOR') {
+    return NextResponse.json({ error: 'Forbidden: Only vendors can access this' }, { status: 403 });
   }
 
   const { searchParams } = new URL(req.url);

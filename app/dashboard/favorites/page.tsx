@@ -8,6 +8,7 @@ import { Heart, MapPin, Star, Users, Trash2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
+import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
 
 export default function FavoritesPage() {
     const router = useRouter();
@@ -146,6 +147,8 @@ export default function FavoritesPage() {
                     <h1 className="text-3xl font-serif text-charcoal mb-2">My Favorites</h1>
                     <p className="text-gray-600">Your saved venues and vendors</p>
                 </div>
+
+                <DiscoverBanner />
 
                 <div className="grid md:grid-cols-2 gap-4 mb-8">
                     <Card className="border-gray-100 shadow-sm">

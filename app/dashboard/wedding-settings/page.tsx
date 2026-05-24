@@ -9,6 +9,7 @@ import { Textarea } from "@/app/components/ui/textarea";
 import { Calendar, Save, Heart } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
+import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
 
 interface WeddingDetails {
   id?: string;
@@ -119,6 +120,8 @@ export default function WeddingSettingsPage() {
           <h1 className="text-3xl font-serif text-charcoal mb-2">Wedding Settings</h1>
           <p className="text-gray-600">Set up your wedding details for personalized planning</p>
         </div>
+
+        <DiscoverBanner />
 
         <Card className="border-gray-100 shadow-sm">
           <CardContent className="p-8">

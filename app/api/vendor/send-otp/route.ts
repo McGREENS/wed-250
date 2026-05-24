@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { users, pendingVendorSignups } from '@/lib/db/schema';
-import { eq } from 'drizzle-orm';
+import { users, pendingVendorSignups, publicReferralLinks, referrals } from '@/lib/db/schema';
+import { eq, and } from 'drizzle-orm';
 import bcrypt from 'bcryptjs';
 import { sendVendorOTPEmail } from '@/lib/email';
 
@@ -17,6 +17,31 @@ export async function POST(req: NextRequest) {
     const [existingUser] = await db.select().from(users).where(eq(users.email, email)).limit(1);
     if (existingUser) {
       return NextResponse.json({ error: 'Email already registered' }, { status: 400 });
+    }
+
+    // Validate referral code if provided
+    if (referralCode) {
+      const [publicLink] = await db
+        .select()
+        .from(publicReferralLinks)
+        .where(eq(publicReferralLinks.referralCode, referralCode))
+        .limit(1);
+
+      if (publicLink) {
+        const isActive = typeof publicLink.isActive === 'boolean' ? publicLink.isActive : !!publicLink.isActive;
+        if (!isActive) {
+          return NextResponse.json({ error: 'This referral link is no longer active' }, { status: 400 });
+        }
+      } else {
+        const [referral] = await db
+          .select()
+          .from(referrals)
+          .where(and(eq(referrals.referralCode, referralCode), eq(referrals.status, 'PENDING')))
+          .limit(1);
+        if (!referral) {
+          return NextResponse.json({ error: 'Invalid or expired referral code' }, { status: 400 });
+        }
+      }
     }
 
     // Generate 6-digit OTP
