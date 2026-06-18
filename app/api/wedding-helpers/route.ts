@@ -71,7 +71,7 @@ export async function POST(req: NextRequest) {
       assignedTasks: JSON.stringify(assignedTasks || []),
       helperUserId,
       accessToken,
-    }).returning();
+    } as any).returning();
 
     // Send email notification if email is provided
     if (email && weddingDetails) {
@@ -231,7 +231,7 @@ export async function PUT(req: NextRequest) {
         role,
         assignedTasks: JSON.stringify(assignedTasks || []),
         updatedAt: new Date(),
-      })
+      } as any)
       .where(and(
         eq(weddingHelpers.id, id),
         eq(weddingHelpers.weddingId, wedding.id)

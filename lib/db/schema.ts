@@ -182,6 +182,21 @@ export const servicePackages = sqliteTable("service_packages", {
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Wedding Helpers table
+export const weddingHelpers = sqliteTable("wedding_helpers", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  weddingId: text("wedding_id").notNull().references(() => weddings.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  role: text("role"),
+  assignedTasks: text("assigned_tasks"), // JSON array of task strings
+  helperUserId: text("helper_user_id").references(() => users.id, { onDelete: "set null" }),
+  accessToken: text("access_token").unique(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Tasks table
 export const tasks = sqliteTable("tasks", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -194,21 +209,6 @@ export const tasks = sqliteTable("tasks", {
   dueDate: integer("due_date", { mode: "timestamp" }),
   priority: text("priority").default("medium"),
   notes: text("notes"),
-  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
-});
-
-// Wedding Helpers table
-export const weddingHelpers = sqliteTable("wedding_helpers", {
-  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
-  weddingId: text("wedding_id").notNull().references(() => weddings.id, { onDelete: "cascade" }),
-  name: text("name").notNull(),
-  email: text("email"),
-  phone: text("phone"),
-  role: text("role"),
-  assignedTasks: text("assigned_tasks"), // JSON array of task strings
-  helperUserId: text("helper_user_id").references(() => users.id, { onDelete: "set null" }),
-  accessToken: text("access_token").unique(),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
