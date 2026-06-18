@@ -190,7 +190,8 @@ export default function ServiceCreationWizard({ onComplete, onCancel, editMode =
                 setIsSubmitting(false);
             }
         } catch (error) {
-            toast.error("Failed to save service");
+            console.error("Service creation error:", error);
+            toast.error(error instanceof Error ? error.message : "Failed to save service");
             setIsSubmitting(false);
         }
     };

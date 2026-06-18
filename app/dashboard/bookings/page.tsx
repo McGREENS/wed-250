@@ -49,16 +49,16 @@ export default function BookingsPage() {
 
     const getStatusBadge = (status: string) => {
         const styles = {
-            PENDING: 'bg-yellow-100 text-yellow-700',
-            CONFIRMED: 'bg-green-100 text-green-700',
-            CANCELLED: 'bg-red-100 text-red-700',
-            COMPLETED: 'bg-blue-100 text-blue-700',
+            PENDING: 'bg-burgundy/10 text-burgundy',
+            CONFIRMED: 'bg-gold/25 text-charcoal',
+            CANCELLED: 'bg-charcoal/10 text-charcoal/70',
+            COMPLETED: 'bg-sand text-charcoal',
         };
-        return styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-700';
+        return styles[status as keyof typeof styles] || 'bg-sand text-charcoal/70';
     };
 
     const VenueTourCard = ({ tour }: { tour: any }) => (
-        <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+        <Card className="border-burgundy/15 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-burgundy/6 via-cream to-sand/30 overflow-hidden">
             <CardContent className="p-6">
                 <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start gap-3">
@@ -67,7 +67,7 @@ export default function BookingsPage() {
                         </div>
                         <div>
                             <h3 className="font-semibold text-charcoal text-lg">{tour.venueName || 'Venue Tour Request'}</h3>
-                            <p className="text-sm text-gray-600">Scheduled venue visit</p>
+                            <p className="text-sm text-charcoal/70">Scheduled venue visit</p>
                         </div>
                     </div>
                     <Badge className={getStatusBadge(tour.status)}>
@@ -75,11 +75,11 @@ export default function BookingsPage() {
                     </Badge>
                 </div>
 
-                <div className="grid md:grid-cols-2 gap-4 mb-4 p-4 bg-sand/20 rounded-lg">
+                <div className="grid md:grid-cols-2 gap-4 mb-4 p-4 bg-sand/40 border border-sand rounded-xl">
                     <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-gray-500" />
+                        <Calendar className="w-4 h-4 text-burgundy/70" />
                         <div>
-                            <p className="text-xs text-gray-500">Tour Date</p>
+                            <p className="text-xs text-charcoal/60">Tour Date</p>
                             <p className="text-sm font-medium text-charcoal">
                                 {new Date(tour.tourDate).toLocaleDateString('en-US', { 
                                     month: 'long', 
@@ -90,16 +90,16 @@ export default function BookingsPage() {
                         </div>
                     </div>
                     <div className="flex items-center gap-2">
-                        <Clock className="w-4 h-4 text-gray-500" />
+                        <Clock className="w-4 h-4 text-burgundy/70" />
                         <div>
-                            <p className="text-xs text-gray-500">Tour Time</p>
+                            <p className="text-xs text-charcoal/60">Tour Time</p>
                             <p className="text-sm font-medium text-charcoal">{tour.tourTime}</p>
                         </div>
                     </div>
                 </div>
 
-                <div className="mb-4 p-3 bg-white rounded-lg border border-gray-100">
-                    <p className="text-xs text-gray-500 mb-2">Contact Information</p>
+                <div className="mb-4 p-3 bg-cream rounded-xl border border-sand">
+                    <p className="text-xs text-charcoal/60 mb-2">Contact Information</p>
                     <div className="space-y-2">
                         <div className="flex items-center gap-2">
                             <Mail className="w-4 h-4 text-burgundy" />
@@ -114,8 +114,8 @@ export default function BookingsPage() {
 
                 {tour.notes && (
                     <div className="mb-4">
-                        <p className="text-xs text-gray-500 mb-1">Notes</p>
-                        <p className="text-sm text-gray-700">{tour.notes}</p>
+                        <p className="text-xs text-charcoal/60 mb-1">Notes</p>
+                        <p className="text-sm text-charcoal/80">{tour.notes}</p>
                     </div>
                 )}
 
@@ -128,7 +128,7 @@ export default function BookingsPage() {
                         View Venue
                     </Button>
                     {tour.status === 'PENDING' && (
-                        <Button variant="outline" className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                        <Button variant="outline" className="flex-1 border-burgundy-light text-burgundy-light hover:bg-burgundy-light hover:text-white">
                             Cancel Tour
                         </Button>
                     )}
@@ -139,21 +139,36 @@ export default function BookingsPage() {
 
     const getPaymentBadge = (status: string) => {
         const styles = {
-            PAID: 'bg-green-100 text-green-700',
-            DEPOSIT_PAID: 'bg-yellow-100 text-yellow-700',
-            UNPAID: 'bg-red-100 text-red-700',
+            PAID: 'bg-gold/25 text-charcoal',
+            DEPOSIT_PAID: 'bg-burgundy/10 text-burgundy',
+            UNPAID: 'bg-sand text-charcoal/70',
         };
-        return styles[status as keyof typeof styles] || 'bg-gray-100 text-gray-700';
+        return styles[status as keyof typeof styles] || 'bg-sand text-charcoal/70';
     };
 
     const getStatusIcon = (status: string) => {
-        if (status === 'confirmed') return <CheckCircle className="w-5 h-5 text-green-600" />;
-        if (status === 'pending') return <Clock className="w-5 h-5 text-yellow-600" />;
-        return <AlertCircle className="w-5 h-5 text-blue-600" />;
+        if (status === 'confirmed') return <CheckCircle className="w-5 h-5 text-gold" />;
+        if (status === 'pending') return <Clock className="w-5 h-5 text-burgundy-light" />;
+        return <AlertCircle className="w-5 h-5 text-charcoal" />;
     };
 
     const filterBookings = (status: string) => {
         return bookings.filter(b => b.status === status);
+    };
+
+    const statCards = {
+        bookings: [
+            { label: 'Total Bookings', value: bookings.length, cardClass: 'border-burgundy/20 bg-gradient-to-br from-burgundy/12 via-burgundy/5 to-cream', valueClass: 'text-charcoal' },
+            { label: 'Confirmed', value: filterBookings('confirmed').length, cardClass: 'border-gold/25 bg-gradient-to-br from-gold/15 via-gold/5 to-cream', valueClass: 'text-gold' },
+            { label: 'Pending', value: filterBookings('pending').length, cardClass: 'border-sand bg-gradient-to-br from-sand via-sand/60 to-cream', valueClass: 'text-burgundy-light' },
+            { label: 'Completed', value: filterBookings('completed').length, cardClass: 'border-charcoal/10 bg-gradient-to-br from-charcoal/5 via-sand/40 to-cream', valueClass: 'text-charcoal' },
+        ],
+        tours: [
+            { label: 'Total Tours', value: venueTours.length, cardClass: 'border-burgundy/20 bg-gradient-to-br from-burgundy/12 via-burgundy/5 to-cream', valueClass: 'text-charcoal' },
+            { label: 'Pending', value: venueTours.filter(t => t.status === 'PENDING').length, cardClass: 'border-sand bg-gradient-to-br from-sand via-sand/60 to-cream', valueClass: 'text-burgundy-light' },
+            { label: 'Confirmed', value: venueTours.filter(t => t.status === 'CONFIRMED').length, cardClass: 'border-gold/25 bg-gradient-to-br from-gold/15 via-gold/5 to-cream', valueClass: 'text-gold' },
+            { label: 'Completed', value: venueTours.filter(t => t.status === 'COMPLETED').length, cardClass: 'border-charcoal/10 bg-gradient-to-br from-charcoal/5 via-sand/40 to-cream', valueClass: 'text-charcoal' },
+        ],
     };
 
     const BookingCard = ({ booking }: { booking: any }) => {
@@ -176,17 +191,17 @@ export default function BookingsPage() {
         };
 
         return (
-            <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border-gold/20 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-gold/8 via-cream to-sand/30 overflow-hidden">
                 <CardContent className="p-6">
                     {/* Header */}
                     <div className="flex items-start justify-between mb-4">
                         <div className="flex items-start gap-3">
-                            <div className="w-12 h-12 bg-burgundy/10 rounded-lg flex items-center justify-center flex-shrink-0">
+                            <div className="w-12 h-12 bg-burgundy/15 rounded-lg flex items-center justify-center flex-shrink-0">
                                 {getStatusIcon(booking.status)}
                             </div>
                             <div>
                                 <h3 className="font-semibold text-charcoal text-lg">{booking.vendorName || 'Vendor'}</h3>
-                                <p className="text-sm text-gray-600">{booking.serviceType || booking.servicePackage}</p>
+                                <p className="text-sm text-charcoal/70">{booking.serviceType || booking.servicePackage}</p>
                             </div>
                         </div>
                         <div className="text-right">
@@ -198,32 +213,32 @@ export default function BookingsPage() {
                     </div>
 
                     {/* Booking details grid */}
-                    <div className="grid md:grid-cols-2 gap-4 mb-4 p-4 bg-sand/20 rounded-lg">
+                    <div className="grid md:grid-cols-2 gap-4 mb-4 p-4 bg-sand/40 border border-sand rounded-xl">
                         <div className="flex items-center gap-2">
-                            <Calendar className="w-4 h-4 text-gray-500" />
+                            <Calendar className="w-4 h-4 text-burgundy/70" />
                             <div>
-                                <p className="text-xs text-gray-500">Event Date</p>
+                                <p className="text-xs text-charcoal/60">Event Date</p>
                                 <p className="text-sm font-medium text-charcoal">{booking.eventDate ? new Date(booking.eventDate).toLocaleDateString('en-US', { month: 'long', day: 'numeric', year: 'numeric' }) : 'Not set'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <Clock className="w-4 h-4 text-gray-500" />
+                            <Clock className="w-4 h-4 text-burgundy/70" />
                             <div>
-                                <p className="text-xs text-gray-500">Booked On</p>
+                                <p className="text-xs text-charcoal/60">Booked On</p>
                                 <p className="text-sm font-medium text-charcoal">{booking.bookingDate ? new Date(booking.bookingDate).toLocaleDateString() : 'N/A'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <MapPin className="w-4 h-4 text-gray-500" />
+                            <MapPin className="w-4 h-4 text-burgundy/70" />
                             <div>
-                                <p className="text-xs text-gray-500">Location</p>
+                                <p className="text-xs text-charcoal/60">Location</p>
                                 <p className="text-sm font-medium text-charcoal">{booking.vendorLocation || 'N/A'}</p>
                             </div>
                         </div>
                         <div className="flex items-center gap-2">
-                            <CheckCircle className="w-4 h-4 text-gray-500" />
+                            <CheckCircle className="w-4 h-4 text-burgundy/70" />
                             <div>
-                                <p className="text-xs text-gray-500">Booking Status</p>
+                                <p className="text-xs text-charcoal/60">Booking Status</p>
                                 <p className="text-sm font-medium text-charcoal capitalize">{booking.status}</p>
                             </div>
                         </div>
@@ -231,13 +246,13 @@ export default function BookingsPage() {
 
                     {booking.notes && (
                         <div className="mb-4">
-                            <p className="text-xs text-gray-500 mb-1">Booking Notes</p>
-                            <p className="text-sm text-gray-700">{booking.notes}</p>
+                            <p className="text-xs text-charcoal/60 mb-1">Booking Notes</p>
+                            <p className="text-sm text-charcoal/80">{booking.notes}</p>
                         </div>
                     )}
 
                     {(booking.vendorPhone || booking.vendorEmail) && (
-                        <div className="flex items-center gap-4 mb-4 p-3 bg-white rounded-lg border border-gray-100">
+                        <div className="flex items-center gap-4 mb-4 p-3 bg-cream rounded-xl border border-sand">
                             {booking.vendorPhone && (
                                 <div className="flex items-center gap-2 flex-1">
                                     <Phone className="w-4 h-4 text-burgundy" />
@@ -255,7 +270,7 @@ export default function BookingsPage() {
 
                     {/* ── Payment section ── */}
                     {totalAmount > 0 && (
-                        <div className="border-t border-gray-100 pt-4 mt-2">
+                        <div className="border-t border-sand pt-4 mt-2">
                             {/* Payment Progress */}
                             <PaymentProgress
                                 totalAmount={totalAmount}
@@ -275,7 +290,7 @@ export default function BookingsPage() {
                             <button
                                 type="button"
                                 onClick={() => setShowPayments(v => !v)}
-                                className="flex items-center justify-between w-full mt-3 px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-600"
+                                className="flex items-center justify-between w-full mt-3 px-4 py-2.5 rounded-lg border border-sand bg-sand/30 hover:bg-sand/50 transition-colors text-sm font-medium text-charcoal/70"
                             >
                                 <span>Payment History</span>
                                 {showPayments
@@ -305,7 +320,7 @@ export default function BookingsPage() {
                             View Vendor
                         </Button>
                         {booking.status === 'pending' && (
-                            <Button variant="outline" className="flex-1 border-red-500 text-red-500 hover:bg-red-500 hover:text-white">
+                            <Button variant="outline" className="flex-1 border-burgundy-light text-burgundy-light hover:bg-burgundy-light hover:text-white">
                                 Cancel Booking
                             </Button>
                         )}
@@ -320,7 +335,7 @@ export default function BookingsPage() {
         const categories = favorite.vendorCategories ? JSON.parse(favorite.vendorCategories) : [];
         
         return (
-            <Card className="border-gray-100 shadow-sm hover:shadow-md transition-shadow">
+            <Card className="border-burgundy/15 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-burgundy/5 via-cream to-sand/25 overflow-hidden">
                 <CardContent className="p-0">
                     {images[0] && (
                         <img src={images[0]} alt={favorite.vendorName} className="w-full h-48 object-cover rounded-t-lg" />
@@ -329,13 +344,13 @@ export default function BookingsPage() {
                         <div className="flex items-start justify-between mb-2">
                             <div>
                                 <h3 className="font-semibold text-charcoal text-lg">{favorite.vendorName}</h3>
-                                <p className="text-sm text-gray-600">{categories.join(', ')}</p>
+                                <p className="text-sm text-charcoal/70">{categories.join(', ')}</p>
                             </div>
                             <Heart className="w-5 h-5 text-burgundy fill-burgundy" />
                         </div>
                         <div className="flex items-center gap-2 mb-3">
-                            <MapPin className="w-4 h-4 text-gray-500" />
-                            <span className="text-sm text-gray-600">{favorite.vendorLocation}</span>
+                            <MapPin className="w-4 h-4 text-burgundy/70" />
+                            <span className="text-sm text-charcoal/70">{favorite.vendorLocation}</span>
                         </div>
                         {favorite.vendorPriceRange && (
                             <p className="text-burgundy font-semibold mb-3">{favorite.vendorPriceRange}</p>
@@ -365,44 +380,28 @@ export default function BookingsPage() {
             <div className="max-w-7xl mx-auto">
                 <div className="mb-8">
                     <h1 className="text-3xl font-serif text-charcoal mb-2">My Bookings & Tours</h1>
-                    <p className="text-gray-600">Manage all your vendor bookings, venue tours and saved items</p>
+                    <p className="text-charcoal/70">Manage all your vendor bookings, venue tours and saved items</p>
                 </div>
 
                 <DiscoverBanner />
 
                 <Tabs value={activeTab} onValueChange={setActiveTab} className="space-y-6">
-                    <TabsList className="bg-white border border-gray-100">
-                        <TabsTrigger value="bookings">Bookings ({bookings.length})</TabsTrigger>
-                        <TabsTrigger value="tours">Venue Tours ({venueTours.length})</TabsTrigger>
-                        <TabsTrigger value="favorites">Saved ({favorites.length})</TabsTrigger>
+                    <TabsList className="bg-sand/40 border border-sand p-1">
+                        <TabsTrigger value="bookings" className="data-[state=active]:bg-cream data-[state=active]:text-burgundy">Bookings ({bookings.length})</TabsTrigger>
+                        <TabsTrigger value="tours" className="data-[state=active]:bg-cream data-[state=active]:text-burgundy">Venue Tours ({venueTours.length})</TabsTrigger>
+                        <TabsTrigger value="favorites" className="data-[state=active]:bg-cream data-[state=active]:text-burgundy">Saved ({favorites.length})</TabsTrigger>
                     </TabsList>
 
                     <TabsContent value="bookings" className="space-y-6">
                         <div className="grid md:grid-cols-4 gap-4 mb-8">
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Total Bookings</p>
-                                    <p className="text-2xl font-bold text-charcoal">{bookings.length}</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Confirmed</p>
-                                    <p className="text-2xl font-bold text-green-600">{filterBookings('confirmed').length}</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Pending</p>
-                                    <p className="text-2xl font-bold text-yellow-600">{filterBookings('pending').length}</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Completed</p>
-                                    <p className="text-2xl font-bold text-blue-600">{filterBookings('completed').length}</p>
-                                </CardContent>
-                            </Card>
+                            {statCards.bookings.map((stat) => (
+                                <Card key={stat.label} className={`shadow-sm overflow-hidden ${stat.cardClass}`}>
+                                    <CardContent className="p-4">
+                                        <p className="text-sm text-charcoal/70 mb-1">{stat.label}</p>
+                                        <p className={`text-2xl font-bold ${stat.valueClass}`}>{stat.value}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
                         </div>
 
                         {bookings.length > 0 ? (
@@ -410,10 +409,10 @@ export default function BookingsPage() {
                                 {bookings.map(booking => <BookingCard key={booking.id} booking={booking} />)}
                             </div>
                         ) : (
-                            <Card className="border-gray-100">
+                            <Card className="border-sand shadow-sm bg-gradient-to-br from-sand/40 via-cream to-sand/20">
                                 <CardContent className="p-12 text-center">
-                                    <Calendar className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-600 mb-4">No bookings yet</p>
+                                    <Calendar className="w-12 h-12 text-burgundy/40 mx-auto mb-4" />
+                                    <p className="text-charcoal/70 mb-4">No bookings yet</p>
                                     <Button 
                                         className="bg-burgundy hover:bg-burgundy-light text-white"
                                         onClick={() => router.push('/vendors')}
@@ -427,30 +426,14 @@ export default function BookingsPage() {
 
                     <TabsContent value="tours" className="space-y-6">
                         <div className="grid md:grid-cols-4 gap-4 mb-8">
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Total Tours</p>
-                                    <p className="text-2xl font-bold text-charcoal">{venueTours.length}</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Pending</p>
-                                    <p className="text-2xl font-bold text-yellow-600">{venueTours.filter(t => t.status === 'PENDING').length}</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Confirmed</p>
-                                    <p className="text-2xl font-bold text-green-600">{venueTours.filter(t => t.status === 'CONFIRMED').length}</p>
-                                </CardContent>
-                            </Card>
-                            <Card className="border-gray-100 shadow-sm">
-                                <CardContent className="p-4">
-                                    <p className="text-sm text-gray-600 mb-1">Completed</p>
-                                    <p className="text-2xl font-bold text-blue-600">{venueTours.filter(t => t.status === 'COMPLETED').length}</p>
-                                </CardContent>
-                            </Card>
+                            {statCards.tours.map((stat) => (
+                                <Card key={stat.label} className={`shadow-sm overflow-hidden ${stat.cardClass}`}>
+                                    <CardContent className="p-4">
+                                        <p className="text-sm text-charcoal/70 mb-1">{stat.label}</p>
+                                        <p className={`text-2xl font-bold ${stat.valueClass}`}>{stat.value}</p>
+                                    </CardContent>
+                                </Card>
+                            ))}
                         </div>
 
                         {venueTours.length > 0 ? (
@@ -458,10 +441,10 @@ export default function BookingsPage() {
                                 {venueTours.map(tour => <VenueTourCard key={tour.id} tour={tour} />)}
                             </div>
                         ) : (
-                            <Card className="border-gray-100">
+                            <Card className="border-burgundy/15 shadow-sm bg-gradient-to-br from-burgundy/6 via-cream to-sand/30">
                                 <CardContent className="p-12 text-center">
-                                    <Eye className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-600 mb-4">No venue tours scheduled yet</p>
+                                    <Eye className="w-12 h-12 text-burgundy/40 mx-auto mb-4" />
+                                    <p className="text-charcoal/70 mb-4">No venue tours scheduled yet</p>
                                     <Button 
                                         className="bg-burgundy hover:bg-burgundy-light text-white"
                                         onClick={() => router.push('/venues')}
@@ -479,10 +462,10 @@ export default function BookingsPage() {
                                 {favorites.map(favorite => <FavoriteCard key={favorite.id} favorite={favorite} />)}
                             </div>
                         ) : (
-                            <Card className="border-gray-100">
+                            <Card className="border-gold/20 shadow-sm bg-gradient-to-br from-gold/10 via-cream to-sand/30">
                                 <CardContent className="p-12 text-center">
-                                    <Heart className="w-12 h-12 text-gray-400 mx-auto mb-4" />
-                                    <p className="text-gray-600 mb-4">No saved vendors or venues yet</p>
+                                    <Heart className="w-12 h-12 text-burgundy/40 mx-auto mb-4" />
+                                    <p className="text-charcoal/70 mb-4">No saved vendors or venues yet</p>
                                     <Button 
                                         className="bg-burgundy hover:bg-burgundy-light text-white"
                                         onClick={() => router.push('/vendors')}

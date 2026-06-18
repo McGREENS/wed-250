@@ -116,7 +116,7 @@ export default function BudgetTracker({ totalBudget, bookings = [] }: any) {
           {remainingBudget >= 0 && remainingBudget < totalBudget * 0.1 && (
             <div className="bg-yellow-50 border border-yellow-200 rounded-lg p-3">
               <p className="text-sm text-yellow-800">
-                💡 You're close to your budget limit. Plan accordingly!
+                You're close to your budget limit. Plan accordingly!
               </p>
             </div>
           )}

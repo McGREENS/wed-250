@@ -259,8 +259,16 @@ export async function POST(req: NextRequest) {
     }
   } catch (error) {
     console.error('Error creating referral:', error);
+    console.error('Error details:', {
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined,
+      error,
+    });
     return NextResponse.json(
-      { error: 'Failed to create referral' },
+      { 
+        error: 'Failed to create referral',
+        details: error instanceof Error ? error.message : 'Unknown error',
+      },
       { status: 500 }
     );
   }

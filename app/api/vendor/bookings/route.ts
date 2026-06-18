@@ -4,7 +4,7 @@ import { db } from '@/lib/db';
 import { bookings, vendors } from '@/lib/db/schema';
 import { eq, and, desc } from 'drizzle-orm';
 import { randomUUID } from 'crypto';
-import { sendQuoteAcceptedEmail, sendQuoteDeclinedEmail } from '@/lib/email';
+import { sendQuoteAcceptedEmail, sendQuoteDeclinedEmail, sendBookingStatusEmail } from '@/lib/email';
 
 export async function GET(req: NextRequest) {
   try {
@@ -171,6 +171,11 @@ export async function PUT(req: NextRequest) {
     }
 
     // ── Regular booking update ────────────────────────────────────────────
+    // Fetch existing booking to check if status changed
+    const [existingBooking] = await db.select().from(bookings)
+      .where(and(eq(bookings.id, id), eq(bookings.vendorId, vendor[0].id))).limit(1);
+    if (!existingBooking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+
     const updates: any = { ...updateData, updatedAt: new Date() };
     if (status) updates.status = status;
     if (rawTotal !== undefined) updates.totalAmount = rawTotal;
@@ -180,6 +185,20 @@ export async function PUT(req: NextRequest) {
     await db.update(bookings)
       .set(updates)
       .where(and(eq(bookings.id, id), eq(bookings.vendorId, vendor[0].id)));
+
+    // Send email notification if status changed to confirmed or cancelled
+    if (status && status !== existingBooking.status && (status === 'confirmed' || status === 'cancelled') && existingBooking.clientEmail) {
+      try {
+        await sendBookingStatusEmail({
+          clientEmail: existingBooking.clientEmail,
+          clientName: existingBooking.clientName || 'Client',
+          vendorName: vendor[0].businessName,
+          servicePackage: existingBooking.servicePackage || 'Service',
+          eventDate: new Date(existingBooking.eventDate!).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' }),
+          status: status as 'confirmed' | 'cancelled',
+        });
+      } catch (e) { console.error('Booking status email failed:', e); }
+    }
 
     return NextResponse.json({ success: true });
   } catch (error) {

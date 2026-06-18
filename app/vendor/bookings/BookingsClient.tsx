@@ -1,10 +1,13 @@
-'use client';
+"use client";
 
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'next/navigation';
 import { Calendar, Plus, Edit2, Trash2, Phone, Mail, DollarSign, MapPin, Clock, CheckCircle, XCircle, Eye, Loader2, ChevronLeft, ChevronRight, MessageSquare, Users, ChevronDown, ChevronUp, FileText } from 'lucide-react';
 import VendorPageLayout from '@/app/components/vendor/VendorPageLayout';
 import { toast } from 'sonner';
+import PaymentPanel from '@/app/components/dashboard/PaymentPanel';
+import PaymentHistory from '@/app/components/dashboard/PaymentHistory';
+import PaymentProgress from '@/app/components/dashboard/PaymentProgress';
 
 interface Booking {
   id: string;
@@ -176,11 +179,11 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
 
   const getTourStatusColor = (status: string) => {
     switch (status) {
-      case 'CONFIRMED': return 'bg-green-100 text-green-800';
-      case 'PENDING': return 'bg-yellow-100 text-yellow-800';
-      case 'CANCELLED': return 'bg-red-100 text-red-800';
-      case 'COMPLETED': return 'bg-blue-100 text-blue-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'CONFIRMED': return 'bg-gold text-charcoal';
+      case 'PENDING': return 'bg-sand text-charcoal';
+      case 'CANCELLED': return 'bg-burgundy-light text-white';
+      case 'COMPLETED': return 'bg-charcoal text-white';
+      default: return 'bg-sand text-charcoal';
     }
   };
 
@@ -275,11 +278,11 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
 
   const getStatusColor = (status: string) => {
     switch (status) {
-      case 'confirmed': return 'bg-green-100 text-green-800';
-      case 'pending': return 'bg-yellow-100 text-yellow-800';
-      case 'completed': return 'bg-blue-100 text-blue-800';
-      case 'cancelled': return 'bg-red-100 text-red-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'confirmed': return 'bg-gold text-charcoal';
+      case 'pending': return 'bg-sand text-charcoal';
+      case 'completed': return 'bg-charcoal text-white';
+      case 'cancelled': return 'bg-burgundy-light text-white';
+      default: return 'bg-sand text-charcoal';
     }
   };
 
@@ -307,27 +310,27 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-6 bg-gray-100 p-1 rounded-lg overflow-x-auto">
+        <div className="flex gap-1 mb-6 bg-sand p-1 rounded-lg overflow-x-auto">
           <button
             onClick={() => setActiveTab('bookings')}
             className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-              activeTab === 'bookings' ? 'bg-white text-[#8B3A3A] shadow-sm' : 'text-gray-600 hover:text-gray-800'
+              activeTab === 'bookings' ? 'bg-burgundy text-white shadow-sm' : 'text-charcoal/70 hover:text-charcoal'
             }`}
           >
             Bookings
             {bookings.length > 0 && (
-              <span className="ml-2 bg-[#8B3A3A] text-white text-xs px-2 py-0.5 rounded-full">{bookings.length}</span>
+              <span className="ml-2 bg-gold text-charcoal text-xs px-2 py-0.5 rounded-full font-semibold">{bookings.length}</span>
             )}
           </button>
           <button
             onClick={() => setActiveTab('tours')}
             className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-              activeTab === 'tours' ? 'bg-white text-[#8B3A3A] shadow-sm' : 'text-gray-600 hover:text-gray-800'
+              activeTab === 'tours' ? 'bg-burgundy text-white shadow-sm' : 'text-charcoal/70 hover:text-charcoal'
             }`}
           >
             Venue Visits
             {tours.filter(t => t.status === 'PENDING').length > 0 && (
-              <span className="ml-2 bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-gold text-charcoal text-xs px-2 py-0.5 rounded-full font-semibold">
                 {tours.filter(t => t.status === 'PENDING').length}
               </span>
             )}
@@ -335,12 +338,12 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
           <button
             onClick={() => setActiveTab('quotes')}
             className={`px-3 sm:px-5 py-2 rounded-md text-xs sm:text-sm font-medium transition-colors whitespace-nowrap ${
-              activeTab === 'quotes' ? 'bg-white text-[#8B3A3A] shadow-sm' : 'text-gray-600 hover:text-gray-800'
+              activeTab === 'quotes' ? 'bg-burgundy text-white shadow-sm' : 'text-charcoal/70 hover:text-charcoal'
             }`}
           >
             Quote Requests
             {quotes.filter(q => q.status === 'pending').length > 0 && (
-              <span className="ml-2 bg-yellow-500 text-white text-xs px-2 py-0.5 rounded-full">
+              <span className="ml-2 bg-gold text-charcoal text-xs px-2 py-0.5 rounded-full font-semibold">
                 {quotes.filter(q => q.status === 'pending').length}
               </span>
             )}
@@ -350,86 +353,193 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
         {/* Bookings Tab */}
         {activeTab === 'bookings' && (
           <div className="grid gap-4">
-            {bookings.map((booking) => (
-              <div key={booking.id} className="bg-white rounded-lg shadow-sm p-4 sm:p-6 border border-[#E6E2DD]">
-                <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
-                  <div className="flex-1 min-w-0">
-                    <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
-                      <h3 className="text-lg sm:text-xl font-semibold text-[#2C2C2C]">{booking.clientName}</h3>
-                      <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(booking.status)}`}>
-                        {booking.status}
-                      </span>
-                    </div>
-                    <div className="grid gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
-                      <div className="flex items-center gap-2">
-                        <Calendar className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
-                        <span className="break-words">{new Date(booking.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+            {bookings.map((booking) => {
+              const BookingCard = () => {
+                const totalAmount = booking.totalAmount || 0;
+                const [totalPaid, setTotalPaid] = useState<number>(0);
+                const [paymentStatus, setPaymentStatus] = useState<string>('UNPAID');
+                const [refreshTrigger, setRefreshTrigger] = useState(0);
+                const [showPayments, setShowPayments] = useState(false);
+                const [loading, setLoading] = useState(true);
+
+                // Fetch actual payment data on mount
+                useEffect(() => {
+                  const fetchPayments = async () => {
+                    try {
+                      const res = await fetch(`/api/bookings/payments?bookingId=${booking.id}`);
+                      if (res.ok) {
+                        const data = await res.json();
+                        const total = data.payments.reduce((sum: number, p: any) => sum + p.amount, 0);
+                        setTotalPaid(total);
+                        
+                        // Determine payment status
+                        let status = 'UNPAID';
+                        if (total >= totalAmount && totalAmount > 0) status = 'PAID';
+                        else if (total > 0) status = 'DEPOSIT_PAID';
+                        setPaymentStatus(status);
+                      }
+                    } catch (error) {
+                      console.error('Error fetching payments:', error);
+                    } finally {
+                      setLoading(false);
+                    }
+                  };
+                  fetchPayments();
+                }, [booking.id, totalAmount]);
+
+                const handlePaymentAdded = (newTotalPaid: number, newStatus: string) => {
+                  setTotalPaid(newTotalPaid);
+                  setPaymentStatus(newStatus);
+                  setRefreshTrigger(t => t + 1);
+                  setShowPayments(true);
+                };
+
+                const handlePaymentDeleted = (newTotalPaid: number, newStatus: string) => {
+                  setTotalPaid(newTotalPaid);
+                  setPaymentStatus(newStatus);
+                };
+
+                const getPaymentBadge = (status: string) => {
+                  const styles = {
+                    PAID: 'bg-gold text-charcoal',
+                    DEPOSIT_PAID: 'bg-sand text-charcoal',
+                    UNPAID: 'bg-burgundy-light text-white',
+                  };
+                  return styles[status as keyof typeof styles] || 'bg-sand text-charcoal';
+                };
+
+                return (
+                  <div className="bg-cream rounded-lg shadow-sm p-4 sm:p-6 border border-burgundy/20">
+                    <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-4">
+                      <div className="flex-1 min-w-0">
+                        <div className="flex flex-wrap items-center gap-2 sm:gap-3 mb-3">
+                          <h3 className="text-lg sm:text-xl font-semibold text-[#2C2C2C]">{booking.clientName}</h3>
+                          <span className={`px-2 sm:px-3 py-1 rounded-full text-xs sm:text-sm font-medium ${getStatusColor(booking.status)}`}>
+                            {booking.status}
+                          </span>
+                        </div>
+                        <div className="grid gap-3 sm:gap-4 text-xs sm:text-sm text-gray-600">
+                          <div className="flex items-center gap-2">
+                            <Calendar className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
+                            <span className="break-words">{new Date(booking.eventDate).toLocaleDateString('en-US', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' })}</span>
+                          </div>
+                          {booking.clientPhone && (
+                            <div className="flex items-center gap-2">
+                              <Phone className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
+                              <span className="break-all">{booking.clientPhone}</span>
+                            </div>
+                          )}
+                          {booking.clientEmail && (
+                            <div className="flex items-center gap-2">
+                              <Mail className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
+                              <span className="break-all">{booking.clientEmail}</span>
+                            </div>
+                          )}
+                        </div>
+                        {booking.servicePackage && (
+                          <div className="mt-3 text-xs sm:text-sm">
+                            <span className="font-medium text-[#2C2C2C]">Service: </span>
+                            <span className="text-gray-600">{booking.servicePackage}</span>
+                          </div>
+                        )}
+                        {booking.notes && (
+                          <div className="mt-3 text-xs sm:text-sm text-gray-600 bg-gray-50 p-3 rounded break-words">{booking.notes}</div>
+                        )}
                       </div>
-                      {booking.clientPhone && (
-                        <div className="flex items-center gap-2">
-                          <Phone className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
-                          <span className="break-all">{booking.clientPhone}</span>
+                      <div className="flex sm:flex-col gap-2 sm:ml-4">
+                        {totalAmount > 0 && (
+                          <div className="text-right mb-2">
+                            <p className="font-bold text-burgundy text-lg">{totalAmount.toLocaleString()} RWF</p>
+                            <span className={`inline-block px-2 py-1 rounded text-xs font-medium mt-1 ${getPaymentBadge(paymentStatus)}`}>
+                              {paymentStatus?.replace('_', ' ')}
+                            </span>
+                          </div>
+                        )}
+                        <div className="relative flex-1 sm:flex-none">
+                          <select
+                            value={booking.status}
+                            onChange={(e) => handleStatusChange(booking.id, e.target.value)}
+                            disabled={updatingStatusId === booking.id}
+                            className="w-full px-2 sm:px-3 py-1 border border-gray-300 rounded text-xs sm:text-sm disabled:opacity-50"
+                          >
+                            <option value="pending">Pending</option>
+                            <option value="confirmed">Confirmed</option>
+                            <option value="completed">Completed</option>
+                            <option value="cancelled">Cancelled</option>
+                          </select>
+                          {updatingStatusId === booking.id && (
+                            <Loader2 className="w-3 h-3 animate-spin absolute right-6 top-1/2 -translate-y-1/2 text-gray-500" />
+                          )}
                         </div>
-                      )}
-                      {booking.clientEmail && (
-                        <div className="flex items-center gap-2">
-                          <Mail className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
-                          <span className="break-all">{booking.clientEmail}</span>
-                        </div>
-                      )}
-                      {booking.totalAmount && (
-                        <div className="flex items-center gap-2">
-                          <DollarSign className="w-4 h-4 text-[#8B3A3A] flex-shrink-0" />
-                          <span>{booking.totalAmount.toLocaleString()} RWF</span>
-                          {booking.depositAmount && <span className="text-gray-400">({booking.depositAmount.toLocaleString()} RWF deposit)</span>}
-                        </div>
-                      )}
+                        <button onClick={() => handleEdit(booking)} className="p-2 text-blue-600 hover:bg-blue-50 rounded">
+                          <Edit2 className="w-4 h-4" />
+                        </button>
+                        <button
+                          onClick={() => setConfirmDeleteId(booking.id)}
+                          disabled={deletingId === booking.id}
+                          className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
+                        >
+                          {deletingId === booking.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                        </button>
+                      </div>
                     </div>
-                    {booking.servicePackage && (
-                      <div className="mt-3 text-xs sm:text-sm">
-                        <span className="font-medium text-[#2C2C2C]">Service: </span>
-                        <span className="text-gray-600">{booking.servicePackage}</span>
+
+                    {/* Payment section */}
+                    {totalAmount > 0 && (
+                      <div className="border-t border-gray-100 pt-4 mt-4">
+                        {loading ? (
+                          <div className="flex items-center justify-center py-8">
+                            <Loader2 className="w-6 h-6 animate-spin text-[#8B3A3A]" />
+                          </div>
+                        ) : (
+                          <>
+                            <PaymentProgress
+                              totalAmount={totalAmount}
+                              totalPaid={totalPaid}
+                              paymentStatus={paymentStatus}
+                            />
+
+                            <PaymentPanel
+                              bookingId={booking.id}
+                              totalAmount={totalAmount}
+                              totalPaid={totalPaid}
+                              onPaymentAdded={handlePaymentAdded}
+                            />
+
+                            <button
+                              type="button"
+                              onClick={() => setShowPayments(v => !v)}
+                              className="flex items-center justify-between w-full mt-3 px-4 py-2.5 rounded-lg border border-gray-200 bg-gray-50 hover:bg-gray-100 transition-colors text-sm font-medium text-gray-600"
+                            >
+                              <span>Payment History</span>
+                              {showPayments
+                                ? <ChevronUp className="w-4 h-4" />
+                                : <ChevronDown className="w-4 h-4" />}
+                            </button>
+
+                            {showPayments && (
+                              <div className="mt-2">
+                                <PaymentHistory
+                                  bookingId={booking.id}
+                                  refreshTrigger={refreshTrigger}
+                                  onPaymentDeleted={handlePaymentDeleted}
+                                />
+                              </div>
+                            )}
+                          </>
+                        )}
                       </div>
                     )}
-                    {booking.notes && (
-                      <div className="mt-3 text-xs sm:text-sm text-gray-600 bg-gray-50 p-3 rounded break-words">{booking.notes}</div>
-                    )}
                   </div>
-                  <div className="flex sm:flex-col gap-2 sm:ml-4">
-                    <div className="relative flex-1 sm:flex-none">
-                      <select
-                        value={booking.status}
-                        onChange={(e) => handleStatusChange(booking.id, e.target.value)}
-                        disabled={updatingStatusId === booking.id}
-                        className="w-full px-2 sm:px-3 py-1 border border-gray-300 rounded text-xs sm:text-sm disabled:opacity-50"
-                      >
-                        <option value="pending">Pending</option>
-                        <option value="confirmed">Confirmed</option>
-                        <option value="completed">Completed</option>
-                        <option value="cancelled">Cancelled</option>
-                      </select>
-                      {updatingStatusId === booking.id && (
-                        <Loader2 className="w-3 h-3 animate-spin absolute right-6 top-1/2 -translate-y-1/2 text-gray-500" />
-                      )}
-                    </div>
-                    <button onClick={() => handleEdit(booking)} className="p-2 text-blue-600 hover:bg-blue-50 rounded">
-                      <Edit2 className="w-4 h-4" />
-                    </button>
-                    <button
-                      onClick={() => setConfirmDeleteId(booking.id)}
-                      disabled={deletingId === booking.id}
-                      className="p-2 text-red-600 hover:bg-red-50 rounded disabled:opacity-50"
-                    >
-                      {deletingId === booking.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
-                    </button>
-                  </div>
-                </div>
-              </div>
-            ))}
+                );
+              };
+
+              return <BookingCard key={booking.id} />;
+            })}
             {bookings.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg border border-[#E6E2DD]">
-                <Calendar className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No bookings yet. Create your first booking to get started.</p>
+              <div className="text-center py-12 bg-sand rounded-lg border border-burgundy/20">
+                <Calendar className="w-16 h-16 text-burgundy/40 mx-auto mb-4" />
+                <p className="text-charcoal/70">No bookings yet. Create your first booking to get started.</p>
               </div>
             )}
           </div>
@@ -439,7 +549,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
         {activeTab === 'quotes' && (
           <div className="grid gap-4">
             {quotes.map((quote) => (
-              <div key={quote.id} className="bg-white rounded-lg shadow-sm p-6 border border-[#E6E2DD]">
+              <div key={quote.id} className="bg-cream rounded-lg shadow-sm p-6 border border-gold/30">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
@@ -505,9 +615,9 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
               </div>
             ))}
             {quotes.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg border border-[#E6E2DD]">
-                <MessageSquare className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No quote requests yet.</p>
+              <div className="text-center py-12 bg-sand rounded-lg border border-burgundy/20">
+                <MessageSquare className="w-16 h-16 text-burgundy/40 mx-auto mb-4" />
+                <p className="text-charcoal/70">No quote requests yet.</p>
               </div>
             )}
           </div>
@@ -517,7 +627,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
         {activeTab === 'tours' && (
           <div className="grid gap-4">
             {tours.map((tour) => (
-              <div key={tour.id} className="bg-white rounded-lg shadow-sm p-6 border border-[#E6E2DD]">
+              <div key={tour.id} className="bg-cream rounded-lg shadow-sm p-6 border border-charcoal/20">
                 <div className="flex justify-between items-start">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-3">
@@ -593,9 +703,9 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
               </div>
             ))}
             {tours.length === 0 && (
-              <div className="text-center py-12 bg-white rounded-lg border border-[#E6E2DD]">
-                <Eye className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                <p className="text-gray-500">No venue visit requests yet.</p>
+              <div className="text-center py-12 bg-sand rounded-lg border border-burgundy/20">
+                <Eye className="w-16 h-16 text-burgundy/40 mx-auto mb-4" />
+                <p className="text-charcoal/70">No venue visit requests yet.</p>
               </div>
             )}
           </div>

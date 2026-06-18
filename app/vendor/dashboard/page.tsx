@@ -40,10 +40,12 @@ function fmt(n: number) {
 }
 
 function ChangeChip({ value }: { value: number | null }) {
-  if (value === null) return <span className="text-xs text-gray-400">No prior data</span>;
+  if (value === null) return <span className="text-xs text-charcoal/60">No prior data</span>;
   const up = value >= 0;
   return (
-    <span className={`flex items-center gap-1 text-xs font-medium ${up ? 'text-green-600' : 'text-red-500'}`}>
+    <span className={`flex items-center gap-1 text-xs font-medium ${
+      up ? 'text-charcoal' : 'text-burgundy'
+    }`}>
       {up ? <TrendingUp className="w-3 h-3" /> : <TrendingDown className="w-3 h-3" />}
       {up ? '+' : ''}{value}% vs last month
     </span>
@@ -236,6 +238,24 @@ export default function VendorDashboardPage() {
     <VendorPageLayout>
       <div className="max-w-7xl mx-auto space-y-8">
 
+        {/* Mobile Profile Alert Banner */}
+        {profileScore < 100 && (
+          <div className="lg:hidden">
+            <Link href="/vendor/settings">
+              <div className="flex items-center gap-3 p-4 bg-burgundy text-white rounded-xl shadow-lg cursor-pointer">
+                <div className="w-10 h-10 bg-white/20 rounded-lg flex items-center justify-center flex-shrink-0">
+                  <AlertCircle className="w-5 h-5" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="text-sm font-semibold">Complete Your Profile ({profileScore}%)</p>
+                  <p className="text-xs text-white/90 mt-0.5">Tap to improve your listing visibility</p>
+                </div>
+                <ArrowRight className="w-5 h-5 flex-shrink-0" />
+              </div>
+            </Link>
+          </div>
+        )}
+
         {/* Header */}
         <div className="flex flex-col gap-4">
           <div>
@@ -288,31 +308,31 @@ export default function VendorDashboardPage() {
         {/* KPI Cards */}
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 sm:gap-4">
         {/* Projected Revenue */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-burgundy shadow-sm bg-burgundy">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm text-gray-500">Projected Revenue</p>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-burgundy/10 rounded-lg flex items-center justify-center">
-                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-burgundy" />
+                <p className="text-xs sm:text-sm text-white/90">Projected Revenue</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                  <TrendingUp className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
+              <p className="text-xl sm:text-2xl font-bold text-white mb-1">
                 {stats.projectedRevenue > 0 ? `${fmt(stats.projectedRevenue)} RWF` : '—'}
               </p>
-              <p className="text-xs text-gray-400">Confirmed &amp; completed bookings</p>
+              <p className="text-xs text-white/70">Confirmed &amp; completed bookings</p>
             </CardContent>
           </Card>
 
           {/* Actual Revenue */}
-          <Card className="border-l-4 border-l-green-500 border-gray-100 shadow-sm">
+          <Card className="border-gold shadow-sm bg-gold">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm text-gray-500">Actual Revenue</p>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-green-50 rounded-lg flex items-center justify-center">
-                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-green-600" />
+                <p className="text-xs sm:text-sm text-charcoal/90">Actual Revenue</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/40 rounded-lg flex items-center justify-center">
+                  <DollarSign className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-charcoal" />
                 </div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-green-700 mb-1">
+              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
                 {stats.actualRevenue > 0 ? `${fmt(stats.actualRevenue)} RWF` : '—'}
               </p>
               <ChangeChip value={stats.actualRevenueChange} />
@@ -320,46 +340,46 @@ export default function VendorDashboardPage() {
           </Card>
 
           {/* Bookings */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-charcoal shadow-sm bg-charcoal">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm text-gray-500">Total Bookings</p>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-burgundy/10 rounded-lg flex items-center justify-center">
-                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-burgundy" />
+                <p className="text-xs sm:text-sm text-white/90">Total Bookings</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Calendar className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">{stats.totalBookings}</p>
-              <span className="text-xs text-yellow-600 font-medium">{stats.pendingBookings} pending</span>
+              <p className="text-xl sm:text-2xl font-bold text-white mb-1">{stats.totalBookings}</p>
+              <span className="text-xs text-gold font-medium">{stats.pendingBookings} pending</span>
             </CardContent>
           </Card>
 
           {/* Services */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-sand shadow-sm bg-sand">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm text-gray-500">Active Services</p>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-blue-50 rounded-lg flex items-center justify-center">
-                  <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-blue-600" />
+                <p className="text-xs sm:text-sm text-charcoal/90">Active Services</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/50 rounded-lg flex items-center justify-center">
+                  <Package className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-charcoal" />
                 </div>
               </div>
               <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">{stats.activeServices}</p>
-              <Link href="/vendor/services" className="text-xs text-blue-600 hover:underline">Manage services →</Link>
+              <Link href="/vendor/services" className="text-xs text-burgundy hover:underline font-medium">Manage services →</Link>
             </CardContent>
           </Card>
 
           {/* Rating */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-burgundy-light shadow-sm bg-burgundy-light">
             <CardContent className="p-4 sm:p-5">
               <div className="flex items-start justify-between mb-2 sm:mb-3">
-                <p className="text-xs sm:text-sm text-gray-500">Avg. Rating</p>
-                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-yellow-50 rounded-lg flex items-center justify-center">
-                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-yellow-500" />
+                <p className="text-xs sm:text-sm text-white/90">Avg. Rating</p>
+                <div className="w-8 h-8 sm:w-9 sm:h-9 bg-white/20 rounded-lg flex items-center justify-center">
+                  <Star className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-white" />
                 </div>
               </div>
-              <p className="text-xl sm:text-2xl font-bold text-charcoal mb-1">
+              <p className="text-xl sm:text-2xl font-bold text-white mb-1">
                 {stats.avgRating > 0 ? stats.avgRating.toFixed(1) : '—'}
               </p>
-              <span className="text-xs text-gray-400">{stats.reviewCount} review{stats.reviewCount !== 1 ? 's' : ''}</span>
+              <span className="text-xs text-white/70">{stats.reviewCount} review{stats.reviewCount !== 1 ? 's' : ''}</span>
             </CardContent>
           </Card>
         </div>
@@ -368,7 +388,7 @@ export default function VendorDashboardPage() {
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
 
           {/* Revenue Chart */}
-          <Card className="lg:col-span-2 border-gray-100 shadow-sm">
+          <Card className="lg:col-span-2 border-burgundy/30 shadow-sm bg-cream">
             <CardHeader className="pb-0">
               <div className="flex items-start justify-between">
                 <div>
@@ -418,7 +438,7 @@ export default function VendorDashboardPage() {
           </Card>
 
           {/* Profile Score */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-charcoal/30 shadow-sm bg-sand">
             <CardHeader className="pb-2 px-4 sm:px-6">
               <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Profile Strength</CardTitle>
             </CardHeader>
@@ -468,7 +488,7 @@ export default function VendorDashboardPage() {
         <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
 
           {/* Upcoming Bookings */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-gold/30 shadow-sm bg-cream">
             <CardHeader className="pb-3 px-4 sm:px-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Upcoming Events</CardTitle>
@@ -518,7 +538,7 @@ export default function VendorDashboardPage() {
           </Card>
 
           {/* Recent Bookings */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-burgundy/30 shadow-sm bg-sand">
             <CardHeader className="pb-3 px-4 sm:px-6">
               <div className="flex items-center justify-between">
                 <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Recent Bookings</CardTitle>
@@ -578,7 +598,7 @@ export default function VendorDashboardPage() {
         </div>
 
         {/* Quick Actions */}
-        <Card className="border-gray-100 shadow-sm">
+        <Card className="border-charcoal/30 shadow-sm bg-cream">
           <CardHeader className="pb-3 px-4 sm:px-6">
             <CardTitle className="text-sm sm:text-base font-semibold text-charcoal">Quick Actions</CardTitle>
           </CardHeader>

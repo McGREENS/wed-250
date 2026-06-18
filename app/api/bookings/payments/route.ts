@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { bookingPayments, bookings } from '@/lib/db/schema';
-import { eq, and } from 'drizzle-orm';
+import { bookingPayments, bookings, vendors } from '@/lib/db/schema';
+import { eq, and, or } from 'drizzle-orm';
 
 // GET - fetch all payments for a booking
 export async function GET(req: NextRequest) {
@@ -13,11 +13,27 @@ export async function GET(req: NextRequest) {
     const bookingId = req.nextUrl.searchParams.get('bookingId');
     if (!bookingId) return NextResponse.json({ error: 'bookingId required' }, { status: 400 });
 
-    // Verify booking belongs to user
+    // Fetch booking first
     const [booking] = await db.select().from(bookings)
-      .where(and(eq(bookings.id, bookingId), eq(bookings.userId, session.user.id)))
+      .where(eq(bookings.id, bookingId))
       .limit(1);
     if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+
+    // Check if user is either the couple OR the vendor
+    let authorized = false;
+    if (booking.userId === session.user.id) {
+      authorized = true; // User is the couple who made the booking
+    } else if (session.user.role === 'VENDOR') {
+      // Check if booking belongs to this vendor
+      const [vendor] = await db.select().from(vendors)
+        .where(eq(vendors.userId, session.user.id))
+        .limit(1);
+      if (vendor && booking.vendorId === vendor.id) {
+        authorized = true; // User is the vendor for this booking
+      }
+    }
+
+    if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     const payments = await db.select().from(bookingPayments)
       .where(eq(bookingPayments.bookingId, bookingId))
@@ -41,11 +57,26 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'bookingId and a positive amount are required' }, { status: 400 });
     }
 
-    // Verify booking belongs to user
+    // Fetch booking first
     const [booking] = await db.select().from(bookings)
-      .where(and(eq(bookings.id, bookingId), eq(bookings.userId, session.user.id)))
+      .where(eq(bookings.id, bookingId))
       .limit(1);
     if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+
+    // Check if user is either the couple OR the vendor
+    let authorized = false;
+    if (booking.userId === session.user.id) {
+      authorized = true;
+    } else if (session.user.role === 'VENDOR') {
+      const [vendor] = await db.select().from(vendors)
+        .where(eq(vendors.userId, session.user.id))
+        .limit(1);
+      if (vendor && booking.vendorId === vendor.id) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     // Fetch existing payments to compute total paid
     const existing = await db.select().from(bookingPayments)
@@ -90,11 +121,26 @@ export async function DELETE(req: NextRequest) {
     const bookingId = req.nextUrl.searchParams.get('bookingId');
     if (!paymentId || !bookingId) return NextResponse.json({ error: 'id and bookingId required' }, { status: 400 });
 
-    // Verify booking belongs to user
+    // Fetch booking first
     const [booking] = await db.select().from(bookings)
-      .where(and(eq(bookings.id, bookingId), eq(bookings.userId, session.user.id)))
+      .where(eq(bookings.id, bookingId))
       .limit(1);
     if (!booking) return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
+
+    // Check if user is either the couple OR the vendor
+    let authorized = false;
+    if (booking.userId === session.user.id) {
+      authorized = true;
+    } else if (session.user.role === 'VENDOR') {
+      const [vendor] = await db.select().from(vendors)
+        .where(eq(vendors.userId, session.user.id))
+        .limit(1);
+      if (vendor && booking.vendorId === vendor.id) {
+        authorized = true;
+      }
+    }
+
+    if (!authorized) return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
 
     await db.delete(bookingPayments).where(eq(bookingPayments.id, paymentId));
 

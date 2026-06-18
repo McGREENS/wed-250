@@ -257,7 +257,7 @@ export default function ContactPage() {
                         <Card className="border-gray-100 shadow-sm bg-sand/20">
                             <CardContent className="p-6">
                                 <h3 className="text-lg font-bold text-[#2C2C2C] mb-3">
-                                    💡 Quick Tip
+                                     Quick Tip
                                 </h3>
                                 <p className="text-gray-700 text-sm leading-relaxed">
                                     For urgent wedding planning assistance, our Premium and Elite members have access to 24/7 priority support via phone and live chat.

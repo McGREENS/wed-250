@@ -85,11 +85,11 @@ export default function DashboardClient() {
       <UserPageLayout>
         <div className="max-w-7xl mx-auto">
           <div className="animate-pulse">
-            <div className="h-8 bg-gray-200 rounded w-1/3 mb-4"></div>
-            <div className="h-4 bg-gray-200 rounded w-1/2 mb-8"></div>
+            <div className="h-8 bg-sand rounded w-1/3 mb-4"></div>
+            <div className="h-4 bg-sand/70 rounded w-1/2 mb-8"></div>
             <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6 mb-8">
               {[...Array(4)].map((_, i) => (
-                <div key={i} className="h-32 bg-gray-200 rounded"></div>
+                <div key={i} className="h-32 bg-sand/50 rounded-xl"></div>
               ))}
             </div>
           </div>
@@ -109,16 +109,44 @@ export default function DashboardClient() {
   }
 
   const dashboardStats = [
-    { label: 'Days Until Wedding', value: stats.daysUntilWedding.toString(), icon: Calendar, color: 'text-burgundy' },
-    { label: 'Planning Progress', value: `${stats.planningProgress}%`, icon: TrendingUp, color: 'text-green-600' },
-    { label: 'Budget Used', value: `${stats.budgetUsage}%`, icon: DollarSign, color: 'text-blue-600' },
-    { label: 'Total Bookings', value: stats.totalBookings.toString(), icon: CheckCircle, color: 'text-purple-600' },
+    {
+      label: 'Days Until Wedding',
+      value: stats.daysUntilWedding.toString(),
+      icon: Calendar,
+      color: 'text-burgundy',
+      cardClass: 'border-burgundy/20 bg-gradient-to-br from-burgundy/12 via-burgundy/5 to-cream',
+      iconBg: 'bg-burgundy/15',
+    },
+    {
+      label: 'Planning Progress',
+      value: `${stats.planningProgress}%`,
+      icon: TrendingUp,
+      color: 'text-gold',
+      cardClass: 'border-gold/25 bg-gradient-to-br from-gold/15 via-gold/5 to-cream',
+      iconBg: 'bg-gold/20',
+    },
+    {
+      label: 'Budget Used',
+      value: `${stats.budgetUsage}%`,
+      icon: DollarSign,
+      color: 'text-burgundy-light',
+      cardClass: 'border-sand bg-gradient-to-br from-sand via-sand/60 to-cream',
+      iconBg: 'bg-burgundy/10',
+    },
+    {
+      label: 'Total Bookings',
+      value: stats.totalBookings.toString(),
+      icon: CheckCircle,
+      color: 'text-charcoal',
+      cardClass: 'border-charcoal/10 bg-gradient-to-br from-charcoal/5 via-sand/40 to-cream',
+      iconBg: 'bg-charcoal/10',
+    },
   ];
 
   const quickActions = [
-    { title: 'Browse Venues', icon: MapPin, href: '/venues', color: 'bg-burgundy' },
-    { title: 'Find Vendors', icon: Star, href: '/vendors', color: 'bg-gold' },
-    { title: 'Wedding Settings', icon: Calendar, href: '/dashboard/wedding-settings', color: 'bg-purple-600' },
+    { title: 'Browse Venues', icon: MapPin, href: '/venues', color: 'bg-burgundy', tileClass: 'bg-burgundy/8 hover:bg-burgundy/12 border-burgundy/15' },
+    { title: 'Find Vendors', icon: Star, href: '/vendors', color: 'bg-gold', tileClass: 'bg-gold/10 hover:bg-gold/15 border-gold/20' },
+    { title: 'Wedding Settings', icon: Calendar, href: '/dashboard/wedding-settings', color: 'bg-charcoal', tileClass: 'bg-sand/50 hover:bg-sand/70 border-sand' },
   ];
 
   return (
@@ -148,11 +176,11 @@ export default function DashboardClient() {
           {dashboardStats.map((stat, index) => {
             const Icon = stat.icon;
             return (
-              <Card key={index} className="border-gray-100 shadow-sm">
+              <Card key={index} className={`shadow-sm overflow-hidden ${stat.cardClass}`}>
                 <CardContent className="p-4 sm:p-6">
                   <div className="flex items-start justify-between mb-2">
-                    <p className="text-xs sm:text-sm text-gray-600">{stat.label}</p>
-                    <div className={`w-8 h-8 sm:w-10 sm:h-10 bg-gray-100 rounded-lg flex items-center justify-center ${stat.color}`}>
+                    <p className="text-xs sm:text-sm text-charcoal/70">{stat.label}</p>
+                    <div className={`w-8 h-8 sm:w-10 sm:h-10 rounded-lg flex items-center justify-center ${stat.iconBg} ${stat.color}`}>
                       <Icon className="w-4 h-4 sm:w-5 sm:h-5" />
                     </div>
                   </div>
@@ -176,7 +204,7 @@ export default function DashboardClient() {
                     <span className="text-xs font-semibold text-burgundy uppercase tracking-wide">Venues</span>
                   </div>
                   <p className="text-base font-bold text-charcoal mt-2">Browse Venues</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Find the perfect venue for your big day</p>
+                  <p className="text-xs text-charcoal/60 mt-0.5">Find the perfect venue for your big day</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-burgundy/10 group-hover:bg-burgundy/20 flex items-center justify-center transition-colors flex-shrink-0">
                   <span className="text-burgundy text-lg font-bold leading-none">→</span>
@@ -193,13 +221,13 @@ export default function DashboardClient() {
                     <div className="w-8 h-8 bg-gold rounded-lg flex items-center justify-center">
                       <Star className="w-4 h-4 text-white" />
                     </div>
-                    <span className="text-xs font-semibold text-yellow-700 uppercase tracking-wide">Vendors</span>
+                    <span className="text-xs font-semibold text-burgundy uppercase tracking-wide">Vendors</span>
                   </div>
                   <p className="text-base font-bold text-charcoal mt-2">Find Vendors</p>
-                  <p className="text-xs text-gray-500 mt-0.5">Photographers, caterers, decorators & more</p>
+                  <p className="text-xs text-charcoal/60 mt-0.5">Photographers, caterers, decorators & more</p>
                 </div>
                 <div className="w-10 h-10 rounded-full bg-gold/10 group-hover:bg-gold/20 flex items-center justify-center transition-colors flex-shrink-0">
-                  <span className="text-yellow-700 text-lg font-bold leading-none">→</span>
+                  <span className="text-gold text-lg font-bold leading-none">→</span>
                 </div>
               </div>
             </div>
@@ -207,12 +235,12 @@ export default function DashboardClient() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="lg:col-span-2 border-gray-100 shadow-sm">
+          <Card className="lg:col-span-2 border-burgundy/15 shadow-sm bg-gradient-to-br from-burgundy/8 via-cream to-sand/30 overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Wedding Countdown</h3>
-              <div className="text-center py-6 sm:py-8 bg-gradient-to-br from-burgundy/10 to-gold/10 rounded-lg mb-4 sm:mb-6">
+              <div className="text-center py-6 sm:py-8 bg-gradient-to-br from-burgundy/15 via-burgundy/5 to-gold/15 rounded-xl mb-4 sm:mb-6 border border-burgundy/10">
                 <div className="text-4xl sm:text-6xl font-bold text-burgundy mb-2">{stats.daysUntilWedding}</div>
-                <p className="text-sm sm:text-base text-gray-600">Days Until Your Big Day</p>
+                <p className="text-sm sm:text-base text-charcoal/70">Days Until Your Big Day</p>
               </div>
               <div className="space-y-3">
                 <div>
@@ -222,7 +250,7 @@ export default function DashboardClient() {
                   </div>
                   <Progress value={stats.planningProgress} className="h-2" />
                 </div>
-                <p className="text-sm text-gray-600">
+                <p className="text-sm text-charcoal/70">
                   {stats.planningProgress < 50 ? "You're getting started! Keep up the momentum." :
                    stats.planningProgress < 80 ? "Great progress! You're on track." :
                    "Almost there! Your wedding is well planned."}
@@ -231,10 +259,10 @@ export default function DashboardClient() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-gold/25 shadow-sm bg-gradient-to-br from-gold/12 via-cream to-sand/40 overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Budget Summary</h3>
-              <div className="text-center mb-4 sm:mb-6">
+              <div className="text-center mb-4 sm:mb-6 py-4 rounded-xl bg-sand/50 border border-gold/15">
                 <div className="text-2xl sm:text-3xl font-bold text-burgundy mb-1">
                   RWF {(stats.totalSpent / 1000000).toFixed(1)}M
                 </div>
@@ -269,7 +297,7 @@ export default function DashboardClient() {
         </div>
 
         <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-sand shadow-sm bg-gradient-to-br from-cream via-sand/25 to-cream overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-charcoal">Upcoming Tasks</h3>
@@ -280,7 +308,7 @@ export default function DashboardClient() {
               <div className="space-y-3">
                 {upcomingTasks.length > 0 ? (
                   upcomingTasks.map((task) => (
-                    <div key={task.id} className="flex items-center gap-3 p-3 bg-sand/20 rounded-lg">
+                    <div key={task.id} className="flex items-center gap-3 p-3 bg-white/70 border border-sand rounded-lg">
                       <input type="checkbox" className="w-5 h-5 text-burgundy rounded" disabled />
                       <div className="flex-1">
                         <p className="font-medium text-charcoal text-sm">{task.title}</p>
@@ -301,7 +329,7 @@ export default function DashboardClient() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-burgundy/15 shadow-sm bg-gradient-to-br from-burgundy/6 via-cream to-sand/30 overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-base sm:text-lg font-semibold text-charcoal">Recent Bookings</h3>
@@ -312,16 +340,16 @@ export default function DashboardClient() {
               <div className="space-y-3">
                 {recentBookings.length > 0 ? (
                   recentBookings.map((booking) => (
-                    <div key={booking.id} className="p-3 border border-gray-100 rounded-lg">
+                    <div key={booking.id} className="p-3 bg-white/80 border border-sand rounded-lg">
                       <div className="flex items-start justify-between mb-2">
                         <div>
                           <p className="font-semibold text-charcoal text-sm">{booking.vendorName || 'Unknown Vendor'}</p>
-                          <p className="text-xs text-gray-600">{booking.serviceType}</p>
+                          <p className="text-xs text-charcoal/60">{booking.serviceType}</p>
                         </div>
                         <span className={`text-xs px-2 py-1 rounded ${
-                          booking.status === 'confirmed' ? 'bg-green-100 text-green-700' : 
-                          booking.status === 'pending' ? 'bg-yellow-100 text-yellow-700' :
-                          'bg-gray-100 text-gray-700'
+                          booking.status === 'confirmed' ? 'bg-gold/25 text-charcoal' : 
+                          booking.status === 'pending' ? 'bg-burgundy/10 text-burgundy' :
+                          'bg-sand text-charcoal/70'
                         }`}>
                           {booking.status}
                         </span>
@@ -339,7 +367,7 @@ export default function DashboardClient() {
           </Card>
         </div>
 
-        <Card className="border-gray-100 shadow-sm mt-4 sm:mt-6">
+        <Card className="border-sand shadow-sm mt-4 sm:mt-6 bg-gradient-to-r from-sand/40 via-cream to-sand/40 overflow-hidden">
           <CardContent className="p-4 sm:p-6">
             <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Quick Actions</h3>
             <div className="grid sm:grid-cols-2 md:grid-cols-3 gap-3">
@@ -347,7 +375,7 @@ export default function DashboardClient() {
                 const Icon = action.icon;
                 return (
                   <Link key={i} href={action.href}>
-                    <button className="w-full flex items-center gap-3 p-3 sm:p-4 bg-sand/20 rounded-lg hover:bg-sand/40 transition-colors text-left">
+                    <button className={`w-full flex items-center gap-3 p-3 sm:p-4 rounded-lg border transition-colors text-left ${action.tileClass}`}>
                       <div className={`w-10 h-10 sm:w-12 sm:h-12 ${action.color} rounded-lg flex items-center justify-center flex-shrink-0`}>
                         <Icon className="w-5 h-5 sm:w-6 sm:h-6 text-white" />
                       </div>

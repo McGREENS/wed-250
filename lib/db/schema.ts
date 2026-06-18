@@ -190,6 +190,37 @@ export const tasks = sqliteTable("tasks", {
   timeline: text("timeline").notNull(),
   completed: integer("completed", { mode: "boolean" }).default(false),
   custom: integer("custom", { mode: "boolean" }).default(false),
+  assignedHelperId: text("assigned_helper_id").references(() => weddingHelpers.id, { onDelete: "set null" }),
+  dueDate: integer("due_date", { mode: "timestamp" }),
+  priority: text("priority").default("medium"),
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Wedding Helpers table
+export const weddingHelpers = sqliteTable("wedding_helpers", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  weddingId: text("wedding_id").notNull().references(() => weddings.id, { onDelete: "cascade" }),
+  name: text("name").notNull(),
+  email: text("email"),
+  phone: text("phone"),
+  role: text("role"),
+  assignedTasks: text("assigned_tasks"), // JSON array of task strings
+  helperUserId: text("helper_user_id").references(() => users.id, { onDelete: "set null" }),
+  accessToken: text("access_token").unique(),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+// Helper Task Progress table
+export const helperTaskProgress = sqliteTable("helper_task_progress", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  helperId: text("helper_id").notNull().references(() => weddingHelpers.id, { onDelete: "cascade" }),
+  taskId: text("task_id").references(() => tasks.id, { onDelete: "cascade" }),
+  taskName: text("task_name").notNull(),
+  status: text("status", { enum: ["pending", "in_progress", "completed"] }).default("pending").notNull(),
+  comments: text("comments"), // JSON array of comment objects
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
@@ -306,6 +337,16 @@ export const weddingsRelations = relations(weddings, ({ one, many }) => ({
   user: one(users, { fields: [weddings.userId], references: [users.id] }),
   venue: one(venues, { fields: [weddings.venueId], references: [venues.id] }),
   bookings: many(bookings),
+  helpers: many(weddingHelpers),
+}));
+
+export const weddingHelpersRelations = relations(weddingHelpers, ({ one, many }) => ({
+  wedding: one(weddings, { fields: [weddingHelpers.weddingId], references: [weddings.id] }),
+  taskProgress: many(helperTaskProgress),
+}));
+
+export const helperTaskProgressRelations = relations(helperTaskProgress, ({ one }) => ({
+  helper: one(weddingHelpers, { fields: [helperTaskProgress.helperId], references: [weddingHelpers.id] }),
 }));
 
 export const bookingPaymentsRelations = relations(bookingPayments, ({ one }) => ({

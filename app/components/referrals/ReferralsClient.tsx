@@ -203,7 +203,7 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
 
   const shareOnWhatsApp = (code: string) => {
     const link = `${baseUrl}/signup?ref=${code}`;
-    const message = `Check out this amazing platform! Join using my referral link: ${link}`;
+    const message = `Hey, Take a look at this platform, you can sign up through my referral link: ${link}`;
     const whatsappUrl = `https://wa.me/?text=${encodeURIComponent(message)}`;
     window.open(whatsappUrl, "_blank");
   };
@@ -271,10 +271,10 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      PENDING: "bg-yellow-100 text-yellow-800",
-      ACCEPTED: "bg-green-100 text-green-800",
-      EXPIRED: "bg-gray-100 text-gray-800",
-      CANCELLED: "bg-red-100 text-red-800",
+      PENDING: "bg-sand text-charcoal",
+      ACCEPTED: "bg-gold text-charcoal",
+      EXPIRED: "bg-charcoal/70 text-cream",
+      CANCELLED: "bg-burgundy-light text-cream",
     };
     return styles[status as keyof typeof styles] || styles.PENDING;
   };
@@ -336,37 +336,37 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-cream p-6 rounded-lg shadow-sm border border-burgundy/30">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Users className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-burgundy/15 rounded-lg">
+              <Users className="w-6 h-6 text-burgundy" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total Referrals</p>
-              <p className="text-2xl font-bold text-charcoal">{stats.total}</p>
+              <p className="text-sm text-charcoal/60">Total Referrals</p>
+              <p className="text-2xl font-bold text-burgundy">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-cream p-6 rounded-lg shadow-sm border border-sand">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-yellow-100 rounded-lg">
-              <Clock className="w-6 h-6 text-yellow-600" />
+            <div className="p-3 bg-sand rounded-lg">
+              <Clock className="w-6 h-6 text-charcoal/70" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Pending</p>
+              <p className="text-sm text-charcoal/60">Pending</p>
               <p className="text-2xl font-bold text-charcoal">{stats.pending}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-gold p-6 rounded-lg shadow-sm border border-gold">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="p-3 bg-white/30 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-charcoal" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Accepted</p>
+              <p className="text-sm text-charcoal/70">Accepted</p>
               <p className="text-2xl font-bold text-charcoal">{stats.accepted}</p>
             </div>
           </div>
@@ -384,10 +384,10 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
         </button>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-cream rounded-lg shadow-sm border border-burgundy/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-sand/50 border-b border-burgundy/20">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Title
@@ -437,8 +437,8 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
                       <span
                         className={`px-2 py-1 text-xs font-medium rounded-full ${
                           link.isActive
-                            ? "bg-green-100 text-green-800"
-                            : "bg-gray-100 text-gray-800"
+                            ? "bg-gold text-charcoal"
+                            : "bg-charcoal/70 text-cream"
                         }`}
                       >
                         {link.isActive ? "Active" : "Inactive"}
@@ -458,8 +458,8 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
                           onClick={() => togglePublicLink(link.id, link.isActive)}
                           className={`flex items-center gap-1 ${
                             link.isActive
-                              ? "text-orange-600 hover:text-orange-800"
-                              : "text-green-600 hover:text-green-800"
+                              ? "text-charcoal/70 hover:text-charcoal"
+                              : "text-gold hover:text-gold/80"
                           }`}
                           title={link.isActive ? "Deactivate" : "Activate"}
                         >
@@ -467,7 +467,7 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
                         </button>
                         <button
                           onClick={() => deletePublicLink(link.id)}
-                          className="text-red-600 hover:text-red-800 flex items-center gap-1"
+                          className="text-burgundy-light hover:text-burgundy flex items-center gap-1"
                           title="Delete link"
                         >
                           <X className="w-4 h-4" />
@@ -483,10 +483,10 @@ export default function ReferralsClient({ userRole }: { userRole: string }) {
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-cream rounded-lg shadow-sm border border-burgundy/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-sand/50 border-b border-burgundy/20">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Invitee

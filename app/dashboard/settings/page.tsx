@@ -107,41 +107,41 @@ export default function SettingsPage() {
       <div className="max-w-2xl mx-auto">
         <div className="mb-8">
           <h1 className="text-3xl font-serif text-charcoal mb-2">Account Settings</h1>
-          <p className="text-gray-600">Manage your profile and security</p>
+          <p className="text-charcoal/70">Manage your profile and security</p>
         </div>
 
         <div className="space-y-6">
           {/* Profile Section */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-gold/20 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-gold/8 via-cream to-sand/30">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-burgundy/15 rounded-lg flex items-center justify-center">
                   <User className="w-5 h-5 text-burgundy" />
                 </div>
                 <div>
                   <h2 className="font-semibold text-charcoal">Profile</h2>
-                  <p className="text-sm text-gray-500">Update your name and phone number</p>
+                  <p className="text-sm text-charcoal/70">Update your name and phone number</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="name">Full Name</Label>
+                  <Label htmlFor="name" className="text-charcoal/80">Full Name</Label>
                   <Input
                     id="name"
                     value={profile.name}
                     onChange={(e) => setProfile({ ...profile, name: e.target.value })}
                     placeholder="Your full name"
-                    className="border-gray-200 focus:border-burgundy"
+                    className="border-sand bg-white focus:border-burgundy"
                   />
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="phone">Phone Number</Label>
+                  <Label htmlFor="phone" className="text-charcoal/80">Phone Number</Label>
                   <Input
                     id="phone"
                     value={profile.phone}
                     onChange={(e) => setProfile({ ...profile, phone: e.target.value })}
                     placeholder="+250 7XX XXX XXX"
-                    className="border-gray-200 focus:border-burgundy"
+                    className="border-sand bg-white focus:border-burgundy"
                   />
                 </div>
                 <div className="flex justify-end pt-2">
@@ -159,20 +159,20 @@ export default function SettingsPage() {
           </Card>
 
           {/* Password Section */}
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-burgundy/20 shadow-sm hover:shadow-md transition-shadow bg-gradient-to-br from-burgundy/12 via-burgundy/5 to-cream">
             <CardContent className="p-6">
               <div className="flex items-center gap-3 mb-6">
-                <div className="w-10 h-10 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                <div className="w-10 h-10 bg-burgundy/15 rounded-lg flex items-center justify-center">
                   <Lock className="w-5 h-5 text-burgundy" />
                 </div>
                 <div>
                   <h2 className="font-semibold text-charcoal">Password</h2>
-                  <p className="text-sm text-gray-500">Change your account password</p>
+                  <p className="text-sm text-charcoal/70">Change your account password</p>
                 </div>
               </div>
               <div className="space-y-4">
                 <div className="space-y-1">
-                  <Label htmlFor="currentPassword">Current Password</Label>
+                  <Label htmlFor="currentPassword" className="text-charcoal/80">Current Password</Label>
                   <div className="relative">
                     <Input
                       id="currentPassword"
@@ -180,15 +180,15 @@ export default function SettingsPage() {
                       value={passwords.current}
                       onChange={(e) => setPasswords({ ...passwords, current: e.target.value })}
                       placeholder="Enter current password"
-                      className="border-gray-200 focus:border-burgundy pr-10"
+                      className="border-sand bg-white focus:border-burgundy pr-10"
                     />
-                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal">
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, current: !p.current }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-burgundy">
                       {showPasswords.current ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="newPassword">New Password</Label>
+                  <Label htmlFor="newPassword" className="text-charcoal/80">New Password</Label>
                   <div className="relative">
                     <Input
                       id="newPassword"
@@ -196,15 +196,15 @@ export default function SettingsPage() {
                       value={passwords.new}
                       onChange={(e) => setPasswords({ ...passwords, new: e.target.value })}
                       placeholder="Min. 8 characters"
-                      className="border-gray-200 focus:border-burgundy pr-10"
+                      className="border-sand bg-white focus:border-burgundy pr-10"
                     />
-                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal">
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, new: !p.new }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-burgundy">
                       {showPasswords.new ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>
                 </div>
                 <div className="space-y-1">
-                  <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                  <Label htmlFor="confirmPassword" className="text-charcoal/80">Confirm New Password</Label>
                   <div className="relative">
                     <Input
                       id="confirmPassword"
@@ -212,9 +212,9 @@ export default function SettingsPage() {
                       value={passwords.confirm}
                       onChange={(e) => setPasswords({ ...passwords, confirm: e.target.value })}
                       placeholder="Repeat new password"
-                      className="border-gray-200 focus:border-burgundy pr-10"
+                      className="border-sand bg-white focus:border-burgundy pr-10"
                     />
-                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-charcoal">
+                    <button type="button" onClick={() => setShowPasswords(p => ({ ...p, confirm: !p.confirm }))} className="absolute right-3 top-1/2 -translate-y-1/2 text-charcoal/40 hover:text-burgundy">
                       {showPasswords.confirm ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                     </button>
                   </div>

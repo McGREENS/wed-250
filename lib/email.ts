@@ -829,3 +829,35 @@ export async function sendVendorOTPEmail({
     html,
   });
 }
+
+export async function sendBookingStatusEmail({
+  clientEmail,
+  clientName,
+  vendorName,
+  servicePackage,
+  eventDate,
+  status,
+}: {
+  clientEmail: string;
+  clientName: string;
+  vendorName: string;
+  servicePackage: string;
+  eventDate: string;
+  status: 'confirmed' | 'cancelled';
+}) {
+  const isConfirmed = status === 'confirmed';
+  const subject = isConfirmed
+    ? `Booking Confirmed - ${servicePackage}`
+    : `Booking Cancelled - ${servicePackage}`;
+
+  const text = isConfirmed
+    ? `Hi ${clientName},\n\nYour booking with ${vendorName} has been confirmed!\n\nService: ${servicePackage}\nEvent Date: ${eventDate}\nStatus: Confirmed\n\nThe vendor will contact you soon to finalize the details.\n\nBest wishes,\nThe Andiza Team\nNorrsken House Kigali`
+    : `Hi ${clientName},\n\nYour booking with ${vendorName} has been cancelled.\n\nService: ${servicePackage}\nEvent Date: ${eventDate}\nStatus: Cancelled\n\nIf you have questions, please contact the vendor directly or reach out to us.\n\nBest wishes,\nThe Andiza Team\nNorrsken House Kigali`;
+
+  return transporter.sendMail({
+    from: '"Andiza" <andiza@cylacon.com>',
+    to: clientEmail,
+    subject,
+    text,
+  });
+}

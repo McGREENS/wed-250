@@ -47,6 +47,19 @@ export async function POST(req: NextRequest) {
     const body = await req.json();
     const { serviceType, name, description, price, duration, features, amenities, image, ...otherFields } = body;
 
+    // Validate required fields
+    if (!name || name.trim() === '') {
+      return NextResponse.json({ error: "Service name is required" }, { status: 400 });
+    }
+
+    if (!description || description.trim() === '') {
+      return NextResponse.json({ error: "Service description is required" }, { status: 400 });
+    }
+
+    if (!price || isNaN(parseFloat(price)) || parseFloat(price) <= 0) {
+      return NextResponse.json({ error: "Valid price is required" }, { status: 400 });
+    }
+
     const [vendor] = await db.select().from(vendors).where(eq(vendors.userId, session.user.id)).limit(1);
     
     if (!vendor) {
@@ -59,16 +72,16 @@ export async function POST(req: NextRequest) {
     // Build features array from features or amenities (for venues)
     let featuresArray = [];
     if (features) {
-      featuresArray = features.split(',').map((f: string) => f.trim());
+      featuresArray = features.split(',').map((f: string) => f.trim()).filter(Boolean);
     } else if (amenities) {
-      featuresArray = amenities.split(',').map((f: string) => f.trim());
+      featuresArray = amenities.split(',').map((f: string) => f.trim()).filter(Boolean);
     }
 
     const [service] = await db.insert(servicePackages).values({
       vendorId: vendor.id,
       serviceType: serviceType || "General",
-      name,
-      description,
+      name: name.trim(),
+      description: description.trim(),
       price: parseFloat(price),
       image: image || null,
       features: JSON.stringify({ duration: duration || null, items: featuresArray }),
@@ -79,7 +92,21 @@ export async function POST(req: NextRequest) {
     return NextResponse.json({ success: true, service });
   } catch (error) {
     console.error("POST /api/vendor/services error:", error);
-    return NextResponse.json({ error: "Failed to create service", details: error instanceof Error ? error.message : "Unknown error" }, { status: 500 });
+    
+    // Extract meaningful error message
+    let errorMessage = "Failed to create service";
+    if (error instanceof Error) {
+      if (error.message.includes('NOT NULL constraint failed')) {
+        const match = error.message.match(/NOT NULL constraint failed: service_packages\.(.+)/);
+        if (match) {
+          errorMessage = `${match[1]} is required`;
+        }
+      } else {
+        errorMessage = error.message;
+      }
+    }
+    
+    return NextResponse.json({ error: errorMessage }, { status: 500 });
   }
 }
 

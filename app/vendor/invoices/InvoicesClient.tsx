@@ -287,11 +287,11 @@ export default function InvoicesClient() {
 
   const getStatusBadge = (status: string) => {
     const styles = {
-      DRAFT: "bg-gray-100 text-gray-800",
-      SENT: "bg-blue-100 text-blue-800",
-      PAID: "bg-green-100 text-green-800",
-      OVERDUE: "bg-red-100 text-red-800",
-      CANCELLED: "bg-gray-100 text-gray-600",
+      DRAFT: "bg-sand text-charcoal",
+      SENT: "bg-burgundy text-cream",
+      PAID: "bg-gold text-charcoal",
+      OVERDUE: "bg-burgundy-light text-cream",
+      CANCELLED: "bg-charcoal/70 text-cream",
     };
     return styles[status as keyof typeof styles] || styles.DRAFT;
   };
@@ -454,59 +454,59 @@ export default function InvoicesClient() {
       </div>
 
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-cream p-6 rounded-lg shadow-sm border border-burgundy/30">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <FileText className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-burgundy/15 rounded-lg">
+              <FileText className="w-6 h-6 text-burgundy" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Total</p>
-              <p className="text-2xl font-bold text-charcoal">{stats.total}</p>
+              <p className="text-sm text-charcoal/60">Total</p>
+              <p className="text-2xl font-bold text-burgundy">{stats.total}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-cream p-6 rounded-lg shadow-sm border border-sand">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-gray-100 rounded-lg">
-              <FileText className="w-6 h-6 text-gray-600" />
+            <div className="p-3 bg-sand rounded-lg">
+              <FileText className="w-6 h-6 text-charcoal/70" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Draft</p>
+              <p className="text-sm text-charcoal/60">Draft</p>
               <p className="text-2xl font-bold text-charcoal">{stats.draft}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-burgundy p-6 rounded-lg shadow-sm border border-burgundy">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-blue-100 rounded-lg">
-              <Send className="w-6 h-6 text-blue-600" />
+            <div className="p-3 bg-white/20 rounded-lg">
+              <Send className="w-6 h-6 text-cream" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Sent</p>
-              <p className="text-2xl font-bold text-charcoal">{stats.sent}</p>
+              <p className="text-sm text-cream/80">Sent</p>
+              <p className="text-2xl font-bold text-cream">{stats.sent}</p>
             </div>
           </div>
         </div>
 
-        <div className="bg-white p-6 rounded-lg shadow-sm border border-gray-200">
+        <div className="bg-gold p-6 rounded-lg shadow-sm border border-gold">
           <div className="flex items-center gap-3">
-            <div className="p-3 bg-green-100 rounded-lg">
-              <CheckCircle className="w-6 h-6 text-green-600" />
+            <div className="p-3 bg-white/30 rounded-lg">
+              <CheckCircle className="w-6 h-6 text-charcoal" />
             </div>
             <div>
-              <p className="text-sm text-gray-600">Paid</p>
+              <p className="text-sm text-charcoal/70">Paid</p>
               <p className="text-2xl font-bold text-charcoal">{stats.paid}</p>
             </div>
           </div>
         </div>
       </div>
 
-      <div className="bg-white rounded-lg shadow-sm border border-gray-200 overflow-hidden">
+      <div className="bg-cream rounded-lg shadow-sm border border-burgundy/20 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
-            <thead className="bg-gray-50 border-b border-gray-200">
+            <thead className="bg-sand/50 border-b border-burgundy/20">
               <tr>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Invoice #

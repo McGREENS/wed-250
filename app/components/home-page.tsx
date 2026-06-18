@@ -1,7 +1,9 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 import Link from "next/link";
+import { useSearchParams } from "next/navigation";
+import { toast } from "sonner";
 import { createPageUrl } from "../utils";
 import { motion } from "framer-motion";
 import {
@@ -19,6 +21,20 @@ import {
 import { ExploreIcon, PlanIcon, MatchIcon, ManageIcon } from "./animated-icons";
 
 export default function HomePage() {
+    const searchParams = useSearchParams();
+
+    useEffect(() => {
+        const comingSoon = searchParams.get('coming-soon');
+        if (comingSoon === 'venues') {
+            toast.info('Venues marketplace coming soon! We\'re preparing amazing venues for you.', {
+                duration: 5000,
+            });
+        } else if (comingSoon === 'vendors') {
+            toast.info('Vendors marketplace coming soon! We\'re onboarding top vendors for you.', {
+                duration: 5000,
+            });
+        }
+    }, [searchParams]);
 
     return (
         <div className="min-h-screen bg-cream bg-noise selection:bg-burgundy selection:text-white overflow-x-hidden">

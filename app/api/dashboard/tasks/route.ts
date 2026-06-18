@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, timeline = 'Custom' } = await request.json();
+    const { title, timeline = 'Custom', assignedHelperId, dueDate, priority = 'medium', notes } = await request.json();
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
@@ -62,7 +62,12 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       title,
       timeline,
-    }).returning();
+      assignedHelperId: assignedHelperId || null,
+      dueDate: dueDate ? new Date(dueDate) : null,
+      priority: priority || 'medium',
+      notes: notes || null,
+      custom: true,
+    } as any).returning();
 
     return NextResponse.json(newTask[0]);
   } catch (error) {
@@ -84,7 +89,42 @@ export async function PATCH(request: NextRequest) {
     }
 
     const updatedTask = await db.update(tasksTable)
-      .set({ updatedAt: new Date(), completed: sql`${completed}` } as any)
+      .set({ 
+        updatedAt: new Date(), 
+        completed: sql`${completed}` 
+      } as any)
+      .where(eq(tasksTable.id, id))
+      .returning();
+
+    return NextResponse.json(updatedTask[0]);
+  } catch (error) {
+    console.error('Task update error:', error);
+    return NextResponse.json({ error: 'Failed to update task' }, { status: 500 });
+  }
+}
+
+export async function PUT(request: NextRequest) {
+  try {
+    const session = await auth();
+    if (!session?.user?.id) {
+      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+    }
+
+    const { id, title, timeline, assignedHelperId, dueDate, priority, notes } = await request.json();
+    if (!id) {
+      return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
+    }
+
+    const updatedTask = await db.update(tasksTable)
+      .set({
+        title,
+        timeline,
+        assignedHelperId: assignedHelperId || null,
+        dueDate: dueDate ? new Date(dueDate) : null,
+        priority: priority || 'medium',
+        notes: notes || null,
+        updatedAt: new Date(),
+      } as any)
       .where(eq(tasksTable.id, id))
       .returning();
 
