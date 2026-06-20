@@ -109,7 +109,7 @@ export default function VendorSidebar() {
 
                 <div className="p-4 border-t border-gray-200">
                     <button
-                        onClick={() => signOut({ callbackUrl: '/' })}
+                        onClick={() => signOut({ callbackUrl: '/login' })}
                         className={`flex items-center ${collapsed ? 'justify-center' : 'gap-3'} px-4 py-3 rounded-lg text-gray-700 hover:bg-red-50 hover:text-red-600 transition-colors w-full`}
                         title={collapsed ? 'Logout' : ''}
                     >
