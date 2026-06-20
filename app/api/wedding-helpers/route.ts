@@ -97,7 +97,7 @@ export async function POST(req: NextRequest) {
           day: 'numeric'
         });
 
-        const baseUrl = process.env.NEXTAUTH_URL || 'https://andiza.co.rw';
+        const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || 'http://localhost:3000';
         const magicLink = `${baseUrl}/helper-tasks?token=${accessToken}`;
         const loginLink = `${baseUrl}/login`;
 
