@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { weddings, bookings, favorites, venueTours } from '@/lib/db/schema';
+import { weddings, bookings, favorites, venueTours, tasks } from '@/lib/db/schema';
 import { eq, count, sum, and } from 'drizzle-orm';
 
 export async function GET(request: NextRequest) {
@@ -30,6 +30,11 @@ export async function GET(request: NextRequest) {
     const userVenueTours = await db.select().from(venueTours).where(eq(venueTours.userId, userId));
     const venueToursCount = userVenueTours.length;
 
+    // Get tasks stats
+    const userTasks = await db.select().from(tasks).where(eq(tasks.userId, userId));
+    const totalTasks = userTasks.length;
+    const tasksCompleted = userTasks.filter(t => t.completed).length;
+
     const wedding = userWedding[0];
     
     // Calculate days until wedding
@@ -40,17 +45,14 @@ export async function GET(request: NextRequest) {
       daysUntilWedding = Math.max(0, Math.ceil((weddingDate.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)));
     }
 
-    // Calculate planning progress (based on bookings vs typical wedding services)
-    const typicalServices = 8; // venue, photography, catering, decoration, music, planning, etc.
-    const planningProgress = Math.min(100, Math.round((totalBookings / typicalServices) * 100));
-
     // Calculate budget usage
     const totalBudget = wedding?.budget || 0;
     const budgetUsage = totalBudget > 0 ? Math.round((totalSpent / totalBudget) * 100) : 0;
 
     return NextResponse.json({
       daysUntilWedding,
-      planningProgress,
+      tasksCompleted,
+      totalTasks,
       budgetUsage,
       totalBookings,
       totalSpent,

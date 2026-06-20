@@ -209,6 +209,7 @@ export const tasks = sqliteTable("tasks", {
   dueDate: integer("due_date", { mode: "timestamp" }),
   priority: text("priority").default("medium"),
   notes: text("notes"),
+  category: text("category").default("General"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
@@ -296,6 +297,18 @@ export const bookingPayments = sqliteTable("booking_payments", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Manual Expenses table (for vendors/expenses outside the platform)
+export const manualExpenses = sqliteTable("manual_expenses", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  category: text("category").notNull(), // "Venue", "Photography", "Catering", etc.
+  vendorName: text("vendor_name").notNull(),
+  amount: real("amount").notNull(),
+  note: text("note"),
+  paidAt: integer("paid_at", { mode: "timestamp" }).notNull().$defaultFn(() => new Date()),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Referrals table
 export const referrals = sqliteTable("referrals", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
@@ -351,6 +364,10 @@ export const helperTaskProgressRelations = relations(helperTaskProgress, ({ one 
 
 export const bookingPaymentsRelations = relations(bookingPayments, ({ one }) => ({
   booking: one(bookings, { fields: [bookingPayments.bookingId], references: [bookings.id] }),
+}));
+
+export const manualExpensesRelations = relations(manualExpenses, ({ one }) => ({
+  user: one(users, { fields: [manualExpenses.userId], references: [users.id] }),
 }));
 
 export const bookingsRelations = relations(bookings, ({ one, many }) => ({
@@ -419,6 +436,7 @@ export const usersRelations = relations(users, ({ many }) => ({
   tasks: many(tasks),
   invoices: many(invoices),
   publicReferralLinks: many(publicReferralLinks),
+  manualExpenses: many(manualExpenses),
 }));
 
 // Invoices table

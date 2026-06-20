@@ -7,6 +7,8 @@ import { Progress } from "@/app/components/ui/progress";
 import { DollarSign, TrendingUp, TrendingDown, Settings, Plus, AlertCircle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import AddManualExpense from '@/app/components/dashboard/AddManualExpense';
+import ManualExpensesList from '@/app/components/dashboard/ManualExpensesList';
 
 interface BudgetCategory {
   name: string;
@@ -28,6 +30,7 @@ interface BudgetOverview {
 export default function BudgetPage() {
   const [budgetData, setBudgetData] = useState<BudgetOverview | null>(null);
   const [loading, setLoading] = useState(true);
+  const [refreshTrigger, setRefreshTrigger] = useState(0);
 
   useEffect(() => {
     const fetchBudgetData = async () => {
@@ -45,7 +48,11 @@ export default function BudgetPage() {
     };
 
     fetchBudgetData();
-  }, []);
+  }, [refreshTrigger]);
+
+  const handleExpenseAdded = () => {
+    setRefreshTrigger(t => t + 1);
+  };
 
   if (loading) {
     return (
@@ -84,7 +91,7 @@ export default function BudgetPage() {
           <div className="flex items-center justify-between">
             <div>
               <h1 className="text-3xl font-serif text-charcoal mb-2">Wedding Budget</h1>
-              <p className="text-gray-600">Track your wedding expenses and stay on budget</p>
+              <p className="text-gray-600">Track your wedding expenses based on actual payments made</p>
             </div>
             <Link href="/dashboard/wedding-settings">
               <Button variant="outline" className="border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
@@ -116,11 +123,11 @@ export default function BudgetPage() {
         )}
 
         <div className="grid md:grid-cols-4 gap-6 mb-8">
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-burgundy/20 shadow-sm bg-gradient-to-br from-burgundy/12 via-burgundy/5 to-cream">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600">Total Budget</p>
-                <DollarSign className="w-5 h-5 text-gray-400" />
+                <p className="text-sm text-charcoal/70">Total Budget</p>
+                <DollarSign className="w-5 h-5 text-burgundy/70" />
               </div>
               <p className="text-2xl font-bold text-charcoal">
                 {totalBudget > 0 ? `RWF ${(totalBudget / 1000000).toFixed(1)}M` : 'Not Set'}
@@ -128,23 +135,23 @@ export default function BudgetPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-gold/25 shadow-sm bg-gradient-to-br from-gold/15 via-gold/5 to-cream">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600">Total Spent</p>
-                <TrendingUp className="w-5 h-5 text-red-500" />
+                <p className="text-sm text-charcoal/70">Total Paid</p>
+                <TrendingUp className="w-5 h-5 text-gold" />
               </div>
-              <p className="text-2xl font-bold text-red-600">
+              <p className="text-2xl font-bold text-burgundy">
                 RWF {(totalSpent / 1000000).toFixed(1)}M
               </p>
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-sand shadow-sm bg-gradient-to-br from-sand via-sand/60 to-cream">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600">Remaining</p>
-                <TrendingDown className="w-5 h-5 text-green-500" />
+                <p className="text-sm text-charcoal/70">Remaining</p>
+                <TrendingDown className="w-5 h-5 text-green-600" />
               </div>
               <p className="text-2xl font-bold text-green-600">
                 {totalBudget > 0 ? `RWF ${(remaining / 1000000).toFixed(1)}M` : 'N/A'}
@@ -152,25 +159,25 @@ export default function BudgetPage() {
             </CardContent>
           </Card>
 
-          <Card className="border-gray-100 shadow-sm">
+          <Card className="border-charcoal/10 shadow-sm bg-gradient-to-br from-charcoal/5 via-sand/40 to-cream">
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-2">
-                <p className="text-sm text-gray-600">Budget Used</p>
+                <p className="text-sm text-charcoal/70">Budget Used</p>
               </div>
               <p className="text-2xl font-bold text-burgundy">
-                {totalBudget > 0 ? `${percentUsed}%` : 'N/A'}
+                {totalBudget > 0 ? `${percentUsed.toFixed(2)}%` : 'N/A'}
               </p>
             </CardContent>
           </Card>
         </div>
 
         {totalBudget > 0 && (
-          <Card className="border-gray-100 shadow-sm mb-8">
+          <Card className="border-burgundy/15 shadow-sm bg-gradient-to-br from-burgundy/8 via-cream to-sand/30 mb-8">
             <CardContent className="p-6">
               <div className="mb-4">
                 <h3 className="text-lg font-semibold text-charcoal">Budget Overview</h3>
-                <p className="text-sm text-gray-600">
-                  RWF {(totalSpent / 1000000).toFixed(1)}M of RWF {(totalBudget / 1000000).toFixed(1)}M spent
+                <p className="text-sm text-charcoal/70">
+                  RWF {(totalSpent / 1000000).toFixed(1)}M paid of RWF {(totalBudget / 1000000).toFixed(1)}M budget
                 </p>
               </div>
               <Progress value={percentUsed} className="h-3" />
@@ -184,35 +191,33 @@ export default function BudgetPage() {
           </Card>
         )}
 
-        <Card className="border-gray-100 shadow-sm">
+        <Card className="border-gold/20 shadow-sm bg-gradient-to-br from-gold/8 via-cream to-sand/30">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg font-semibold text-charcoal">Spending by Category</h3>
+              <h3 className="text-lg font-semibold text-charcoal">Payments by Category</h3>
               <Link href="/dashboard/bookings">
                 <Button variant="ghost" size="sm" className="text-burgundy">
                   View All Bookings
                 </Button>
               </Link>
             </div>
+
+            <div className="mb-6">
+              <AddManualExpense onExpenseAdded={handleExpenseAdded} />
+            </div>
             <div className="space-y-4">
               {categories.filter(cat => cat.totalSpent > 0).length > 0 ? (
                 categories
                   .filter(category => category.totalSpent > 0)
                   .map((category, index) => {
-                    const categoryPercent = totalBudget > 0 ? Math.round((category.totalSpent / totalBudget) * 100) : 0;
-                    const isPaid = category.paidAmount >= category.totalSpent;
+                    const categoryPercent = totalBudget > 0 ? ((category.totalSpent / totalBudget) * 100) : 0;
 
                     return (
-                      <div key={index} className="p-4 border border-gray-100 rounded-lg">
+                      <div key={index} className="p-4 border border-burgundy/15 rounded-lg bg-gradient-to-br from-sand/40 via-cream to-sand/20">
                         <div className="flex items-center justify-between mb-3">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 mb-1">
                               <h4 className="font-semibold text-charcoal">{category.name}</h4>
-                              {isPaid && (
-                                <span className="text-xs px-2 py-1 bg-green-100 text-green-700 rounded">
-                                  Paid
-                                </span>
-                              )}
                               {category.bookings.length > 0 && (
                                 <span className="text-xs px-2 py-1 bg-blue-100 text-blue-700 rounded">
                                   {category.bookings.length} booking{category.bookings.length > 1 ? 's' : ''}
@@ -221,18 +226,13 @@ export default function BudgetPage() {
                             </div>
                             <div className="flex items-center gap-4 text-sm">
                               <span className="text-gray-600">
-                                Total: <span className="font-medium text-charcoal">RWF {category.totalSpent.toLocaleString()}</span>
+                                Paid: <span className="font-medium text-charcoal">RWF {category.totalSpent.toLocaleString()}</span>
                               </span>
-                              {category.paidAmount > 0 && (
-                                <span className="text-gray-600">
-                                  Paid: <span className="font-medium text-green-600">RWF {category.paidAmount.toLocaleString()}</span>
-                                </span>
-                              )}
                             </div>
                           </div>
                           <div className="text-right">
                             <p className="text-lg font-bold text-burgundy">
-                              {totalBudget > 0 ? `${categoryPercent}%` : 'N/A'}
+                              {totalBudget > 0 ? `${categoryPercent.toFixed(2)}%` : 'N/A'}
                             </p>
                           </div>
                         </div>
@@ -241,9 +241,9 @@ export default function BudgetPage() {
                     );
                   })
               ) : (
-                <div className="text-center py-8 text-gray-500">
-                  <p className="mb-2">No bookings yet</p>
-                  <p className="text-sm">Start booking vendors to see your spending breakdown</p>
+                <div className="text-center py-8 text-charcoal/60">
+                  <p className="mb-2">No payments recorded yet</p>
+                  <p className="text-sm">Make payments on your bookings to see your spending breakdown</p>
                   <div className="flex gap-2 justify-center mt-4">
                     <Link href="/venues">
                       <Button variant="outline" size="sm">
@@ -259,6 +259,8 @@ export default function BudgetPage() {
                 </div>
               )}
             </div>
+
+            <ManualExpensesList refreshTrigger={refreshTrigger} />
           </CardContent>
         </Card>
       </div>

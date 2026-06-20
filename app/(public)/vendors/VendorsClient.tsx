@@ -282,7 +282,7 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
               />
             ) : (
               <>
-                <div className={viewMode === 'grid' ? 'grid md:grid-cols-2 lg:grid-cols-3 gap-6' : 'space-y-4'}>
+                <div className={viewMode === 'grid' ? 'grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 sm:gap-6' : 'space-y-4'}>
                   {paginated.map((service) => (
                     <ServiceCard
                       key={service.id}

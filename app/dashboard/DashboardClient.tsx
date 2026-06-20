@@ -10,7 +10,8 @@ import { useEffect, useState } from 'react';
 
 interface DashboardStats {
   daysUntilWedding: number;
-  planningProgress: number;
+  tasksCompleted: number;
+  totalTasks: number;
   budgetUsage: number;
   totalBookings: number;
   totalSpent: number;
@@ -118,9 +119,9 @@ export default function DashboardClient() {
       iconBg: 'bg-burgundy/15',
     },
     {
-      label: 'Planning Progress',
-      value: `${stats.planningProgress}%`,
-      icon: TrendingUp,
+      label: 'Tasks Completed',
+      value: `${stats.tasksCompleted}/${stats.totalTasks}`,
+      icon: CheckCircle,
       color: 'text-gold',
       cardClass: 'border-gold/25 bg-gradient-to-br from-gold/15 via-gold/5 to-cream',
       iconBg: 'bg-gold/20',
@@ -136,7 +137,7 @@ export default function DashboardClient() {
     {
       label: 'Total Bookings',
       value: stats.totalBookings.toString(),
-      icon: CheckCircle,
+      icon: TrendingUp,
       color: 'text-charcoal',
       cardClass: 'border-charcoal/10 bg-gradient-to-br from-charcoal/5 via-sand/40 to-cream',
       iconBg: 'bg-charcoal/10',
@@ -235,31 +236,69 @@ export default function DashboardClient() {
         </div>
 
         <div className="grid lg:grid-cols-3 gap-4 sm:gap-6 mb-6 sm:mb-8">
-          <Card className="lg:col-span-2 border-burgundy/15 shadow-sm bg-gradient-to-br from-burgundy/8 via-cream to-sand/30 overflow-hidden">
+          <Card className="border-burgundy/15 shadow-sm bg-gradient-to-br from-burgundy/8 via-cream to-sand/30 overflow-hidden">
+            <CardContent className="p-4 sm:p-6">
+              <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Task Completion</h3>
+              <div className="flex items-center justify-center py-6">
+                <div className="relative w-40 h-40">
+                  <svg className="w-40 h-40 transform -rotate-90">
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="70"
+                      stroke="currentColor"
+                      strokeWidth="12"
+                      fill="none"
+                      className="text-sand"
+                    />
+                    <circle
+                      cx="80"
+                      cy="80"
+                      r="70"
+                      stroke="currentColor"
+                      strokeWidth="12"
+                      fill="none"
+                      strokeDasharray={`${2 * Math.PI * 70}`}
+                      strokeDashoffset={`${2 * Math.PI * 70 * (1 - (stats.totalTasks > 0 ? stats.tasksCompleted / stats.totalTasks : 0))}`}
+                      className="text-burgundy transition-all duration-500"
+                      strokeLinecap="round"
+                    />
+                  </svg>
+                  <div className="absolute inset-0 flex flex-col items-center justify-center">
+                    <div className="text-3xl font-bold text-burgundy">
+                      {stats.totalTasks > 0 ? Math.round((stats.tasksCompleted / stats.totalTasks) * 100) : 0}%
+                    </div>
+                    <div className="text-xs text-charcoal/60 mt-1">
+                      {stats.tasksCompleted} of {stats.totalTasks}
+                    </div>
+                  </div>
+                </div>
+              </div>
+              <p className="text-sm text-center text-charcoal/70 mt-2">
+                {stats.totalTasks === 0 ? "No tasks yet. Start planning!" :
+                 stats.tasksCompleted === stats.totalTasks ? "All tasks completed! 🎉" :
+                 stats.tasksCompleted / stats.totalTasks < 0.5 ? "Keep going! You're making progress." :
+                 "Great work! You're almost there."}
+              </p>
+              <Link href="/dashboard/checklist">
+                <Button variant="outline" className="w-full mt-4 border-burgundy text-burgundy hover:bg-burgundy hover:text-white">
+                  Manage Tasks
+                </Button>
+              </Link>
+            </CardContent>
+          </Card>
+
+          <Card className="border-gold/25 shadow-sm bg-gradient-to-br from-gold/8 via-cream to-sand/30 overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Wedding Countdown</h3>
-              <div className="text-center py-6 sm:py-8 bg-gradient-to-br from-burgundy/15 via-burgundy/5 to-gold/15 rounded-xl mb-4 sm:mb-6 border border-burgundy/10">
+              <div className="text-center py-6 sm:py-8 bg-gradient-to-br from-burgundy/15 via-burgundy/5 to-gold/15 rounded-xl mb-4 border border-burgundy/10">
                 <div className="text-4xl sm:text-6xl font-bold text-burgundy mb-2">{stats.daysUntilWedding}</div>
                 <p className="text-sm sm:text-base text-charcoal/70">Days Until Your Big Day</p>
-              </div>
-              <div className="space-y-3">
-                <div>
-                  <div className="flex justify-between text-sm mb-2">
-                    <span className="text-gray-600">Planning Progress</span>
-                    <span className="font-semibold text-charcoal">{stats.planningProgress}%</span>
-                  </div>
-                  <Progress value={stats.planningProgress} className="h-2" />
-                </div>
-                <p className="text-sm text-charcoal/70">
-                  {stats.planningProgress < 50 ? "You're getting started! Keep up the momentum." :
-                   stats.planningProgress < 80 ? "Great progress! You're on track." :
-                   "Almost there! Your wedding is well planned."}
-                </p>
               </div>
             </CardContent>
           </Card>
 
-          <Card className="border-gold/25 shadow-sm bg-gradient-to-br from-gold/12 via-cream to-sand/40 overflow-hidden">
+          <Card className="border-sand shadow-sm bg-gradient-to-br from-sand/50 via-cream to-sand/30 overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <h3 className="text-base sm:text-lg font-semibold text-charcoal mb-4">Budget Summary</h3>
               <div className="text-center mb-4 sm:mb-6 py-4 rounded-xl bg-sand/50 border border-gold/15">

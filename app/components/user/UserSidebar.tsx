@@ -10,6 +10,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: Home },
   { href: '/dashboard/bookings', label: 'My Bookings', icon: Calendar },
+  { href: '/dashboard/budget', label: 'Budget', icon: DollarSign },
   { href: '/dashboard/checklist', label: 'Checklist', icon: ListChecks },
   { href: '/dashboard/messages', label: 'Messages', icon: MessageSquare },
   { href: '/dashboard/favorites', label: 'Favorites', icon: Heart },

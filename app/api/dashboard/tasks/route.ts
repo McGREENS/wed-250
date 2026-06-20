@@ -53,7 +53,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, timeline = 'Custom', assignedHelperId, dueDate, priority = 'medium', notes } = await request.json();
+    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes } = await request.json();
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
@@ -62,6 +62,7 @@ export async function POST(request: NextRequest) {
       userId: session.user.id,
       title,
       timeline,
+      category: category || 'General',
       assignedHelperId: assignedHelperId || null,
       dueDate: dueDate ? new Date(dueDate) : null,
       priority: priority || 'medium',
@@ -110,7 +111,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, title, timeline, assignedHelperId, dueDate, priority, notes } = await request.json();
+    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
@@ -119,6 +120,7 @@ export async function PUT(request: NextRequest) {
       .set({
         title,
         timeline,
+        category: category || 'General',
         assignedHelperId: assignedHelperId || null,
         dueDate: dueDate ? new Date(dueDate) : null,
         priority: priority || 'medium',

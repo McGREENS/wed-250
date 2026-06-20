@@ -39,9 +39,11 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
   const [loading, setLoading] = useState(true);
   const [sending, setSending] = useState(false);
   const [shouldAutoScroll, setShouldAutoScroll] = useState(true);
+  const [isUserScrolling, setIsUserScrolling] = useState(false);
   
   const messagesContainerRef = useRef<HTMLDivElement>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const previousMessageCountRef = useRef(0);
 
   // Define displayMessages before useEffect
   const activeConversation = conversations.find((c) => c.id === selectedConversation);
@@ -65,27 +67,45 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
     if (selectedConversation) {
       subscribeToConversation(selectedConversation);
       markMessagesAsRead(selectedConversation);
-      setShouldAutoScroll(true);
+      setIsUserScrolling(false);
+      previousMessageCountRef.current = 0;
+      // Only auto-scroll when first opening a conversation
+      setTimeout(() => {
+        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+      }, 100);
       return () => {
         unsubscribeFromConversation(selectedConversation);
       };
     }
-  }, [selectedConversation, subscribeToConversation, unsubscribeFromConversation]);
+  }, [selectedConversation]);
 
-  // Auto-scroll when messages update
+  // Auto-scroll only when user is at bottom and new messages arrive
   useEffect(() => {
-    if (shouldAutoScroll) {
-      setTimeout(() => {
-        messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-      }, 0);
+    if (!isUserScrolling && displayMessages.length > previousMessageCountRef.current) {
+      const container = messagesContainerRef.current;
+      if (container) {
+        const { scrollTop, scrollHeight, clientHeight } = container;
+        const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
+        
+        if (isAtBottom) {
+          messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+        }
+      }
     }
-  }, [displayMessages, shouldAutoScroll]);
+    previousMessageCountRef.current = displayMessages.length;
+  }, [displayMessages.length, isUserScrolling]);
 
   const handleScroll = () => {
     if (!messagesContainerRef.current) return;
     const { scrollTop, scrollHeight, clientHeight } = messagesContainerRef.current;
-    const isNearBottom = scrollHeight - scrollTop - clientHeight < 100;
-    setShouldAutoScroll(isNearBottom);
+    const isAtBottom = scrollHeight - scrollTop - clientHeight < 150;
+    
+    // User is scrolling up
+    if (!isAtBottom) {
+      setIsUserScrolling(true);
+    } else {
+      setIsUserScrolling(false);
+    }
   };
 
   const markMessagesAsRead = async (conversationId: string) => {
@@ -136,7 +156,7 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
 
       if (res.ok) {
         setMessageText("");
-        setShouldAutoScroll(true);
+        setIsUserScrolling(false);
         await fetchConversations();
         toast.success("Message sent");
       } else {

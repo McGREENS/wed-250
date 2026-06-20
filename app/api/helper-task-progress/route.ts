@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { weddingHelpers, helperTaskProgress } from "@/lib/db/schema";
+import { weddingHelpers, helperTaskProgress, tasks } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 
 export async function GET(request: NextRequest) {
@@ -105,6 +105,17 @@ export async function POST(request: NextRequest) {
         .where(eq(helperTaskProgress.id, existing.id))
         .returning();
 
+      // Sync with main tasks table if status is completed
+      if (taskId && status === "completed") {
+        await db.update(tasks)
+          .set({ completed: true, updatedAt: new Date() } as any)
+          .where(eq(tasks.id, taskId));
+      } else if (taskId && (status === "pending" || status === "in_progress")) {
+        await db.update(tasks)
+          .set({ completed: false, updatedAt: new Date() } as any)
+          .where(eq(tasks.id, taskId));
+      }
+
       return NextResponse.json({ progress: updated });
     } else {
       // Create new
@@ -119,6 +130,13 @@ export async function POST(request: NextRequest) {
           comments: JSON.stringify(comments),
         } as any)
         .returning();
+
+      // Sync with main tasks table if status is completed
+      if (taskId && status === "completed") {
+        await db.update(tasks)
+          .set({ completed: true, updatedAt: new Date() } as any)
+          .where(eq(tasks.id, taskId));
+      }
 
       return NextResponse.json({ progress: newProgress });
     }
