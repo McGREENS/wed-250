@@ -5,9 +5,8 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
-import { Textarea } from "@/app/components/ui/textarea";
 import { Progress } from "@/app/components/ui/progress";
-import { Plus, Trash2, Edit2, X, Save, Calendar, User, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, X, Calendar, User, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -30,48 +29,40 @@ interface Helper {
   role: string;
 }
 
-function TaskModal({ task, helpers, onSave, onCancel }: { 
+function TaskModal({ task, category, helpers, onSave, onCancel }: { 
   task: Task | null; 
+  category: string;
   helpers: Helper[];
   onSave: (task: Partial<Task>) => void; 
   onCancel: () => void 
 }) {
   const [form, setForm] = useState({
     title: task?.title || '',
-    timeline: task?.timeline || '12 months before',
     assignedHelperId: task?.assignedHelperId || '',
-    dueDate: task?.dueDate || '',
     priority: task?.priority || 'medium',
-    notes: task?.notes || '',
-    category: task?.category || 'General',
   });
+  const [loading, setLoading] = useState(false);
 
-  const predefinedCategories = [
-    'General',
-    'Introduction Ceremony',
-    'Dowry Negotiation',
-    'Bride Price Ceremony',
-    'Civil Registration',
-    'Wedding Reception',
-    'Religious Ceremony',
-    'Planning & Preparation',
-    'Decorations & Setup',
-    'Food & Catering',
-    'Music & Entertainment',
-    'Photography & Video',
-    'Transportation',
-    'Attire & Beauty',
-  ];
+  const handleSubmit = async () => {
+    if (!form.title) return;
+    setLoading(true);
+    await onSave({ 
+      ...form, 
+      category,
+      assignedHelperId: form.assignedHelperId || null 
+    });
+    setLoading(false);
+  };
 
   return (
     <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-2xl w-full max-w-2xl max-h-[90vh] overflow-y-auto">
+      <div className="bg-white rounded-xl shadow-2xl w-full max-w-md">
         <div className="p-6 border-b border-gray-200">
-          <h3 className="text-xl font-semibold text-charcoal">{task ? 'Edit Task' : 'Create New Task'}</h3>
+          <h3 className="text-xl font-semibold text-charcoal">Adding task to {category}</h3>
         </div>
         <div className="p-6 space-y-4">
           <div>
-            <Label className="text-sm font-medium mb-2">Task Title *</Label>
+            <Label className="text-sm font-medium mb-2">Task Title</Label>
             <Input 
               value={form.title} 
               onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))} 
@@ -81,111 +72,48 @@ function TaskModal({ task, helpers, onSave, onCancel }: {
           </div>
 
           <div>
-            <Label className="text-sm font-medium mb-2">Category *</Label>
+            <Label className="text-sm font-medium mb-2">Helper</Label>
             <select 
-              value={predefinedCategories.includes(form.category) ? form.category : 'custom'} 
-              onChange={(e) => {
-                if (e.target.value === 'custom') {
-                  setForm(prev => ({ ...prev, category: '' }));
-                } else {
-                  setForm(prev => ({ ...prev, category: e.target.value }));
-                }
-              }}
-              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm mb-2"
+              value={form.assignedHelperId} 
+              onChange={(e) => setForm(prev => ({ ...prev, assignedHelperId: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
             >
-              {predefinedCategories.map(cat => (
-                <option key={cat} value={cat}>{cat}</option>
+              <option value="">No helper assigned</option>
+              {helpers.map(h => (
+                <option key={h.id} value={h.id}>{h.name} {h.role ? `(${h.role})` : ''}</option>
               ))}
-              <option value="custom">+ Create custom category</option>
             </select>
-            {!predefinedCategories.includes(form.category) && (
-              <Input 
-                value={form.category} 
-                onChange={(e) => setForm(prev => ({ ...prev, category: e.target.value }))} 
-                placeholder="Enter custom category name"
-                className="border-gray-200"
-              />
-            )}
-            <p className="text-xs text-gray-500 mt-1">Group tasks by wedding ceremony or phase</p>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium mb-2">Timeline</Label>
-              <select 
-                value={form.timeline} 
-                onChange={(e) => setForm(prev => ({ ...prev, timeline: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-              >
-                <option value="12 months before">12 months before</option>
-                <option value="9 months before">9 months before</option>
-                <option value="6 months before">6 months before</option>
-                <option value="3 months before">3 months before</option>
-                <option value="1 month before">1 month before</option>
-                <option value="Custom">Custom</option>
-              </select>
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium mb-2">Priority</Label>
-              <select 
-                value={form.priority} 
-                onChange={(e) => setForm(prev => ({ ...prev, priority: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-              >
-                <option value="low">Low</option>
-                <option value="medium">Medium</option>
-                <option value="high">High</option>
-              </select>
-            </div>
-          </div>
-
-          <div className="grid md:grid-cols-2 gap-4">
-            <div>
-              <Label className="text-sm font-medium mb-2">Due Date (Optional)</Label>
-              <Input 
-                type="date"
-                value={form.dueDate} 
-                onChange={(e) => setForm(prev => ({ ...prev, dueDate: e.target.value }))}
-                className="border-gray-200"
-              />
-            </div>
-
-            <div>
-              <Label className="text-sm font-medium mb-2">Assign Helper (Optional)</Label>
-              <select 
-                value={form.assignedHelperId} 
-                onChange={(e) => setForm(prev => ({ ...prev, assignedHelperId: e.target.value }))}
-                className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
-              >
-                <option value="">No helper assigned</option>
-                {helpers.map(h => (
-                  <option key={h.id} value={h.id}>{h.name} {h.role ? `(${h.role})` : ''}</option>
-                ))}
-              </select>
-            </div>
           </div>
 
           <div>
-            <Label className="text-sm font-medium mb-2">Notes (Optional)</Label>
-            <Textarea 
-              value={form.notes} 
-              onChange={(e) => setForm(prev => ({ ...prev, notes: e.target.value }))}
-              placeholder="Add any additional details..."
-              className="border-gray-200 min-h-[80px]"
-            />
+            <Label className="text-sm font-medium mb-2">Urgency</Label>
+            <select 
+              value={form.priority} 
+              onChange={(e) => setForm(prev => ({ ...prev, priority: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+            >
+              <option value="low">Low</option>
+              <option value="medium">Medium</option>
+              <option value="high">High</option>
+            </select>
           </div>
         </div>
 
         <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
-          <Button onClick={onCancel} variant="outline">Cancel</Button>
+          <Button onClick={onCancel} variant="outline" disabled={loading}>Cancel</Button>
           <Button 
-            onClick={() => form.title && onSave(form)} 
-            disabled={!form.title}
+            onClick={handleSubmit}
+            disabled={!form.title || loading}
             className="bg-burgundy text-white hover:bg-burgundy/90"
           >
-            <Save className="w-4 h-4 mr-2" />
-            {task ? 'Update Task' : 'Create Task'}
+            {loading ? (
+              <>
+                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                Adding...
+              </>
+            ) : (
+              'Add Task'
+            )}
           </Button>
         </div>
       </div>
@@ -199,7 +127,7 @@ export default function ChecklistPage() {
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
-  const [expandedCategory, setExpandedCategory] = useState<string | null>(null);
+  const [expandedCategory, setExpandedCategory] = useState<string | null>('Traditional (Gusaba)');
 
   useEffect(() => {
     fetchData();
@@ -281,12 +209,7 @@ export default function ChecklistPage() {
     }
   };
 
-  const handleDeleteTask = async (id: string, custom: boolean) => {
-    if (!custom) {
-      toast.error('Cannot delete default tasks');
-      return;
-    }
-
+  const handleDeleteTask = async (id: string) => {
     try {
       const res = await fetch(`/api/dashboard/tasks?id=${id}`, { method: 'DELETE' });
       if (res.ok) {
@@ -326,15 +249,11 @@ export default function ChecklistPage() {
   const completedCount = tasks.filter(t => t.completed).length;
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
   
-  const categories = [...new Set(tasks.map(t => t.category || 'General'))];
-  const sortedCategories = categories.sort((a, b) => {
-    if (a === 'General') return 1;
-    if (b === 'General') return -1;
-    return a.localeCompare(b);
-  });
+  const allowedCategories = ['Traditional (Gusaba)', 'Civil Ceremony', 'Church Wedding', 'Reception', 'Gutwikurura'];
+  const sortedCategories = allowedCategories;
 
   const getCategoryStats = (category: string) => {
-    const categoryTasks = tasks.filter(t => (t.category || 'General') === category);
+    const categoryTasks = tasks.filter(t => (t.category || 'Traditional (Gusaba)') === category);
     const completed = categoryTasks.filter(t => t.completed).length;
     const total = categoryTasks.length;
     const percentage = total > 0 ? Math.round((completed / total) * 100) : 0;
@@ -343,22 +262,13 @@ export default function ChecklistPage() {
 
   const getCategoryColor = (category: string) => {
     const colors: Record<string, { bg: string; border: string; text: string; progress: string }> = {
-      'Introduction Ceremony': { bg: 'from-purple-50 to-purple-100', border: 'border-purple-300', text: 'text-purple-700', progress: 'bg-purple-500' },
-      'Dowry Negotiation': { bg: 'from-pink-50 to-pink-100', border: 'border-pink-300', text: 'text-pink-700', progress: 'bg-pink-500' },
-      'Bride Price Ceremony': { bg: 'from-rose-50 to-rose-100', border: 'border-rose-300', text: 'text-rose-700', progress: 'bg-rose-500' },
-      'Civil Registration': { bg: 'from-blue-50 to-blue-100', border: 'border-blue-300', text: 'text-blue-700', progress: 'bg-blue-500' },
-      'Wedding Reception': { bg: 'from-amber-50 to-amber-100', border: 'border-amber-300', text: 'text-amber-700', progress: 'bg-amber-500' },
-      'Religious Ceremony': { bg: 'from-indigo-50 to-indigo-100', border: 'border-indigo-300', text: 'text-indigo-700', progress: 'bg-indigo-500' },
-      'Planning & Preparation': { bg: 'from-cyan-50 to-cyan-100', border: 'border-cyan-300', text: 'text-cyan-700', progress: 'bg-cyan-500' },
-      'Decorations & Setup': { bg: 'from-emerald-50 to-emerald-100', border: 'border-emerald-300', text: 'text-emerald-700', progress: 'bg-emerald-500' },
-      'Food & Catering': { bg: 'from-orange-50 to-orange-100', border: 'border-orange-300', text: 'text-orange-700', progress: 'bg-orange-500' },
-      'Music & Entertainment': { bg: 'from-violet-50 to-violet-100', border: 'border-violet-300', text: 'text-violet-700', progress: 'bg-violet-500' },
-      'Photography & Video': { bg: 'from-fuchsia-50 to-fuchsia-100', border: 'border-fuchsia-300', text: 'text-fuchsia-700', progress: 'bg-fuchsia-500' },
-      'Transportation': { bg: 'from-slate-50 to-slate-100', border: 'border-slate-300', text: 'text-slate-700', progress: 'bg-slate-500' },
-      'Attire & Beauty': { bg: 'from-pink-50 to-pink-100', border: 'border-pink-300', text: 'text-pink-700', progress: 'bg-pink-500' },
-      'General': { bg: 'from-gray-50 to-gray-100', border: 'border-gray-300', text: 'text-gray-700', progress: 'bg-gray-500' },
+      'Traditional (Gusaba)': { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800', progress: 'bg-purple-600' },
+      'Civil Ceremony': { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800', progress: 'bg-blue-600' },
+      'Church Wedding': { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-800', progress: 'bg-indigo-600' },
+      'Reception': { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800', progress: 'bg-amber-600' },
+      'Gutwikurura': { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800', progress: 'bg-rose-600' },
     };
-    return colors[category] || { bg: 'from-burgundy-50 to-burgundy-100', border: 'border-burgundy-300', text: 'text-burgundy-700', progress: 'bg-burgundy-500' };
+    return colors[category] || { bg: 'bg-burgundy-100', border: 'border-burgundy-400', text: 'text-burgundy-800', progress: 'bg-burgundy-600' };
   };
 
   return (
@@ -382,15 +292,8 @@ export default function ChecklistPage() {
           </CardContent>
         </Card>
 
-        <div className="mb-6 flex justify-between items-center">
-          <p className="text-sm text-gray-600">Click on a category to view and manage tasks</p>
-          <Button 
-            onClick={() => { setEditingTask(null); setShowModal(true); }} 
-            className="bg-burgundy text-white hover:bg-burgundy/90"
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            Add Task
-          </Button>
+        <div className="mb-6">
+          <p className="text-sm text-gray-600">Click on a category to view and add tasks</p>
         </div>
 
         {helpers.length === 0 && (
@@ -403,7 +306,7 @@ export default function ChecklistPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-6">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
           {sortedCategories.map(category => {
             const stats = getCategoryStats(category);
             const colors = getCategoryColor(category);
@@ -412,24 +315,24 @@ export default function ChecklistPage() {
             return (
               <Card 
                 key={category} 
-                className={`border-2 ${colors.border} shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br ${colors.bg}`}
+                className={`border-2 ${colors.border} shadow-md hover:shadow-xl transition-all cursor-pointer ${colors.bg}`}
                 onClick={() => setExpandedCategory(isExpanded ? null : category)}
               >
-                <CardContent className="p-5">
-                  <div className="flex items-start justify-between mb-3">
+                <CardContent className="p-2">
+                  <div className="flex items-center justify-between mb-1">
                     <div className="flex-1">
-                      <h3 className={`font-bold text-base mb-1 ${colors.text}`}>{category}</h3>
-                      <p className="text-xs text-gray-600">{stats.total} {stats.total === 1 ? 'task' : 'tasks'}</p>
+                      <h3 className={`font-bold text-xs ${colors.text}`}>{category}</h3>
+                      <p className="text-[10px] text-gray-600">{stats.total} {stats.total === 1 ? 'task' : 'tasks'}</p>
                     </div>
-                    <div className={`text-2xl font-bold ${colors.text}`}>{stats.percentage}%</div>
+                    <div className={`text-base font-bold ${colors.text}`}>{stats.percentage}%</div>
                   </div>
                   
-                  <div className="space-y-2 mb-3">
-                    <div className="flex justify-between text-xs text-gray-600">
-                      <span>{stats.completed} completed</span>
-                      <span>{stats.total - stats.completed} remaining</span>
+                  <div className="space-y-0.5 mb-1">
+                    <div className="flex justify-between text-[10px] text-gray-600">
+                      <span>{stats.completed} done</span>
+                      <span>{stats.total - stats.completed} left</span>
                     </div>
-                    <div className="w-full bg-white/50 rounded-full h-2.5 overflow-hidden">
+                    <div className="w-full bg-white/60 rounded-full h-1 overflow-hidden">
                       <div 
                         className={`h-full ${colors.progress} transition-all duration-500`}
                         style={{ width: `${stats.percentage}%` }}
@@ -438,13 +341,13 @@ export default function ChecklistPage() {
                   </div>
 
                   <button 
-                    className={`text-xs font-medium ${colors.text} hover:underline flex items-center gap-1`}
+                    className={`text-[10px] font-medium ${colors.text} hover:underline flex items-center gap-1`}
                     onClick={(e) => {
                       e.stopPropagation();
                       setExpandedCategory(isExpanded ? null : category);
                     }}
                   >
-                    {isExpanded ? '▲ Hide tasks' : '▼ View tasks'}
+                    {isExpanded ? '▲ Hide' : '▼ View'}
                   </button>
                 </CardContent>
               </Card>
@@ -457,15 +360,30 @@ export default function ChecklistPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-charcoal">{expandedCategory}</h3>
-                <button 
-                  onClick={() => setExpandedCategory(null)}
-                  className="text-gray-500 hover:text-charcoal transition-colors"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+                <div className="flex gap-2">
+                  <Button 
+                    onClick={() => { setEditingTask(null); setShowModal(true); }}
+                    size="sm"
+                    className="bg-burgundy text-white hover:bg-burgundy/90"
+                  >
+                    <Plus className="w-4 h-4 mr-2" />
+                    Add Task
+                  </Button>
+                  <button 
+                    onClick={() => setExpandedCategory(null)}
+                    className="text-gray-500 hover:text-charcoal transition-colors"
+                  >
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
               </div>
               <div className="space-y-2">
-                {tasks.filter(t => (t.category || 'General') === expandedCategory).map(task => {
+                {tasks.filter(t => (t.category || 'Traditional (Gusaba)') === expandedCategory).length === 0 ? (
+                  <div className="p-4 text-center text-gray-500">
+                    No tasks in this category yet. Click "Add Task" to create one.
+                  </div>
+                ) : (
+                  tasks.filter(t => (t.category || 'Traditional (Gusaba)') === expandedCategory).map(task => {
                   const helperName = getHelperName(task.assignedHelperId);
                   const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed;
                   
@@ -500,9 +418,11 @@ export default function ChecklistPage() {
                         </div>
 
                         <div className="flex flex-wrap gap-3 text-xs text-charcoal/70 mt-2">
-                          <span className="flex items-center gap-1 bg-burgundy/10 text-burgundy px-2 py-1 rounded-full font-medium">
-                            {task.timeline}
-                          </span>
+                          {task.timeline && (
+                            <span className="flex items-center gap-1 bg-burgundy/10 text-burgundy px-2 py-1 rounded-full font-medium">
+                              {task.timeline}
+                            </span>
+                          )}
                           {helperName && (
                             <span className="flex items-center gap-1">
                               <User className="w-3 h-3" />
@@ -534,43 +454,28 @@ export default function ChecklistPage() {
                         >
                           <Edit2 className="w-3.5 h-3.5" />
                         </Button>
-                        {task.custom && (
-                          <Button 
-                            variant="ghost" 
-                            size="sm" 
-                            onClick={() => handleDeleteTask(task.id, task.custom)}
-                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                          >
-                            <Trash2 className="w-3.5 h-3.5" />
-                          </Button>
-                        )}
+                        <Button 
+                          variant="ghost" 
+                          size="sm" 
+                          onClick={() => handleDeleteTask(task.id)}
+                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                        >
+                          <Trash2 className="w-3.5 h-3.5" />
+                        </Button>
                       </div>
                     </div>
                   );
-                })}
+                })
+                )}
               </div>
             </CardContent>
           </Card>
         )}
 
-        {tasks.length === 0 && (
-          <Card className="border-sand shadow-sm bg-gradient-to-br from-sand/40 via-cream to-sand/20">
-            <CardContent className="p-12 text-center">
-              <p className="text-charcoal/70 mb-4">No tasks yet. Click "Add Task" to get started!</p>
-              <Button 
-                onClick={() => setShowModal(true)} 
-                className="bg-burgundy text-white hover:bg-burgundy/90"
-              >
-                <Plus className="w-4 h-4 mr-2" />
-                Create Your First Task
-              </Button>
-            </CardContent>
-          </Card>
-        )}
-
-        {showModal && (
+        {showModal && expandedCategory && (
           <TaskModal
             task={editingTask}
+            category={expandedCategory}
             helpers={helpers}
             onSave={handleSaveTask}
             onCancel={() => { setShowModal(false); setEditingTask(null); }}

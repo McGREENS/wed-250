@@ -398,7 +398,7 @@ export default function WeddingSettingsPage() {
               />
             )}
 
-            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-4">
+            <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-3">
               {helpers.map(helper => {
                 const assignedTasks = checklistTasks.filter(t => t.assignedHelperId === helper.id);
                 const progress = helperProgress[helper.id!] || [];
@@ -417,18 +417,18 @@ export default function WeddingSettingsPage() {
                     className="border-2 border-burgundy/20 shadow-md hover:shadow-xl transition-all cursor-pointer bg-gradient-to-br from-burgundy/5 to-cream"
                     onClick={() => setExpandedHelper(isExpanded ? null : helper.id!)}
                   >
-                    <CardContent className="p-5">
-                      <div className="flex items-start justify-between mb-3">
+                    <CardContent className="p-3">
+                      <div className="flex items-start justify-between mb-2">
                         <div className="flex-1">
-                          <h3 className="font-bold text-base text-charcoal mb-1">{helper.name}</h3>
-                          <p className="text-xs text-gray-600">{helper.role || 'Helper'}</p>
+                          <h3 className="font-bold text-sm text-charcoal">{helper.name}</h3>
+                          <p className="text-[10px] text-gray-600">{helper.role || 'Helper'}</p>
                         </div>
-                        <div className="flex gap-1">
+                        <div className="flex gap-0.5">
                           <Button 
                             size="sm" 
                             variant="ghost" 
                             onClick={(e) => { e.stopPropagation(); setEditingHelper(helper); setShowHelperForm(true); }}
-                            className="h-7 w-7 p-0"
+                            className="h-6 w-6 p-0"
                           >
                             <Edit2 className="w-3 h-3" />
                           </Button>
@@ -436,19 +436,19 @@ export default function WeddingSettingsPage() {
                             size="sm" 
                             variant="ghost" 
                             onClick={(e) => { e.stopPropagation(); handleDeleteHelper(helper.id!); }}
-                            className="h-7 w-7 p-0 text-red-500 hover:text-red-600"
+                            className="h-6 w-6 p-0 text-red-500 hover:text-red-600"
                           >
                             <Trash2 className="w-3 h-3" />
                           </Button>
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <div className="flex justify-between text-xs text-gray-600">
+                      <div className="space-y-1">
+                        <div className="flex justify-between text-[10px] text-gray-600">
                           <span>{completedCount}/{totalCount} tasks done</span>
                           <span className="font-medium">{progressPercent}%</span>
                         </div>
-                        <div className="w-full bg-white/50 rounded-full h-2 overflow-hidden">
+                        <div className="w-full bg-white/50 rounded-full h-1 overflow-hidden">
                           <div 
                             className="h-full bg-burgundy transition-all duration-500"
                             style={{ width: `${progressPercent}%` }}
@@ -457,13 +457,13 @@ export default function WeddingSettingsPage() {
                       </div>
 
                       <button 
-                        className="text-xs font-medium text-burgundy hover:underline flex items-center gap-1 mt-3"
+                        className="text-[10px] font-medium text-burgundy hover:underline flex items-center gap-1 mt-2"
                         onClick={(e) => {
                           e.stopPropagation();
                           setExpandedHelper(isExpanded ? null : helper.id!);
                         }}
                       >
-                        {isExpanded ? '▲ Hide details' : '▼ View details'}
+                        {isExpanded ? '▲ Hide' : '▼ View'}
                       </button>
                     </CardContent>
                   </Card>
