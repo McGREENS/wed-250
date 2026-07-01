@@ -4,9 +4,10 @@ import UserPageLayout from '@/app/components/user/UserPageLayout';
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
-import { Calendar, Heart, DollarSign, CheckCircle, TrendingUp, Plus, MapPin, Star } from 'lucide-react';
+import { Calendar, Heart, DollarSign, CheckCircle, TrendingUp, Plus, MapPin, Star, Users, X, ClipboardList } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
+import { useSession } from 'next-auth/react';
 
 interface DashboardStats {
   daysUntilWedding: number;
@@ -45,6 +46,17 @@ export default function DashboardClient() {
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
+  const [showWelcomePopup, setShowWelcomePopup] = useState(false);
+  const { data: session } = useSession();
+
+  useEffect(() => {
+    if (!session?.user?.id) return;
+    const key = `andiza_welcome_${session.user.id}`;
+    if (!sessionStorage.getItem(key)) {
+      setShowWelcomePopup(true);
+      sessionStorage.setItem(key, '1');
+    }
+  }, [session?.user?.id]);
 
   useEffect(() => {
     const fetchDashboardData = async () => {
@@ -158,12 +170,26 @@ export default function DashboardClient() {
             Welcome Back{stats.coupleNames ? `, ${stats.coupleNames}` : ''}!
           </h1>
           {stats.weddingDate ? (
-            <p className="text-sm sm:text-base text-gray-600">
-              Your wedding is on {new Date(stats.weddingDate).toLocaleDateString()} - {stats.daysUntilWedding} days to go!
-              <Link href="/dashboard/wedding-settings" className="ml-2 text-burgundy hover:underline text-sm">
-                (Edit)
+            <div className="flex flex-wrap items-center gap-3">
+              <p className="text-sm sm:text-base text-gray-600">
+                Your wedding is on {new Date(stats.weddingDate).toLocaleDateString()} - {stats.daysUntilWedding} days to go!
+                <Link href="/dashboard/wedding-settings" className="ml-2 text-burgundy hover:underline text-sm">
+                  (Edit)
+                </Link>
+              </p>
+              <Link href="/dashboard/checklist">
+                <Button size="sm" className="bg-burgundy hover:bg-burgundy/90 text-white gap-1.5">
+                  <CheckCircle className="w-3.5 h-3.5" />
+                  Manage Tasks
+                </Button>
               </Link>
-            </p>
+              <Link href="/dashboard/wedding-settings">
+                <Button size="sm" variant="outline" className="border-burgundy text-burgundy hover:bg-burgundy hover:text-white gap-1.5">
+                  <Users className="w-3.5 h-3.5" />
+                  Add Helpers
+                </Button>
+              </Link>
+            </div>
           ) : (
             <p className="text-sm sm:text-base text-gray-600">
               <Link href="/dashboard/wedding-settings" className="text-burgundy hover:underline">
@@ -427,6 +453,64 @@ export default function DashboardClient() {
           </CardContent>
         </Card>
       </div>
+
+      {showWelcomePopup && (
+        <div className="fixed inset-0 bg-black/40 flex items-end sm:items-center justify-center z-50 p-3 sm:p-4">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm overflow-hidden">
+            <div className="bg-burgundy px-4 py-3 flex items-center justify-between">
+              <div className="flex items-center gap-2">
+                <Heart className="w-4 h-4 text-white/80" />
+                <div>
+                  <p className="text-white font-semibold text-sm leading-tight">
+                    {stats?.coupleNames ? `Hi, ${stats.coupleNames}!` : 'Welcome back!'}
+                  </p>
+                  {stats?.daysUntilWedding > 0 && (
+                    <p className="text-white/70 text-xs">{stats.daysUntilWedding} days to go 🎉</p>
+                  )}
+                </div>
+              </div>
+              <button onClick={() => setShowWelcomePopup(false)} className="text-white/60 hover:text-white">
+                <X className="w-4 h-4" />
+              </button>
+            </div>
+            <div className="p-3 space-y-2">
+              <p className="text-[11px] text-gray-400 uppercase tracking-wide font-medium px-1">What would you like to do?</p>
+              <Link href="/dashboard/checklist" onClick={() => setShowWelcomePopup(false)}>
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-burgundy/15 bg-burgundy/5 hover:bg-burgundy/10 transition-colors cursor-pointer group">
+                  <div className="w-8 h-8 bg-burgundy rounded-lg flex items-center justify-center flex-shrink-0">
+                    <ClipboardList className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-charcoal">Manage Tasks</p>
+                    <p className="text-xs text-gray-400 truncate">
+                      {stats && stats.totalTasks > 0 ? `${stats.tasksCompleted}/${stats.totalTasks} completed` : 'View your checklist'}
+                    </p>
+                  </div>
+                  <span className="text-burgundy text-sm group-hover:translate-x-0.5 transition-transform">→</span>
+                </div>
+              </Link>
+              <Link href="/dashboard/wedding-settings" onClick={() => setShowWelcomePopup(false)}>
+                <div className="flex items-center gap-3 p-3 rounded-lg border border-gold/20 bg-gold/5 hover:bg-gold/10 transition-colors cursor-pointer group">
+                  <div className="w-8 h-8 bg-gold rounded-lg flex items-center justify-center flex-shrink-0">
+                    <Users className="w-4 h-4 text-white" />
+                  </div>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-sm font-semibold text-charcoal">Add Helpers</p>
+                    <p className="text-xs text-gray-400">Assign tasks to friends &amp; family</p>
+                  </div>
+                  <span className="text-gold text-sm group-hover:translate-x-0.5 transition-transform">→</span>
+                </div>
+              </Link>
+              <button
+                onClick={() => setShowWelcomePopup(false)}
+                className="w-full py-2 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Continue to dashboard
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </UserPageLayout>
   );
 }

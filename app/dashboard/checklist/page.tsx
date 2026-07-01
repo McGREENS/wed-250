@@ -6,7 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Progress } from "@/app/components/ui/progress";
-import { Plus, Trash2, Edit2, X, Calendar, User, Loader2 } from 'lucide-react';
+import { Plus, Trash2, Edit2, Calendar, User, Loader2 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { toast } from 'sonner';
 
@@ -21,6 +21,7 @@ interface Task {
   priority?: string;
   notes?: string;
   category?: string;
+  expectedBudget?: number | null;
 }
 
 interface Helper {
@@ -40,6 +41,7 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
     title: task?.title || '',
     assignedHelperId: task?.assignedHelperId || '',
     priority: task?.priority || 'medium',
+    expectedBudget: task?.expectedBudget != null ? String(task.expectedBudget) : '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -49,7 +51,8 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
     await onSave({ 
       ...form, 
       category,
-      assignedHelperId: form.assignedHelperId || null 
+      assignedHelperId: form.assignedHelperId || null,
+      expectedBudget: form.expectedBudget !== '' ? parseFloat(form.expectedBudget) : null,
     });
     setLoading(false);
   };
@@ -96,6 +99,17 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
               <option value="medium">Medium</option>
               <option value="high">High</option>
             </select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-2">Expected Budget (RWF)</Label>
+            <Input
+              type="number"
+              value={form.expectedBudget}
+              onChange={(e) => setForm(prev => ({ ...prev, expectedBudget: e.target.value }))}
+              placeholder="e.g., 500000"
+              className="border-gray-200"
+            />
           </div>
         </div>
 
@@ -261,14 +275,56 @@ export default function ChecklistPage() {
   };
 
   const getCategoryColor = (category: string) => {
-    const colors: Record<string, { bg: string; border: string; text: string; progress: string }> = {
-      'Traditional (Gusaba)': { bg: 'bg-purple-100', border: 'border-purple-400', text: 'text-purple-800', progress: 'bg-purple-600' },
-      'Civil Ceremony': { bg: 'bg-blue-100', border: 'border-blue-400', text: 'text-blue-800', progress: 'bg-blue-600' },
-      'Church Wedding': { bg: 'bg-indigo-100', border: 'border-indigo-400', text: 'text-indigo-800', progress: 'bg-indigo-600' },
-      'Reception': { bg: 'bg-amber-100', border: 'border-amber-400', text: 'text-amber-800', progress: 'bg-amber-600' },
-      'Gutwikurura': { bg: 'bg-rose-100', border: 'border-rose-400', text: 'text-rose-800', progress: 'bg-rose-600' },
+    const colors: Record<string, { image: string; border: string; text: string; subtext: string; progress: string; activeBorder: string }> = {
+      'Traditional (Gusaba)': {
+        image: '/traditional.jpeg',
+        border: 'border-[#7a3d52]',
+        text: 'text-white',
+        subtext: 'text-white/80',
+        progress: 'bg-rose-300',
+        activeBorder: 'border-rose-300 ring-2 ring-rose-300/50',
+      },
+      'Civil Ceremony': {
+        image: '/civil.jpeg',
+        border: 'border-[#3a5080]',
+        text: 'text-white',
+        subtext: 'text-white/80',
+        progress: 'bg-blue-300',
+        activeBorder: 'border-blue-300 ring-2 ring-blue-300/50',
+      },
+      'Church Wedding': {
+        image: '/church.jpeg',
+        border: 'border-[#4a4580]',
+        text: 'text-white',
+        subtext: 'text-white/80',
+        progress: 'bg-indigo-300',
+        activeBorder: 'border-indigo-300 ring-2 ring-indigo-300/50',
+      },
+      'Reception': {
+        image: '/reception.jpeg',
+        border: 'border-[#7a5520]',
+        text: 'text-white',
+        subtext: 'text-white/80',
+        progress: 'bg-amber-300',
+        activeBorder: 'border-amber-300 ring-2 ring-amber-300/50',
+      },
+      'Gutwikurura': {
+        image: '/wediing.jpg',
+        border: 'border-[#4a7040]',
+        text: 'text-white',
+        subtext: 'text-white/80',
+        progress: 'bg-emerald-300',
+        activeBorder: 'border-emerald-300 ring-2 ring-emerald-300/50',
+      },
     };
-    return colors[category] || { bg: 'bg-burgundy-100', border: 'border-burgundy-400', text: 'text-burgundy-800', progress: 'bg-burgundy-600' };
+    return colors[category] || {
+      image: '/wediing.jpg',
+      border: 'border-[#6b3030]',
+      text: 'text-white',
+      subtext: 'text-white/80',
+      progress: 'bg-red-300',
+      activeBorder: 'border-red-300 ring-2 ring-red-300/50',
+    };
   };
 
   return (
@@ -292,10 +348,6 @@ export default function ChecklistPage() {
           </CardContent>
         </Card>
 
-        <div className="mb-6">
-          <p className="text-sm text-gray-600">Click on a category to view and add tasks</p>
-        </div>
-
         {helpers.length === 0 && (
           <Card className="border-sand bg-gradient-to-br from-sand via-sand/60 to-cream mb-6">
             <CardContent className="p-4">
@@ -306,49 +358,43 @@ export default function ChecklistPage() {
           </Card>
         )}
 
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-3 mb-6">
+        <div className="flex gap-3 mb-6 overflow-x-auto pb-2 scrollbar-hide">
           {sortedCategories.map(category => {
             const stats = getCategoryStats(category);
             const colors = getCategoryColor(category);
             const isExpanded = expandedCategory === category;
 
             return (
-              <Card 
-                key={category} 
-                className={`border-2 ${colors.border} shadow-md hover:shadow-xl transition-all cursor-pointer ${colors.bg}`}
+              <Card
+                key={category}
+                className={`border flex-shrink-0 w-36 sm:flex-1 ${colors.border} shadow-lg hover:shadow-xl hover:-translate-y-0.5 transition-all duration-200 cursor-pointer overflow-hidden relative ${
+                  isExpanded ? colors.activeBorder : ''
+                }`}
                 onClick={() => setExpandedCategory(isExpanded ? null : category)}
+                style={{ backgroundImage: `url(${colors.image})`, backgroundSize: 'cover', backgroundPosition: 'center' }}
               >
-                <CardContent className="p-2">
-                  <div className="flex items-center justify-between mb-1">
-                    <div className="flex-1">
-                      <h3 className={`font-bold text-xs ${colors.text}`}>{category}</h3>
-                      <p className="text-[10px] text-gray-600">{stats.total} {stats.total === 1 ? 'task' : 'tasks'}</p>
-                    </div>
-                    <div className={`text-base font-bold ${colors.text}`}>{stats.percentage}%</div>
+                <div className="absolute inset-0 bg-black/55" />
+                <CardContent className="p-4 relative z-10">
+                  <div className="flex items-start justify-between mb-3">
+                    <h3 className={`font-semibold text-xs leading-tight ${colors.text} drop-shadow`}>{category}</h3>
+                    <div className={`text-sm font-bold ${colors.text} opacity-90 drop-shadow`}>{stats.percentage}%</div>
                   </div>
-                  
-                  <div className="space-y-0.5 mb-1">
-                    <div className="flex justify-between text-[10px] text-gray-600">
-                      <span>{stats.completed} done</span>
-                      <span>{stats.total - stats.completed} left</span>
-                    </div>
-                    <div className="w-full bg-white/60 rounded-full h-1 overflow-hidden">
-                      <div 
+
+                  <div className="mb-3">
+                    <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
+                      <div
                         className={`h-full ${colors.progress} transition-all duration-500`}
                         style={{ width: `${stats.percentage}%` }}
                       />
                     </div>
                   </div>
 
-                  <button 
-                    className={`text-[10px] font-medium ${colors.text} hover:underline flex items-center gap-1`}
-                    onClick={(e) => {
-                      e.stopPropagation();
-                      setExpandedCategory(isExpanded ? null : category);
-                    }}
-                  >
-                    {isExpanded ? '▲ Hide' : '▼ View'}
-                  </button>
+                  <div className="flex items-center justify-between">
+                    <p className={`text-[10px] ${colors.subtext} drop-shadow`}>{stats.completed}/{stats.total} done</p>
+                    <p className={`text-[10px] font-medium ${colors.text} opacity-80`}>
+                      {isExpanded ? '▲' : '▼'}
+                    </p>
+                  </div>
                 </CardContent>
               </Card>
             );
@@ -360,112 +406,108 @@ export default function ChecklistPage() {
             <CardContent className="p-6">
               <div className="flex items-center justify-between mb-4">
                 <h3 className="text-xl font-semibold text-charcoal">{expandedCategory}</h3>
-                <div className="flex gap-2">
-                  <Button 
-                    onClick={() => { setEditingTask(null); setShowModal(true); }}
-                    size="sm"
-                    className="bg-burgundy text-white hover:bg-burgundy/90"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Task
-                  </Button>
-                  <button 
-                    onClick={() => setExpandedCategory(null)}
-                    className="text-gray-500 hover:text-charcoal transition-colors"
-                  >
-                    <X className="w-5 h-5" />
-                  </button>
-                </div>
+                <Button
+                  onClick={() => { setEditingTask(null); setShowModal(true); }}
+                  size="sm"
+                  className="bg-burgundy text-white hover:bg-burgundy/90"
+                >
+                  <Plus className="w-4 h-4 mr-2" />
+                  New task
+                </Button>
               </div>
               <div className="space-y-2">
                 {tasks.filter(t => (t.category || 'Traditional (Gusaba)') === expandedCategory).length === 0 ? (
                   <div className="p-4 text-center text-gray-500">
-                    No tasks in this category yet. Click "Add Task" to create one.
+                    No tasks in this category yet. Click "New task" to create one.
                   </div>
                 ) : (
                   tasks.filter(t => (t.category || 'Traditional (Gusaba)') === expandedCategory).map(task => {
-                  const helperName = getHelperName(task.assignedHelperId);
-                  const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed;
-                  
-                  return (
-                    <div 
-                      key={task.id} 
-                      className={`flex items-start gap-3 p-4 rounded-lg transition-colors ${
-                        task.completed ? 'bg-gold/20 border border-gold/30' : 'bg-sand/40 border border-sand hover:bg-sand/50'
-                      }`}
-                    >
-                      <input 
-                        type="checkbox" 
-                        checked={task.completed} 
-                        onChange={() => toggleTask(task.id, task.completed)} 
-                        className="w-5 h-5 text-burgundy rounded cursor-pointer mt-0.5 flex-shrink-0" 
-                      />
-                      
-                      <div className="flex-1 min-w-0">
-                        <div className="flex items-start justify-between gap-2 mb-1">
-                          <span className={`font-medium ${
-                            task.completed ? 'line-through text-charcoal/50' : 'text-charcoal'
-                          }`}>
-                            {task.title}
-                          </span>
-                          <div className="flex gap-1 flex-shrink-0">
+                    const helperName = getHelperName(task.assignedHelperId);
+                    const isOverdue = task.dueDate && new Date(task.dueDate) < new Date() && !task.completed;
+
+                    return (
+                      <div
+                        key={task.id}
+                        className={`flex items-start gap-3 p-4 rounded-lg transition-colors ${
+                          task.completed ? 'bg-gold/20 border border-gold/30' : 'bg-sand/40 border border-sand hover:bg-sand/50'
+                        }`}
+                      >
+                        <input
+                          type="checkbox"
+                          checked={task.completed}
+                          onChange={() => toggleTask(task.id, task.completed)}
+                          className="w-5 h-5 text-burgundy rounded cursor-pointer mt-0.5 flex-shrink-0"
+                        />
+
+                        <div className="flex-1 min-w-0">
+                          <div className="flex items-start justify-between gap-2 mb-1">
+                            <span className={`font-medium ${
+                              task.completed ? 'line-through text-charcoal/50' : 'text-charcoal'
+                            }`}>
+                              {task.title}
+                            </span>
                             {task.priority && (
-                              <span className={`text-xs px-2 py-1 rounded-full font-medium ${getPriorityColor(task.priority)}`}>
+                              <span className={`text-xs px-2 py-1 rounded-full font-medium flex-shrink-0 ${getPriorityColor(task.priority)}`}>
                                 {task.priority}
                               </span>
                             )}
                           </div>
+
+                          <div className="flex flex-wrap gap-3 text-xs text-charcoal/70 mt-2">
+                            {task.timeline && (
+                              <span className="flex items-center gap-1 bg-burgundy/10 text-burgundy px-2 py-1 rounded-full font-medium">
+                                {task.timeline}
+                              </span>
+                            )}
+                            {helperName && (
+                              <span className="flex items-center gap-1">
+                                <User className="w-3 h-3" />
+                                {helperName}
+                              </span>
+                            )}
+                            {task.dueDate && (
+                              <span className={`flex items-center gap-1 ${
+                                isOverdue ? 'text-red-600 font-medium' : ''
+                              }`}>
+                                <Calendar className="w-3 h-3" />
+                                {new Date(task.dueDate).toLocaleDateString()}
+                                {isOverdue && ' (Overdue)'}
+                              </span>
+                            )}
+                          </div>
+
+                          {task.expectedBudget != null && (
+                            <div className="mt-2 inline-flex items-center gap-1.5 bg-gold/10 border border-gold/30 text-amber-800 text-xs font-medium px-3 py-1 rounded-full">
+                              <span>💰</span>
+                              <span>Budget: {Number(task.expectedBudget).toLocaleString()} RWF</span>
+                            </div>
+                          )}
+                          {task.notes && (
+                            <p className="text-xs text-charcoal/80 mt-2 p-2 bg-cream/50 rounded border border-sand italic">{task.notes}</p>
+                          )}
                         </div>
 
-                        <div className="flex flex-wrap gap-3 text-xs text-charcoal/70 mt-2">
-                          {task.timeline && (
-                            <span className="flex items-center gap-1 bg-burgundy/10 text-burgundy px-2 py-1 rounded-full font-medium">
-                              {task.timeline}
-                            </span>
-                          )}
-                          {helperName && (
-                            <span className="flex items-center gap-1">
-                              <User className="w-3 h-3" />
-                              {helperName}
-                            </span>
-                          )}
-                          {task.dueDate && (
-                            <span className={`flex items-center gap-1 ${
-                              isOverdue ? 'text-red-600 font-medium' : ''
-                            }`}>
-                              <Calendar className="w-3 h-3" />
-                              {new Date(task.dueDate).toLocaleDateString()}
-                              {isOverdue && ' (Overdue)'}
-                            </span>
-                          )}
+                        <div className="flex gap-1 flex-shrink-0">
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => { setEditingTask(task); setShowModal(true); }}
+                            className="h-8 w-8 p-0"
+                          >
+                            <Edit2 className="w-3.5 h-3.5" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleDeleteTask(task.id)}
+                            className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
+                          >
+                            <Trash2 className="w-3.5 h-3.5" />
+                          </Button>
                         </div>
-
-                        {task.notes && (
-                          <p className="text-xs text-charcoal/80 mt-2 p-2 bg-cream/50 rounded border border-sand italic">{task.notes}</p>
-                        )}
                       </div>
-
-                      <div className="flex gap-1 flex-shrink-0">
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => { setEditingTask(task); setShowModal(true); }}
-                          className="h-8 w-8 p-0"
-                        >
-                          <Edit2 className="w-3.5 h-3.5" />
-                        </Button>
-                        <Button 
-                          variant="ghost" 
-                          size="sm" 
-                          onClick={() => handleDeleteTask(task.id)}
-                          className="h-8 w-8 p-0 text-red-500 hover:text-red-600"
-                        >
-                          <Trash2 className="w-3.5 h-3.5" />
-                        </Button>
-                      </div>
-                    </div>
-                  );
-                })
+                    );
+                  })
                 )}
               </div>
             </CardContent>

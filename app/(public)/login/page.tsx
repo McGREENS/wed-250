@@ -51,10 +51,12 @@ export default function LoginPage() {
                     setError("Invalid email or password");
                 } else if (res?.ok) {
                     toast.success("Welcome back!");
-                    // Check user role and redirect accordingly
-                    const response = await fetch('/api/auth/session');
-                    const session = await response.json();
-                    
+                    // Clear welcome popup flag so it shows on next dashboard visit
+                    const sessionRes = await fetch('/api/auth/session');
+                    const session = await sessionRes.json();
+                    if (session?.user?.id) {
+                      sessionStorage.removeItem(`andiza_welcome_${session.user.id}`);
+                    }
                     if (session?.user?.role === 'ADMIN') {
                         router.push("/admin");
                     } else if (session?.user?.role === 'VENDOR') {

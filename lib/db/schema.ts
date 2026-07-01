@@ -210,6 +210,7 @@ export const tasks = sqliteTable("tasks", {
   priority: text("priority").default("medium"),
   notes: text("notes"),
   category: text("category").default("General"),
+  expectedBudget: real("expected_budget"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

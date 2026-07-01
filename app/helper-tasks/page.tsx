@@ -20,6 +20,13 @@ interface HelperTask {
     dueDate?: string | null;
     priority?: string;
     notes?: string;
+    expectedBudget?: number | null;
+    custom?: boolean;
+    userId?: string;
+    assignedHelperId?: string | null;
+    category?: string | null;
+    createdAt?: string | null;
+    updatedAt?: string | null;
   }>;
   wedding: {
     coupleNames: string;
@@ -294,13 +301,34 @@ export default function HelperTasksPage() {
                                   <div className="flex-1">
                                     <div className="mb-2">
                                       <p className="text-gray-700 font-medium">{taskItem.title}</p>
-                                      {taskItem.timeline && (
-                                        <span className="text-xs text-gray-500">{taskItem.timeline}</span>
+                                      <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                                        {taskItem.timeline && (
+                                          <span className="text-xs text-gray-500">{taskItem.timeline}</span>
+                                        )}
+                                        {taskItem.priority && (
+                                          <span className={`text-xs font-medium px-2 py-0.5 rounded-full ${
+                                            taskItem.priority === 'high' ? 'bg-red-100 text-red-700' :
+                                            taskItem.priority === 'low' ? 'bg-green-100 text-green-700' :
+                                            'bg-blue-100 text-blue-700'
+                                          }`}>{taskItem.priority}</span>
+                                        )}
+                                        {taskItem.custom && (
+                                          <span className="text-xs bg-purple-100 text-purple-700 px-2 py-0.5 rounded-full">Custom</span>
+                                        )}
+                                        {taskItem.dueDate && (
+                                          <span className="text-xs text-red-600">
+                                            Due: {new Date(taskItem.dueDate).toLocaleDateString()}
+                                          </span>
+                                        )}
+                                      </div>
+                                      {taskItem.expectedBudget != null && (
+                                        <div className="mt-2 inline-flex items-center gap-1.5 bg-gold/10 border border-gold/30 text-amber-800 text-xs font-medium px-3 py-1 rounded-full">
+                                          <span>💰</span>
+                                          <span>Budget: {taskItem.expectedBudget.toLocaleString()} RWF</span>
+                                        </div>
                                       )}
-                                      {taskItem.dueDate && (
-                                        <span className="text-xs text-red-600 ml-2">
-                                          Due: {new Date(taskItem.dueDate).toLocaleDateString()}
-                                        </span>
+                                      {taskItem.notes && (
+                                        <p className="mt-2 text-xs text-gray-500 italic">{taskItem.notes}</p>
                                       )}
                                     </div>
                                     

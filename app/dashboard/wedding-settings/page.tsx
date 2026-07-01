@@ -6,10 +6,11 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
-import { Calendar, Save, Heart, Users, Plus, Trash2, Edit2, X, Mail, Phone, CheckCircle2, Clock, Circle } from 'lucide-react';
+import { Calendar, Save, Heart, Users, Plus, Trash2, Edit2, X, Mail, Phone, CheckCircle2, Clock, Circle, ClipboardList } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
+import Link from 'next/link';
 
 interface WeddingDetails {
   id?: string;
@@ -476,6 +477,17 @@ export default function WeddingSettingsPage() {
                 </div>
               )}
             </div>
+
+            {helpers.length > 0 && (
+              <div className="mt-6 flex justify-end">
+                <Link href="/dashboard/checklist">
+                  <Button className="bg-burgundy text-white hover:bg-burgundy/90">
+                    <ClipboardList className="w-4 h-4 mr-2" />
+                    Manage Tasks in Checklist
+                  </Button>
+                </Link>
+              </div>
+            )}
 
             {expandedHelper && (
               <Card className="border-gold/20 shadow-lg mt-6 bg-gradient-to-br from-gold/8 via-cream to-sand/30">

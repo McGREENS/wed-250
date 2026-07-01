@@ -18,8 +18,13 @@ import { Heart, Store, Eye, EyeOff, Loader2 } from "lucide-react";
 const CoupleSignupSchema = z.object({
     name: z.string().min(1, "Name is required"),
     email: z.string().email("Invalid email address"),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm Password is required"),
+    password: z.string()
+        .min(8, "Password must be at least 8 characters")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number")
+        .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    confirmPassword: z.string().min(8, "Confirm Password is required"),
     weddingDate: z.string().optional(),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
@@ -32,8 +37,13 @@ const VendorSignupSchema = z.object({
     phone: z.string().min(10, "Valid phone number is required"),
     serviceCategory: z.string().min(1, "Service category is required"),
     otherCategory: z.string().optional(),
-    password: z.string().min(6, "Password must be at least 6 characters"),
-    confirmPassword: z.string().min(6, "Confirm Password is required"),
+    password: z.string()
+        .min(8, "Password must be at least 8 characters")
+        .regex(/[A-Z]/, "Password must contain at least one uppercase letter")
+        .regex(/[a-z]/, "Password must contain at least one lowercase letter")
+        .regex(/[0-9]/, "Password must contain at least one number")
+        .regex(/[^A-Za-z0-9]/, "Password must contain at least one special character"),
+    confirmPassword: z.string().min(8, "Confirm Password is required"),
 }).refine((data) => data.password === data.confirmPassword, {
     message: "Passwords do not match",
     path: ["confirmPassword"],
@@ -268,7 +278,7 @@ export default function SignupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="couple-password">Password</Label>
                                     <div className="relative">
-                                        <Input id="couple-password" type={showPassword ? "text" : "password"} placeholder="Min. 6 characters" {...coupleForm.register("password")} className="pr-10" />
+                                        <Input id="couple-password" type={showPassword ? "text" : "password"} placeholder="Min. 8 chars (A-Z, a-z, 0-9, @#$...)" {...coupleForm.register("password")} className="pr-10" />
                                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
                                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                         </button>
@@ -358,7 +368,7 @@ export default function SignupPage() {
                                 <div className="space-y-2">
                                     <Label htmlFor="vendor-password">Password</Label>
                                     <div className="relative">
-                                        <Input id="vendor-password" type={showPassword ? "text" : "password"} placeholder="Min. 6 characters" {...vendorForm.register("password")} className="pr-10" />
+                                        <Input id="vendor-password" type={showPassword ? "text" : "password"} placeholder="Min. 8 chars (A-Z, a-z, 0-9, @#$...)" {...vendorForm.register("password")} className="pr-10" />
                                         <button type="button" onClick={() => setShowPassword(!showPassword)} className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-500">
                                             {showPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
                                         </button>
