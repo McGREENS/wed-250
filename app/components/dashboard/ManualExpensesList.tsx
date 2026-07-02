@@ -1,9 +1,8 @@
 "use client";
 
 import { useState, useEffect } from 'react';
-import { Card, CardContent } from '@/app/components/ui/card';
 import { Button } from '@/app/components/ui/button';
-import { Trash2, Receipt } from 'lucide-react';
+import { Trash2 } from 'lucide-react';
 
 interface ManualExpense {
   id: string;
@@ -19,101 +18,135 @@ interface ManualExpensesListProps {
   refreshTrigger: number;
 }
 
+const CATEGORY_DOT: Record<string, string> = {
+  Venue:          'bg-burgundy',
+  Photography:    'bg-amber-500',
+  Catering:       'bg-emerald-600',
+  Decoration:     'bg-purple-500',
+  Music:          'bg-blue-500',
+  Planning:       'bg-rose-500',
+  Transportation: 'bg-orange-500',
+  Flowers:        'bg-pink-500',
+  Attire:         'bg-indigo-500',
+  Other:          'bg-gray-400',
+};
+
+function fmt(n: number) {
+  return n.toLocaleString('en-US');
+}
+
 export default function ManualExpensesList({ refreshTrigger }: ManualExpensesListProps) {
   const [expenses, setExpenses] = useState<ManualExpense[]>([]);
   const [loading, setLoading] = useState(true);
+  const [deletingId, setDeletingId] = useState<string | null>(null);
 
-  useEffect(() => {
-    fetchExpenses();
-  }, [refreshTrigger]);
+  useEffect(() => { fetchExpenses(); }, [refreshTrigger]);
 
   const fetchExpenses = async () => {
     try {
-      const response = await fetch('/api/manual-expenses');
-      if (response.ok) {
-        const data = await response.json();
+      const res = await fetch('/api/manual-expenses');
+      if (res.ok) {
+        const data = await res.json();
         setExpenses(data.expenses || []);
       }
-    } catch (error) {
-      console.error('Failed to fetch expenses:', error);
+    } catch (e) {
+      console.error(e);
     } finally {
       setLoading(false);
     }
   };
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this expense?')) return;
-
+    if (!confirm('Delete this expense?')) return;
+    setDeletingId(id);
     try {
-      const response = await fetch(`/api/manual-expenses?id=${id}`, {
-        method: 'DELETE',
-      });
-
-      if (response.ok) {
-        setExpenses(expenses.filter(e => e.id !== id));
-      }
-    } catch (error) {
-      console.error('Failed to delete expense:', error);
+      const res = await fetch(`/api/manual-expenses?id=${id}`, { method: 'DELETE' });
+      if (res.ok) setExpenses(prev => prev.filter(e => e.id !== id));
+    } finally {
+      setDeletingId(null);
     }
   };
 
   if (loading) {
-    return <div className="text-center py-4 text-charcoal/60">Loading expenses...</div>;
+    return (
+      <div className="space-y-2 mt-4">
+        {[...Array(3)].map((_, i) => (
+          <div key={i} className="h-14 bg-gray-100 rounded-lg animate-pulse" />
+        ))}
+      </div>
+    );
   }
 
-  if (expenses.length === 0) {
-    return null;
-  }
+  if (expenses.length === 0) return null;
+
+  const total = expenses.reduce((s, e) => s + e.amount, 0);
 
   return (
-    <div className="mt-6">
-      <div className="flex items-center gap-2 mb-4">
-        <Receipt className="w-5 h-5 text-burgundy" />
-        <h3 className="font-semibold text-charcoal">Manual Expenses</h3>
-        <span className="text-sm text-charcoal/60">({expenses.length})</span>
+    <div className="mt-4">
+      {/* Column headers */}
+      <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_80px_40px] gap-x-3 px-3 mb-2">
+        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide">Vendor</span>
+        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide hidden sm:block text-right">Date</span>
+        <span className="text-[11px] font-semibold text-gray-400 uppercase tracking-wide text-right">Amount</span>
+        <span />
       </div>
-      <div className="space-y-3">
-        {expenses.map((expense) => (
-          <Card key={expense.id} className="border-burgundy/10 bg-gradient-to-br from-sand/20 via-cream to-sand/10">
-            <CardContent className="p-4">
-              <div className="flex items-start justify-between">
-                <div className="flex-1">
-                  <div className="flex items-center gap-2 mb-1">
-                    <h4 className="font-medium text-charcoal">{expense.vendorName}</h4>
-                    <span className="text-xs px-2 py-0.5 bg-burgundy/10 text-burgundy rounded">
-                      {expense.category}
-                    </span>
-                  </div>
-                  <p className="text-sm text-charcoal/70 mb-2">
-                    Paid on {new Date(expense.paidAt).toLocaleDateString('en-US', {
-                      month: 'short',
-                      day: 'numeric',
-                      year: 'numeric'
-                    })}
+
+      <div className="divide-y divide-gray-100 border border-gray-100 rounded-xl overflow-hidden">
+        {expenses.map((expense) => {
+          const dot = CATEGORY_DOT[expense.category] || 'bg-gray-400';
+          return (
+            <div
+              key={expense.id}
+              className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_80px_40px] gap-x-3 items-center px-4 py-3 bg-white hover:bg-gray-50 transition-colors"
+            >
+              {/* Vendor + category */}
+              <div className="flex items-center gap-2.5 min-w-0">
+                <span className={`w-2 h-2 rounded-full flex-shrink-0 ${dot}`} />
+                <div className="min-w-0">
+                  <p className="text-sm font-medium text-charcoal truncate">{expense.vendorName}</p>
+                  <p className="text-[11px] text-gray-400 truncate">
+                    {expense.category}{expense.note ? ` · ${expense.note}` : ''}
                   </p>
-                  {expense.note && (
-                    <p className="text-sm text-charcoal/60 italic">{expense.note}</p>
-                  )}
-                </div>
-                <div className="text-right flex items-start gap-2">
-                  <div>
-                    <p className="font-bold text-burgundy">
-                      {expense.amount.toLocaleString()} RWF
-                    </p>
-                  </div>
-                  <Button
-                    variant="ghost"
-                    size="sm"
-                    onClick={() => handleDelete(expense.id)}
-                    className="text-red-600 hover:text-red-700 hover:bg-red-50 h-8 w-8 p-0"
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
                 </div>
               </div>
-            </CardContent>
-          </Card>
-        ))}
+
+              {/* Date — hidden on mobile */}
+              <p className="text-xs text-gray-400 text-right hidden sm:block">
+                {new Date(expense.paidAt).toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' })}
+              </p>
+
+              {/* Amount */}
+              <p className="text-sm font-semibold text-charcoal text-right tabular-nums">
+                {fmt(expense.amount)}
+              </p>
+
+              {/* Delete */}
+              <div className="flex justify-end">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={() => handleDelete(expense.id)}
+                  disabled={deletingId === expense.id}
+                  className="h-7 w-7 p-0 text-gray-300 hover:text-red-500 hover:bg-red-50"
+                >
+                  <Trash2 className="w-3.5 h-3.5" />
+                </Button>
+              </div>
+            </div>
+          );
+        })}
+
+        {/* Total row */}
+        <div className="grid grid-cols-[1fr_auto_auto] sm:grid-cols-[1fr_120px_80px_40px] gap-x-3 items-center px-4 py-3 bg-gray-50">
+          <p className="text-xs font-semibold text-gray-500">
+            {expenses.length} expense{expenses.length > 1 ? 's' : ''}
+          </p>
+          <span className="hidden sm:block" />
+          <p className="text-sm font-bold text-burgundy text-right tabular-nums">
+            {fmt(total)} <span className="text-xs font-normal text-gray-400">RWF</span>
+          </p>
+          <span />
+        </div>
       </div>
     </div>
   );

@@ -3,6 +3,8 @@ import { db } from '@/lib/db';
 import { servicePackages, vendors } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
+export const dynamic = 'force-dynamic';
+
 export default async function VendorsPage() {
   // Fetch all active service packages with vendor information
   const services = await db
