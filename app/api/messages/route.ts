@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { conversations, messages, users, vendors, bookings } from '@/lib/db/schema';
 import { eq, and, or, desc, sql } from 'drizzle-orm';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 // GET - Fetch all conversations for the logged-in user
 export async function GET(req: NextRequest) {
@@ -57,21 +58,7 @@ export async function GET(req: NextRequest) {
         return NextResponse.json({ conversations: [] });
       }
 
-      // Get all couples who have bookings with this vendor
-      const vendorBookings = await db
-        .select({
-          coupleId: bookings.userId,
-          coupleName: users.name,
-          coupleEmail: users.email,
-          bookingId: bookings.id,
-          bookingStatus: bookings.status,
-        })
-        .from(bookings)
-        .innerJoin(users, eq(bookings.userId, users.id))
-        .where(eq(bookings.vendorId, vendor.id))
-        .groupBy(bookings.userId, users.name, users.email, bookings.id, bookings.status);
-
-      // Get existing conversations
+      // Get ALL real conversations for this vendor (primary source)
       const existingConversations = await db
         .select({
           id: conversations.id,
@@ -85,50 +72,13 @@ export async function GET(req: NextRequest) {
         })
         .from(conversations)
         .innerJoin(users, eq(conversations.coupleId, users.id))
-        .where(eq(conversations.vendorId, vendor.id));
+        .where(eq(conversations.vendorId, vendor.id))
+        .orderBy(desc(conversations.lastMessageAt));
 
-      // Create a map of existing conversations by coupleId
-      const conversationMap = new Map(existingConversations.map(c => [c.coupleId, c]));
-
-      // Merge bookings with conversations - create virtual conversations for couples without messages
-      const uniqueCouples = new Map<string, any>();
-      vendorBookings.forEach(booking => {
-        if (!uniqueCouples.has(booking.coupleId)) {
-          uniqueCouples.set(booking.coupleId, {
-            coupleId: booking.coupleId,
-            coupleName: booking.coupleName,
-            coupleEmail: booking.coupleEmail,
-            bookingId: booking.bookingId,
-          });
-        }
-      });
-
-      userConversations = Array.from(uniqueCouples.values()).map(couple => {
-        const existingConv = conversationMap.get(couple.coupleId);
-        return existingConv || {
-          id: `virtual-${couple.coupleId}`,
-          vendorId: vendor.id,
-          coupleId: couple.coupleId,
-          bookingId: couple.bookingId,
-          lastMessageAt: null,
-          createdAt: new Date(),
-          coupleName: couple.coupleName,
-          coupleEmail: couple.coupleEmail,
-          isVirtual: true,
-        };
-      });
-
-      // Sort: conversations with messages first, then by last message time
-      userConversations.sort((a, b) => {
-        if (a.lastMessageAt && !b.lastMessageAt) return -1;
-        if (!a.lastMessageAt && b.lastMessageAt) return 1;
-        if (a.lastMessageAt && b.lastMessageAt) {
-          return new Date(b.lastMessageAt).getTime() - new Date(a.lastMessageAt).getTime();
-        }
-        return 0;
-      });
+      userConversations = existingConversations;
     } else {
       // For couples, get all existing conversations
+      const coupleId = await resolveOwnerUserId(session.user.id);
       const existingConversations = await db
         .select({
           id: conversations.id,
@@ -142,7 +92,7 @@ export async function GET(req: NextRequest) {
         })
         .from(conversations)
         .innerJoin(vendors, eq(conversations.vendorId, vendors.id))
-        .where(eq(conversations.coupleId, session.user.id));
+        .where(eq(conversations.coupleId, coupleId));
 
       // Get bookings to merge with conversations
       const coupleBookings = await db
@@ -154,7 +104,7 @@ export async function GET(req: NextRequest) {
         })
         .from(bookings)
         .innerJoin(vendors, eq(bookings.vendorId, vendors.id))
-        .where(eq(bookings.userId, session.user.id))
+        .where(eq(bookings.userId, coupleId))
         .groupBy(bookings.vendorId, vendors.businessName, vendors.category, bookings.id);
 
       const conversationMap = new Map(existingConversations.map(c => [c.vendorId, c]));
@@ -189,7 +139,7 @@ export async function GET(req: NextRequest) {
         return existingConv || {
           id: `virtual-${vendor.vendorId}`,
           vendorId: vendor.vendorId,
-          coupleId: session.user.id,
+          coupleId: coupleId,
           bookingId: vendor.bookingId,
           lastMessageAt: null,
           createdAt: new Date(),
@@ -293,7 +243,7 @@ export async function POST(req: NextRequest) {
       }
     } else {
       // Couple is sending message
-      finalCoupleId = session.user.id;
+      finalCoupleId = await resolveOwnerUserId(session.user.id);
       if (!finalVendorId) {
         return NextResponse.json({ error: 'Vendor ID is required' }, { status: 400 });
       }

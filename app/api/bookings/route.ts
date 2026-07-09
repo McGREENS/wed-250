@@ -3,14 +3,16 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { bookings, vendors, users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
+
+    const userId = await resolveOwnerUserId(session.user.id);
 
     const userBookings = await db
       .select({
@@ -37,7 +39,7 @@ export async function GET(req: NextRequest) {
       .from(bookings)
       .leftJoin(vendors, eq(bookings.vendorId, vendors.id))
       .leftJoin(users, eq(vendors.userId, users.id))
-      .where(eq(bookings.userId, session.user.id));
+      .where(eq(bookings.userId, userId));
 
     return NextResponse.json({ bookings: userBookings });
   } catch (error) {

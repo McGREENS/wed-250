@@ -1,10 +1,13 @@
 import nodemailer from 'nodemailer';
 
-// Create SMTP transporter
+const smtpPort = parseInt(process.env.SMTP_PORT || '465');
 const transporter = nodemailer.createTransport({
   host: process.env.SMTP_HOST || 'mail.cylacon.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
+  port: smtpPort,
+  secure: smtpPort === 465,
+  connectionTimeout: 10000,
+  greetingTimeout: 10000,
+  socketTimeout: 10000,
   auth: {
     user: process.env.SMTP_USER || 'andiza@cylacon.com',
     pass: process.env.SMTP_PASSWORD || '3fGapSreQA7BhVLJemFs',

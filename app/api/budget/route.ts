@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { bookings, weddings, vendors, bookingPayments, manualExpenses } from '@/lib/db/schema';
 import { eq, sum } from 'drizzle-orm';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = await resolveOwnerUserId(session.user.id);
 
     // Get user's wedding info for total budget
     const userWedding = await db.select().from(weddings).where(eq(weddings.userId, userId)).limit(1);

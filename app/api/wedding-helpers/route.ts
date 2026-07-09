@@ -5,6 +5,7 @@ import { weddingHelpers, weddings, users } from "@/lib/db/schema";
 import { eq, and } from "drizzle-orm";
 import nodemailer from 'nodemailer';
 import crypto from 'crypto';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(req: NextRequest) {
   try {
@@ -13,8 +14,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const ownerUserId = await resolveOwnerUserId(session.user.id);
     const wedding = await db.query.weddings.findFirst({
-      where: eq(weddings.userId, session.user.id),
+      where: eq(weddings.userId, ownerUserId),
     });
 
     if (!wedding) {
@@ -39,8 +41,9 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
+    const ownerUserIdPost = await resolveOwnerUserId(session.user.id);
     const wedding = await db.query.weddings.findFirst({
-      where: eq(weddings.userId, session.user.id),
+      where: eq(weddings.userId, ownerUserIdPost),
     });
 
     if (!wedding) {
@@ -215,8 +218,9 @@ export async function PUT(req: NextRequest) {
     const body = await req.json();
     const { id, name, email, phone, role, assignedTasks } = body;
 
+    const ownerUserIdPut = await resolveOwnerUserId(session.user.id);
     const wedding = await db.query.weddings.findFirst({
-      where: eq(weddings.userId, session.user.id),
+      where: eq(weddings.userId, ownerUserIdPut),
     });
 
     if (!wedding) {
@@ -259,8 +263,9 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: "Helper ID required" }, { status: 400 });
     }
 
+    const ownerUserIdDel = await resolveOwnerUserId(session.user.id);
     const wedding = await db.query.weddings.findFirst({
-      where: eq(weddings.userId, session.user.id),
+      where: eq(weddings.userId, ownerUserIdDel),
     });
 
     if (!wedding) {

@@ -3,19 +3,21 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { favorites, vendors, servicePackages } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(req: NextRequest) {
   try {
     const session = await auth();
-    
     if (!session?.user?.id) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = await resolveOwnerUserId(session.user.id);
+
     const userFavorites = await db
       .select()
       .from(favorites)
-      .where(eq(favorites.userId, session.user.id));
+      .where(eq(favorites.userId, userId));
 
     const favoriteVendors = [];
     const favoriteVenues = [];
@@ -87,7 +89,7 @@ export async function POST(req: NextRequest) {
     }
 
     // Check if already exists
-    const conditions = [eq(favorites.userId, session.user.id)];
+    const conditions = [eq(favorites.userId, await resolveOwnerUserId(session.user.id))];
     if (vendorId) conditions.push(eq(favorites.vendorId, vendorId));
     if (venueId) conditions.push(eq(favorites.venueId, venueId));
 
@@ -101,7 +103,7 @@ export async function POST(req: NextRequest) {
     }
 
     const [favorite] = await db.insert(favorites).values({
-      userId: session.user.id,
+      userId: await resolveOwnerUserId(session.user.id),
       vendorId: vendorId || null,
       venueId: venueId || null,
     } as any).returning();
@@ -129,7 +131,7 @@ export async function DELETE(req: NextRequest) {
       return NextResponse.json({ error: 'vendorId or venueId required' }, { status: 400 });
     }
 
-    const conditions = [eq(favorites.userId, session.user.id)];
+    const conditions = [eq(favorites.userId, await resolveOwnerUserId(session.user.id))];
     if (vendorId) conditions.push(eq(favorites.vendorId, vendorId));
     if (venueId) conditions.push(eq(favorites.venueId, venueId));
 

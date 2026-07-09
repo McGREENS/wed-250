@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { weddings } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,7 +12,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = await resolveOwnerUserId(session.user.id);
     const userWedding = await db.select().from(weddings).where(eq(weddings.userId, userId)).limit(1);
 
     return NextResponse.json(userWedding[0] || null);
@@ -34,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Couple names and wedding date are required' }, { status: 400 });
     }
 
-    const userId = session.user.id;
+    const userId = await resolveOwnerUserId(session.user.id);
 
     // Check if wedding already exists
     const existingWedding = await db.select().from(weddings).where(eq(weddings.userId, userId)).limit(1);

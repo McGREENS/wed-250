@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { tasks as tasksTable, weddingHelpers, weddings } from '@/lib/db/schema';
 import { eq, desc, sql } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(request: NextRequest) {
   try {
@@ -12,7 +13,7 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = session.user.id;
+    const userId = await resolveOwnerUserId(session.user.id);
     const userTasks = await db.select().from(tasksTable).where(eq(tasksTable.userId, userId)).orderBy(desc(tasksTable.createdAt));
 
     // No default tasks - user creates their own
@@ -43,7 +44,7 @@ export async function POST(request: NextRequest) {
     const helperIdToAssign = assignedHelperId && assignedHelperId !== '' ? assignedHelperId : null;
 
     const newTask = await db.insert(tasksTable).values({
-      userId: session.user.id,
+      userId: await resolveOwnerUserId(session.user.id),
       title,
       timeline,
       category: category || 'General',
@@ -68,7 +69,7 @@ export async function POST(request: NextRequest) {
 
         if (helper && helper.email) {
           const wedding = await db.query.weddings.findFirst({
-            where: eq(weddings.userId, session.user.id),
+            where: eq(weddings.userId, await resolveOwnerUserId(session.user.id)),
           });
 
           console.log('Wedding found:', wedding ? wedding.coupleNames : 'No wedding found');

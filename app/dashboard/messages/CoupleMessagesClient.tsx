@@ -54,13 +54,37 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
   }, []);
 
   useEffect(() => {
-    if (vendorIdParam && conversations.length > 0) {
-      const conversation = conversations.find(c => c.vendorId === vendorIdParam);
-      if (conversation) {
-        setSelectedConversation(conversation.id);
-      }
+    if (!vendorIdParam || loading) return;
+    const conversation = conversations.find(c => c.vendorId === vendorIdParam);
+    if (conversation) {
+      setSelectedConversation(conversation.id);
+      return;
     }
-  }, [vendorIdParam, conversations]);
+    const virtualId = `virtual-${vendorIdParam}`;
+    if (conversations.find(c => c.id === virtualId)) {
+      setSelectedConversation(virtualId);
+      return;
+    }
+    fetch(`/api/vendors/${vendorIdParam}`)
+      .then(r => r.ok ? r.json() : null)
+      .then(data => {
+        if (!data?.vendor) return;
+        const virtualConv: Conversation = {
+          id: virtualId,
+          vendorId: vendorIdParam,
+          coupleId: userId,
+          vendorName: data.vendor.businessName,
+          vendorBusinessName: data.vendor.businessName,
+          lastMessageAt: '',
+          unreadCount: 0,
+          messages: [],
+          isVirtual: true,
+        };
+        setConversations(prev => [virtualConv, ...prev]);
+        setSelectedConversation(virtualId);
+      })
+      .catch(() => {});
+  }, [vendorIdParam, loading]);
 
   // Subscribe to real-time updates when conversation is selected
   useEffect(() => {
@@ -149,16 +173,21 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           vendorId: conversation.vendorId,
-          coupleId: conversation.coupleId,
           content: messageText.trim(),
         }),
       });
 
       if (res.ok) {
+        const data = await res.json();
         setMessageText("");
         setIsUserScrolling(false);
-        await fetchConversations();
-        toast.success("Message sent");
+        // If this was a virtual conversation, replace it with the real one
+        if (conversation.isVirtual) {
+          await fetchConversations();
+          setSelectedConversation(data.conversationId);
+        } else {
+          await fetchConversations();
+        }
       } else {
         const data = await res.json();
         toast.error(data.error || "Failed to send message");
@@ -207,7 +236,7 @@ export default function CoupleMessagesClient({ userId }: { userId: string }) {
             <div className="p-8 text-center">
               <MessageSquare className="w-12 h-12 text-gray-300 mx-auto mb-3" />
               <p className="text-gray-500 text-sm">No conversations yet</p>
-              <p className="text-gray-400 text-xs mt-1">Book a vendor to start chatting</p>
+              <p className="text-gray-400 text-xs mt-1">Visit a vendor page and click "Chat with Vendor" to start</p>
             </div>
           ) : (
             filteredConversations.map((conv) => (

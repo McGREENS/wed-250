@@ -93,6 +93,7 @@ export const venues = sqliteTable("venues", {
 export const weddings = sqliteTable("weddings", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  partnerUserId: text("partner_user_id").references(() => users.id, { onDelete: "set null" }),
   coupleNames: text("couple_names").notNull(),
   weddingDate: integer("wedding_date", { mode: "timestamp" }),
   venueId: text("venue_id").references(() => venues.id),

@@ -3,6 +3,7 @@ import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { manualExpenses } from '@/lib/db/schema';
 import { eq, desc } from 'drizzle-orm';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(request: NextRequest) {
   try {
@@ -11,10 +12,12 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
+    const userId = await resolveOwnerUserId(session.user.id);
+
     const expenses = await db
       .select()
       .from(manualExpenses)
-      .where(eq(manualExpenses.userId, session.user.id))
+      .where(eq(manualExpenses.userId, userId))
       .orderBy(desc(manualExpenses.paidAt));
 
     return NextResponse.json({ expenses });
@@ -43,7 +46,7 @@ export async function POST(request: NextRequest) {
 
     const expenseData: any = {
       id: crypto.randomUUID(),
-      userId: session.user.id,
+      userId: await resolveOwnerUserId(session.user.id),
       category,
       vendorName,
       amount: parseFloat(amount),

@@ -6,7 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
-import { Calendar, Save, Heart, Users, Plus, Trash2, Edit2, X, Mail, Phone, CheckCircle2, Clock, Circle, ClipboardList } from 'lucide-react';
+import { Calendar, Save, Heart, Users, Plus, Trash2, Edit2, X, Mail, Phone, CheckCircle2, Clock, Circle, ClipboardList, UserPlus, Link2, Unlink, Eye, EyeOff } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
@@ -105,15 +105,26 @@ export default function WeddingSettingsPage() {
   const [expandedHelper, setExpandedHelper] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [partner, setPartner] = useState<{ id: string; name: string; email: string } | null>(null);
+  const [showPartnerForm, setShowPartnerForm] = useState(false);
+  const [partnerForm, setPartnerForm] = useState({ name: '', email: '', ownerPassword: '' });
+  const [savingPartner, setSavingPartner] = useState(false);
+  const [showOwnerPassword, setShowOwnerPassword] = useState(false);
 
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const [weddingRes, helpersRes, tasksRes] = await Promise.all([
+        const [weddingRes, helpersRes, tasksRes, partnerRes] = await Promise.all([
           fetch('/api/wedding-settings'),
           fetch('/api/wedding-helpers'),
-          fetch('/api/dashboard/tasks')
+          fetch('/api/dashboard/tasks'),
+          fetch('/api/partner-invite')
         ]);
+
+        if (partnerRes.ok) {
+          const pd = await partnerRes.json();
+          setPartner(pd.partner || null);
+        }
 
         if (weddingRes.ok) {
           const data = await weddingRes.json();
@@ -238,6 +249,47 @@ export default function WeddingSettingsPage() {
       }
     } catch (error) {
       toast.error('Failed to delete helper');
+    }
+  };
+
+  const handleInvitePartner = async () => {
+    if (!partnerForm.name || !partnerForm.email) {
+      toast.error('Please enter your partner\'s name and email');
+      return;
+    }
+    setSavingPartner(true);
+    try {
+      const res = await fetch('/api/partner-invite', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ partnerName: partnerForm.name, partnerEmail: partnerForm.email, ownerPassword: partnerForm.ownerPassword }),
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setPartner({ id: '', name: partnerForm.name, email: partnerForm.email });
+        setShowPartnerForm(false);
+        setPartnerForm({ name: '', email: '', ownerPassword: '' });
+        toast.success('Invitation sent! Your partner will receive an email with login credentials.');
+      } else {
+        toast.error(data.error || 'Failed to send invitation');
+      }
+    } catch {
+      toast.error('Failed to send invitation');
+    } finally {
+      setSavingPartner(false);
+    }
+  };
+
+  const handleRemovePartner = async () => {
+    if (!confirm('Remove your partner\'s access to this account?')) return;
+    try {
+      const res = await fetch('/api/partner-invite', { method: 'DELETE' });
+      if (res.ok) {
+        setPartner(null);
+        toast.success('Partner access removed');
+      }
+    } catch {
+      toast.error('Failed to remove partner');
     }
   };
 
@@ -370,6 +422,116 @@ export default function WeddingSettingsPage() {
                 </Button>
               </div>
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Partner Invite Card */}
+        <Card className="border-gray-100 shadow-sm mt-6">
+          <CardContent className="p-8">
+            <div className="flex items-center justify-between mb-6">
+              <div className="flex items-center gap-3">
+                <div className="w-12 h-12 bg-burgundy/10 rounded-lg flex items-center justify-center">
+                  <UserPlus className="w-6 h-6 text-burgundy" />
+                </div>
+                <div>
+                  <h2 className="text-xl font-semibold text-charcoal">Invite Your Partner</h2>
+                  <p className="text-sm text-gray-600">Give your partner full access to this wedding account</p>
+                </div>
+              </div>
+              {!partner && !showPartnerForm && (
+                <Button onClick={() => setShowPartnerForm(true)} className="bg-burgundy text-white hover:bg-burgundy/90">
+                  <UserPlus className="w-4 h-4 mr-2" /> Invite Partner
+                </Button>
+              )}
+            </div>
+
+            {partner ? (
+              <div className="flex items-center justify-between p-4 rounded-xl border border-emerald-200 bg-emerald-50">
+                <div className="flex items-center gap-3">
+                  <div className="w-10 h-10 rounded-full bg-emerald-100 flex items-center justify-center">
+                    <Heart className="w-5 h-5 text-emerald-600" />
+                  </div>
+                  <div>
+                    <p className="font-semibold text-charcoal text-sm">{partner.name}</p>
+                    <p className="text-xs text-gray-500">{partner.email} · Full access</p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={handleRemovePartner}
+                  className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                >
+                  <Unlink className="w-4 h-4 mr-1.5" /> Remove
+                </Button>
+              </div>
+            ) : showPartnerForm ? (
+              <div className="border border-burgundy/20 rounded-xl p-6 bg-burgundy/5">
+                <div className="grid sm:grid-cols-2 gap-4 mb-4">
+                  <div>
+                    <Label className="text-sm">Partner's Name *</Label>
+                    <Input
+                      value={partnerForm.name}
+                      onChange={e => setPartnerForm(p => ({ ...p, name: e.target.value }))}
+                      placeholder="e.g., Jane Smith"
+                      className="border-gray-200 mt-1"
+                    />
+                  </div>
+                  <div>
+                    <Label className="text-sm">Partner's Email *</Label>
+                    <Input
+                      type="email"
+                      value={partnerForm.email}
+                      onChange={e => setPartnerForm(p => ({ ...p, email: e.target.value }))}
+                      placeholder="partner@email.com"
+                      className="border-gray-200 mt-1"
+                    />
+                  </div>
+                  <div className="sm:col-span-2">
+                    <Label className="text-sm">Your Password * <span className="text-gray-400 font-normal">(used as partner's login password)</span></Label>
+                    <div className="relative mt-1">
+                      <Input
+                        type={showOwnerPassword ? 'text' : 'password'}
+                        value={partnerForm.ownerPassword}
+                        onChange={e => setPartnerForm(p => ({ ...p, ownerPassword: e.target.value }))}
+                        placeholder="Enter your current password"
+                        className="border-gray-200 pr-10"
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowOwnerPassword(v => !v)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+                      >
+                        {showOwnerPassword ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                      </button>
+                    </div>
+                  </div>
+                </div>
+                <div className="bg-blue-50 border border-blue-200 rounded-lg p-3 mb-4">
+                  <p className="text-xs text-blue-800">
+                    Your partner will receive an email with their login email and password. They'll use the same password you entered above to log in.
+                  </p>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    onClick={handleInvitePartner}
+                    disabled={savingPartner || !partnerForm.name || !partnerForm.email || !partnerForm.ownerPassword}
+                    className="bg-burgundy text-white hover:bg-burgundy/90"
+                  >
+                    {savingPartner ? 'Sending...' : 'Send Invitation'}
+                  </Button>
+                  <Button variant="outline" onClick={() => { setShowPartnerForm(false); setPartnerForm({ name: '', email: '', ownerPassword: '' }); }}>
+                    Cancel
+                  </Button>
+                </div>
+              </div>
+            ) : (
+              <div className="text-center py-8 text-gray-400">
+                <Heart className="w-10 h-10 mx-auto mb-2 opacity-20" />
+                <p className="text-sm text-gray-500">No partner linked yet.</p>
+                <p className="text-xs mt-1">Invite your partner so you can plan together.</p>
+              </div>
+            )}
           </CardContent>
         </Card>
 

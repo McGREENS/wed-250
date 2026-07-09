@@ -327,7 +327,7 @@ function GeneralServiceForm({ serviceType, currentStep, formData, updateFormData
                     <Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your service..." />
                 </Field>
                 <Field label="Price (RWF)" required>
-                    <Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 1500000" />
+                    <Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 1500000" />
                 </Field>
                 <div className="flex justify-between pt-6 border-t border-gray-100">
                     <Button onClick={onBack} variant="outline"><ArrowLeft className="w-4 h-4 mr-2" /> Back</Button>
@@ -377,7 +377,7 @@ function PhotographyVideographyForm({ serviceType, currentStep, formData, update
                                 placeholder="e.g., 10 hours, Full Day" />
                         </Field>
                         <Field label="Years of Experience">
-                            <Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)}
+                            <Input type="number" min="0" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)}
                                 placeholder="e.g., 5" />
                         </Field>
                     </div>
@@ -399,10 +399,10 @@ function PhotographyVideographyForm({ serviceType, currentStep, formData, update
                         <>
                             <div className="grid grid-cols-2 gap-4">
                                 <Field label="Number of Photographers" required>
-                                    <Input type="number" value={formData.photographerCount || ""} onChange={(e) => updateFormData("photographerCount", e.target.value)} placeholder="e.g., 2" />
+                                    <Input type="number" min="1" value={formData.photographerCount || ""} onChange={(e) => updateFormData("photographerCount", e.target.value)} placeholder="e.g., 2" />
                                 </Field>
                                 <Field label="Edited Photos Delivered" required>
-                                    <Input type="number" value={formData.photoCount || ""} onChange={(e) => updateFormData("photoCount", e.target.value)} placeholder="e.g., 500" />
+                                    <Input type="number" min="0" value={formData.photoCount || ""} onChange={(e) => updateFormData("photoCount", e.target.value)} placeholder="e.g., 500" />
                                 </Field>
                             </div>
                             <Field label="Photo Album Included">
@@ -438,7 +438,7 @@ function PhotographyVideographyForm({ serviceType, currentStep, formData, update
                         <>
                             <div className="grid grid-cols-2 gap-4">
                                 <Field label="Number of Videographers" required>
-                                    <Input type="number" value={formData.videographerCount || ""} onChange={(e) => updateFormData("videographerCount", e.target.value)} placeholder="e.g., 2" />
+                                    <Input type="number" min="1" value={formData.videographerCount || ""} onChange={(e) => updateFormData("videographerCount", e.target.value)} placeholder="e.g., 2" />
                                 </Field>
                                 <Field label="Final Video Length" required>
                                     <Input value={formData.videoLength || ""} onChange={(e) => updateFormData("videoLength", e.target.value)} placeholder="e.g., 3-5 min highlight + full ceremony" />
@@ -559,7 +559,7 @@ function PhotographyVideographyForm({ serviceType, currentStep, formData, update
                     <h3 className="font-semibold text-lg text-charcoal">Pricing & Delivery</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="Package Price (RWF)" required>
-                            <Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 1500000" />
+                            <Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 1500000" />
                         </Field>
                         <Field label="Deposit Required">
                             <Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30% to confirm booking" />
@@ -662,8 +662,8 @@ function CateringForm({ currentStep, formData, updateFormData, onBack, onNext, o
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Logistics</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Minimum Guests" required><Input type="number" value={formData.minGuests || ""} onChange={(e) => updateFormData("minGuests", e.target.value)} placeholder="e.g., 50" /></Field>
-                        <Field label="Maximum Guests"><Input type="number" value={formData.maxGuests || ""} onChange={(e) => updateFormData("maxGuests", e.target.value)} placeholder="e.g., 500" /></Field>
+                        <Field label="Minimum Guests" required><Input type="number" min="0" value={formData.minGuests || ""} onChange={(e) => updateFormData("minGuests", e.target.value)} placeholder="e.g., 50" /></Field>
+                        <Field label="Maximum Guests"><Input type="number" min="0" value={formData.maxGuests || ""} onChange={(e) => updateFormData("maxGuests", e.target.value)} placeholder="e.g., 500" /></Field>
                     </div>
                     <Field label="Staff Provided">
                         <Sel value={formData.staffProvided || "yes"} onChange={(v) => updateFormData("staffProvided", v)}>
@@ -691,7 +691,7 @@ function CateringForm({ currentStep, formData, updateFormData, onBack, onNext, o
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 5000000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 5000000" /></Field>
                         <Field label="Pricing Per Person">
                             <Sel value={formData.pricingType || "flat"} onChange={(v) => updateFormData("pricingType", v)}>
                                 <option value="flat">Flat Rate</option>
@@ -732,7 +732,7 @@ function MusicForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                             <option value="other">Other Entertainment</option>
                         </Sel>
                     </Field>
-                    <Field label="Years of Experience"><Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 8" /></Field>
+                    <Field label="Years of Experience"><Input type="number" min="0" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 8" /></Field>
                     <Field label="Package Image"><Input type="file" accept="image/*" onChange={handleImage} />{formData.image && <img src={formData.image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg border" />}</Field>
                 </div>
             )}
@@ -799,7 +799,7 @@ function MusicForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 600000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 600000" /></Field>
                         <Field label="Deposit Required"><Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30%" /></Field>
                     </div>
                     <Field label="Overtime Rate"><Input value={formData.overtimeRate || ""} onChange={(e) => updateFormData("overtimeRate", e.target.value)} placeholder="e.g., 80,000 RWF per extra hour" /></Field>
@@ -845,8 +845,8 @@ function TransportForm({ currentStep, formData, updateFormData, onBack, onNext, 
                         <Input value={formData.vehicleTypes || ""} onChange={(e) => updateFormData("vehicleTypes", e.target.value)} placeholder="e.g., Rolls Royce, Mercedes S-Class, Toyota Coaster bus" />
                     </Field>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Number of Vehicles"><Input type="number" value={formData.vehicleCount || ""} onChange={(e) => updateFormData("vehicleCount", e.target.value)} placeholder="e.g., 3" /></Field>
-                        <Field label="Total Passenger Capacity"><Input type="number" value={formData.passengerCapacity || ""} onChange={(e) => updateFormData("passengerCapacity", e.target.value)} placeholder="e.g., 60" /></Field>
+                        <Field label="Number of Vehicles"><Input type="number" min="1" value={formData.vehicleCount || ""} onChange={(e) => updateFormData("vehicleCount", e.target.value)} placeholder="e.g., 3" /></Field>
+                        <Field label="Total Passenger Capacity"><Input type="number" min="0" value={formData.passengerCapacity || ""} onChange={(e) => updateFormData("passengerCapacity", e.target.value)} placeholder="e.g., 60" /></Field>
                     </div>
                     <Field label="Hours of Service" required><Input value={formData.serviceHours || ""} onChange={(e) => updateFormData("serviceHours", e.target.value)} placeholder="e.g., 8 hours, Full Day" /></Field>
                     <Field label="Chauffeur Included">
@@ -894,7 +894,7 @@ function TransportForm({ currentStep, formData, updateFormData, onBack, onNext, 
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500000" /></Field>
                         <Field label="Deposit Required"><Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30%" /></Field>
                     </div>
                     <Field label="Overtime Rate"><Input value={formData.overtimeRate || ""} onChange={(e) => updateFormData("overtimeRate", e.target.value)} placeholder="e.g., 50,000 RWF per extra hour" /></Field>
@@ -1006,7 +1006,7 @@ function AttireForm({ currentStep, formData, updateFormData, onBack, onNext, onS
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 800000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 800000" /></Field>
                         <Field label="Deposit Required"><Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 50%" /></Field>
                     </div>
                     <Field label="Payment Schedule"><Input value={formData.paymentSchedule || ""} onChange={(e) => updateFormData("paymentSchedule", e.target.value)} placeholder="e.g., 50% on order, 50% on final fitting" /></Field>
@@ -1115,14 +1115,14 @@ function DecorationForm({ currentStep, formData, updateFormData, onBack, onNext,
                             <option value="no">Not Included</option>
                         </Sel>
                     </Field>
-                    <Field label="Years of Experience"><Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 8" /></Field>
+                    <Field label="Years of Experience"><Input type="number" min="0" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 8" /></Field>
                 </div>
             )}
             {currentStep === 4 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 1200000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 1200000" /></Field>
                         <Field label="Deposit Required"><Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 40%" /></Field>
                     </div>
                     <Field label="Payment Schedule"><Input value={formData.paymentSchedule || ""} onChange={(e) => updateFormData("paymentSchedule", e.target.value)} placeholder="e.g., 40% deposit, 60% one week before" /></Field>
@@ -1156,7 +1156,7 @@ function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onS
                             <option value="grooming">Groom Grooming</option>
                         </Sel>
                     </Field>
-                    <Field label="Years of Experience"><Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 6" /></Field>
+                    <Field label="Years of Experience"><Input type="number" min="0" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 6" /></Field>
                     <Field label="Package Image"><Input type="file" accept="image/*" onChange={handleImage} />{formData.image && <img src={formData.image} alt="Preview" className="mt-2 w-32 h-32 object-cover rounded-lg border" />}</Field>
                 </div>
             )}
@@ -1225,7 +1225,7 @@ function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onS
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 300000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 300000" /></Field>
                         <Field label="Deposit Required"><Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 50%" /></Field>
                     </div>
                     <Field label="Travel Fee"><Input value={formData.travelFee || ""} onChange={(e) => updateFormData("travelFee", e.target.value)} placeholder="e.g., Free within Kigali, 50,000 RWF outside" /></Field>
@@ -1269,7 +1269,7 @@ function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNex
                         <Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your service, what you offer, and what makes you unique..." />
                     </Field>
                     <Field label="Years of Experience">
-                        <Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 5" />
+                        <Input type="number" min="0" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 5" />
                     </Field>
                     <Field label="Package Image">
                         <Input type="file" accept="image/*" onChange={handleImage} />
@@ -1304,7 +1304,7 @@ function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNex
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="Package Price (RWF)" required>
-                            <Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500000" />
+                            <Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500000" />
                         </Field>
                         <Field label="Deposit Required">
                             <Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30%, 150,000 RWF" />
@@ -1393,8 +1393,8 @@ function PlanningForm({ currentStep, formData, updateFormData, onBack, onNext, o
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Experience & Team</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Years of Experience"><Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 7" /></Field>
-                        <Field label="Weddings Planned"><Input type="number" value={formData.weddingsPlanned || ""} onChange={(e) => updateFormData("weddingsPlanned", e.target.value)} placeholder="e.g., 150" /></Field>
+                        <Field label="Years of Experience"><Input type="number" min="0" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 7" /></Field>
+                        <Field label="Weddings Planned"><Input type="number" min="0" value={formData.weddingsPlanned || ""} onChange={(e) => updateFormData("weddingsPlanned", e.target.value)} placeholder="e.g., 150" /></Field>
                     </div>
                     <Field label="Team Size"><Input value={formData.teamSize || ""} onChange={(e) => updateFormData("teamSize", e.target.value)} placeholder="e.g., Lead planner + 2 assistants" /></Field>
                     <Field label="Certifications / Awards">
@@ -1409,7 +1409,7 @@ function PlanningForm({ currentStep, formData, updateFormData, onBack, onNext, o
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
-                        <Field label="Package Price (RWF)" required><Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 2000000" /></Field>
+                        <Field label="Package Price (RWF)" required><Input type="number" min="0" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 2000000" /></Field>
                         <Field label="Deposit Required"><Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30%" /></Field>
                     </div>
                     <Field label="Payment Schedule"><Input value={formData.paymentSchedule || ""} onChange={(e) => updateFormData("paymentSchedule", e.target.value)} placeholder="e.g., 30% deposit, 70% one month before" /></Field>
@@ -1528,7 +1528,8 @@ function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                         <div>
                             <label className="block text-sm font-medium text-charcoal mb-2">Maximum Guest Capacity *</label>
                             <Input 
-                                type="number" 
+                                type="number"
+                                min="0"
                                 value={formData.maxCapacity || ""} 
                                 onChange={(e) => updateFormData("maxCapacity", e.target.value)} 
                                 placeholder="e.g., 300" 
@@ -1538,7 +1539,8 @@ function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                         <div>
                             <label className="block text-sm font-medium text-charcoal mb-2">Minimum Guest Capacity</label>
                             <Input 
-                                type="number" 
+                                type="number"
+                                min="0"
                                 value={formData.minCapacity || ""} 
                                 onChange={(e) => updateFormData("minCapacity", e.target.value)} 
                                 placeholder="e.g., 50" 
@@ -1687,7 +1689,8 @@ function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                         <div>
                             <label className="block text-sm font-medium text-charcoal mb-2">Venue Rental Price (RWF) *</label>
                             <Input 
-                                type="number" 
+                                type="number"
+                                min="0"
                                 value={formData.price || ""} 
                                 onChange={(e) => updateFormData("price", e.target.value)} 
                                 placeholder="e.g., 2000000" 

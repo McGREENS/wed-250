@@ -33,6 +33,9 @@ export default function VendorMessagesClient() {
 
     useEffect(() => {
         fetchConversations();
+        // Poll every 5 seconds for new conversations/messages
+        const interval = setInterval(fetchConversations, 5000);
+        return () => clearInterval(interval);
     }, []);
 
     // Subscribe to real-time updates when conversation is selected
@@ -78,6 +81,7 @@ export default function VendorMessagesClient() {
             if (res.ok) {
                 const data = await res.json();
                 setConversations(data.conversations || []);
+                // Only auto-select first conversation on initial load
                 if (data.conversations?.length > 0 && !selectedConversation) {
                     setSelectedConversation(data.conversations[0].id);
                 }
@@ -85,7 +89,6 @@ export default function VendorMessagesClient() {
             }
         } catch (error) {
             console.error('Error fetching conversations:', error);
-            toast.error('Failed to load conversations');
         } finally {
             setLoading(false);
         }

@@ -4,6 +4,7 @@ import { db } from '@/lib/db';
 import { venueTours, servicePackages, vendors, users } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 import { sendTourConfirmationEmail, sendTourDeclinedEmail } from '@/lib/email';
+import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function POST(req: NextRequest) {
   try {
@@ -58,7 +59,7 @@ export async function GET(req: NextRequest) {
       })
       .from(venueTours)
       .leftJoin(servicePackages, eq(venueTours.venueId, servicePackages.id))
-      .where(eq(venueTours.userId, session.user.id));
+      .where(eq(venueTours.userId, await resolveOwnerUserId(session.user.id)));
 
     return NextResponse.json({ tours });
   } catch (error) {
