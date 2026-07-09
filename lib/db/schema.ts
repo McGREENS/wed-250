@@ -212,6 +212,9 @@ export const tasks = sqliteTable("tasks", {
   notes: text("notes"),
   category: text("category").default("General"),
   expectedBudget: real("expected_budget"),
+  budgetType: text("budget_type", { enum: ["fixed", "percent"] }).default("fixed"),
+  budgetPercent: real("budget_percent"),
+  actualSpent: real("actual_spent"),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

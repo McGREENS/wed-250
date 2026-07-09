@@ -35,12 +35,11 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes, expectedBudget } = await request.json();
+    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes, expectedBudget, budgetType = 'fixed', budgetPercent } = await request.json();
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
 
-    // Ensure empty string is converted to null
     const helperIdToAssign = assignedHelperId && assignedHelperId !== '' ? assignedHelperId : null;
 
     const newTask = await db.insert(tasksTable).values({
@@ -53,6 +52,8 @@ export async function POST(request: NextRequest) {
       priority: priority || 'medium',
       notes: notes || null,
       expectedBudget: expectedBudget ? parseFloat(expectedBudget) : null,
+      budgetType: budgetType || 'fixed',
+      budgetPercent: budgetPercent ? parseFloat(budgetPercent) : null,
       custom: true,
     } as any).returning();
 
@@ -170,7 +171,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, completed } = await request.json();
+    const { id, completed, actualSpent } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
@@ -178,7 +179,8 @@ export async function PATCH(request: NextRequest) {
     const updatedTask = await db.update(tasksTable)
       .set({ 
         updatedAt: new Date(), 
-        completed: sql`${completed}` 
+        completed: sql`${completed}`,
+        ...(actualSpent != null ? { actualSpent: parseFloat(actualSpent) } : {}),
       } as any)
       .where(eq(tasksTable.id, id))
       .returning();
@@ -197,7 +199,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes, expectedBudget } = await request.json();
+    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes, expectedBudget, budgetType, budgetPercent, actualSpent } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
@@ -212,6 +214,9 @@ export async function PUT(request: NextRequest) {
         priority: priority || 'medium',
         notes: notes || null,
         expectedBudget: expectedBudget ? parseFloat(expectedBudget) : null,
+        budgetType: budgetType || 'fixed',
+        budgetPercent: budgetPercent ? parseFloat(budgetPercent) : null,
+        actualSpent: actualSpent != null ? parseFloat(actualSpent) : null,
         updatedAt: new Date(),
       } as any)
       .where(eq(tasksTable.id, id))

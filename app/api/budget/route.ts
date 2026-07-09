@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
-import { bookings, weddings, vendors, bookingPayments, manualExpenses } from '@/lib/db/schema';
-import { eq, sum } from 'drizzle-orm';
+import { bookings, weddings, vendors, bookingPayments, manualExpenses, tasks as tasksTable } from '@/lib/db/schema';
+import { eq } from 'drizzle-orm';
 import { resolveOwnerUserId } from '@/lib/resolveOwner';
 
 export async function GET(request: NextRequest) {
@@ -36,120 +36,109 @@ export async function GET(request: NextRequest) {
 
     // Get all payments for user's bookings
     const bookingIds = userBookings.map(b => b.id);
-    const payments = bookingIds.length > 0 ? await db
-      .select({
-        bookingId: bookingPayments.bookingId,
-        amount: bookingPayments.amount,
-      })
-      .from(bookingPayments)
-      .where(eq(bookingPayments.bookingId, bookingIds[0])) : [];
-
-    // Create a map of bookingId to total paid amount
-    const paymentMap = new Map();
-    for (const payment of payments) {
-      const currentTotal = paymentMap.get(payment.bookingId) || 0;
-      paymentMap.set(payment.bookingId, currentTotal + (payment.amount || 0));
-    }
-
-    // Fetch all payments for all bookings if there are multiple
-    if (bookingIds.length > 1) {
-      for (const bookingId of bookingIds.slice(1)) {
-        const morePayments = await db
-          .select({
-            bookingId: bookingPayments.bookingId,
-            amount: bookingPayments.amount,
-          })
-          .from(bookingPayments)
-          .where(eq(bookingPayments.bookingId, bookingId));
-        
-        for (const payment of morePayments) {
-          const currentTotal = paymentMap.get(payment.bookingId) || 0;
-          paymentMap.set(payment.bookingId, currentTotal + (payment.amount || 0));
-        }
+    const paymentMap = new Map<string, number>();
+    for (const bookingId of bookingIds) {
+      const pmts = await db
+        .select({ bookingId: bookingPayments.bookingId, amount: bookingPayments.amount })
+        .from(bookingPayments)
+        .where(eq(bookingPayments.bookingId, bookingId));
+      for (const p of pmts) {
+        paymentMap.set(p.bookingId, (paymentMap.get(p.bookingId) || 0) + (p.amount || 0));
       }
     }
 
-    // Get manual expenses (vendors booked outside the platform)
-    const userManualExpenses = await db
-      .select()
-      .from(manualExpenses)
-      .where(eq(manualExpenses.userId, userId));
+    // Get manual expenses
+    const userManualExpenses = await db.select().from(manualExpenses).where(eq(manualExpenses.userId, userId));
 
-    // Group bookings by service type and calculate totals based on actual payments
-    const categoryMap = new Map();
-    let totalSpent = 0;
+    // Get all tasks with budget
+    const userTasks = await db.select().from(tasksTable).where(eq(tasksTable.userId, userId));
+
+    // Helper: resolve a task's allocated budget amount
+    const resolveTaskBudget = (task: any): number => {
+      if (!task.expectedBudget && !task.budgetPercent) return 0;
+      if (task.budgetType === 'percent' && task.budgetPercent && totalBudget > 0) {
+        return (task.budgetPercent / 100) * totalBudget;
+      }
+      return task.expectedBudget || 0;
+    };
+
+    // Build vendor-category map (bookings + manual expenses)
+    const categoryMap = new Map<string, { name: string; bookings: any[]; totalSpent: number; paidAmount: number }>();
+    let totalSpentFromBookings = 0;
 
     userBookings.forEach(booking => {
       const paidAmount = paymentMap.get(booking.id) || 0;
       const serviceType = booking.serviceType || 'Other';
-      
-      totalSpent += paidAmount;
-
+      totalSpentFromBookings += paidAmount;
       if (!categoryMap.has(serviceType)) {
-        categoryMap.set(serviceType, {
-          name: serviceType,
-          bookings: [],
-          totalSpent: 0,
-          paidAmount: 0,
-        });
+        categoryMap.set(serviceType, { name: serviceType, bookings: [], totalSpent: 0, paidAmount: 0 });
       }
-
-      const category = categoryMap.get(serviceType);
-      category.bookings.push(booking);
-      category.totalSpent += paidAmount;
-      category.paidAmount += paidAmount;
+      const cat = categoryMap.get(serviceType)!;
+      cat.bookings.push(booking);
+      cat.totalSpent += paidAmount;
+      cat.paidAmount += paidAmount;
     });
 
-    // Add manual expenses to categories
     userManualExpenses.forEach(expense => {
       const category = expense.category || 'Other';
-      totalSpent += expense.amount;
-
+      totalSpentFromBookings += expense.amount;
       if (!categoryMap.has(category)) {
-        categoryMap.set(category, {
-          name: category,
-          bookings: [],
-          totalSpent: 0,
-          paidAmount: 0,
-        });
+        categoryMap.set(category, { name: category, bookings: [], totalSpent: 0, paidAmount: 0 });
       }
-
-      const cat = categoryMap.get(category);
+      const cat = categoryMap.get(category)!;
       cat.totalSpent += expense.amount;
       cat.paidAmount += expense.amount;
     });
 
-    // Convert map to array and add default categories if they don't exist
-    const defaultCategories = [
-      'Venue', 'Photography', 'Catering', 'Decoration', 
-      'Music', 'Planning', 'Transportation', 'Flowers'
-    ];
+    // Build wedding-phase task budget map
+    const WEDDING_PHASES = ['Traditional (Gusaba)', 'Civil Ceremony', 'Church Wedding', 'Reception', 'Gutwikurura'];
+    const phaseMap = new Map<string, { name: string; allocated: number; spent: number; taskCount: number }>();
+    WEDDING_PHASES.forEach(p => phaseMap.set(p, { name: p, allocated: 0, spent: 0, taskCount: 0 }));
+    phaseMap.set('Other', { name: 'Other', allocated: 0, spent: 0, taskCount: 0 });
 
-    defaultCategories.forEach(categoryName => {
-      if (!categoryMap.has(categoryName)) {
-        categoryMap.set(categoryName, {
-          name: categoryName,
-          bookings: [],
-          totalSpent: 0,
-          paidAmount: 0,
-        });
+    let totalPlanned = 0;  // allocated but not yet completed
+    let totalTaskSpent = 0; // completed tasks actual spent
+
+    userTasks.forEach(task => {
+      const allocated = resolveTaskBudget(task);
+      if (allocated === 0) return;
+
+      const phase = WEDDING_PHASES.includes(task.category || '') ? task.category! : 'Other';
+      const phaseData = phaseMap.get(phase)!;
+      phaseData.taskCount += 1;
+
+      if (task.completed) {
+        const spent = task.actualSpent != null ? (task.actualSpent as number) : allocated;
+        phaseData.spent += spent;
+        totalTaskSpent += spent;
+      } else {
+        phaseData.allocated += allocated;
+        totalPlanned += allocated;
       }
     });
 
-    const categories = Array.from(categoryMap.values()).map(category => ({
-      ...category,
-      percentOfBudget: totalBudget > 0 ? parseFloat(((category.totalSpent / totalBudget) * 100).toFixed(2)) : 0,
-    }));
-
-    const remaining = Math.max(0, totalBudget - totalSpent);
+    const totalSpent = totalSpentFromBookings + totalTaskSpent;
+    const remaining = totalBudget > 0 ? totalBudget - totalSpent - totalPlanned : 0;
     const percentUsed = totalBudget > 0 ? parseFloat(((totalSpent / totalBudget) * 100).toFixed(2)) : 0;
+
+    const categories = Array.from(categoryMap.values())
+      .filter(c => c.totalSpent > 0)
+      .map(c => ({
+        ...c,
+        percentOfBudget: totalBudget > 0 ? parseFloat(((c.totalSpent / totalBudget) * 100).toFixed(2)) : 0,
+      }))
+      .sort((a, b) => b.totalSpent - a.totalSpent);
+
+    const phases = Array.from(phaseMap.values()).filter(p => p.allocated > 0 || p.spent > 0);
 
     return NextResponse.json({
       totalBudget,
       totalSpent,
+      totalPlanned,
       remaining,
       percentUsed,
-      categories: categories.sort((a, b) => b.totalSpent - a.totalSpent),
+      categories,
+      phases,
       recentBookings: userBookings.slice(0, 5),
     });
   } catch (error) {

@@ -19,9 +19,11 @@ interface BudgetCategory {
 interface BudgetOverview {
   totalBudget: number;
   totalSpent: number;
+  totalPlanned: number;
   remaining: number;
   percentUsed: number;
   categories: BudgetCategory[];
+  phases: { name: string; allocated: number; spent: number; taskCount: number }[];
   recentBookings: any[];
 }
 
@@ -93,7 +95,7 @@ export default function BudgetPage() {
     );
   }
 
-  const { totalBudget, totalSpent, remaining, percentUsed, categories } = budgetData;
+  const { totalBudget, totalSpent, totalPlanned, remaining, percentUsed, categories, phases } = budgetData;
   const activeCategories = categories.filter(c => c.totalSpent > 0);
   const circumference = 2 * Math.PI * 54;
   const dashOffset = circumference * (1 - Math.min(percentUsed, 100) / 100);
@@ -199,7 +201,10 @@ export default function BudgetPage() {
                 </div>
               </div>
               <p className="text-2xl font-bold text-burgundy">RWF {fmt(totalSpent)}</p>
-              <p className="text-xs text-gray-400 mt-1">Paid so far</p>
+              {totalPlanned > 0 && (
+                <p className="text-xs text-amber-600 mt-1 font-medium">+ RWF {fmt(totalPlanned)} planned</p>
+              )}
+              <p className="text-xs text-gray-400 mt-0.5">Paid so far</p>
             </div>
 
             <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-5 flex flex-col justify-between">
@@ -212,7 +217,7 @@ export default function BudgetPage() {
               <p className={`text-2xl font-bold ${isOverBudget ? 'text-red-600' : 'text-emerald-600'}`}>
                 {totalBudget > 0 ? `RWF ${fmt(remaining)}` : '—'}
               </p>
-              <p className="text-xs text-gray-400 mt-1">{isOverBudget ? 'Over budget' : 'Left to spend'}</p>
+              <p className="text-xs text-gray-400 mt-1">{isOverBudget ? 'Over budget' : 'After spent & planned'}</p>
             </div>
           </div>
         </div>
@@ -284,6 +289,46 @@ export default function BudgetPage() {
             </div>
           )}
         </div>
+
+        {/* ── Wedding phase task budgets ── */}
+        {phases && phases.length > 0 && (
+          <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6 mb-6">
+            <div className="flex items-center justify-between mb-5">
+              <h2 className="text-base font-semibold text-charcoal">Budget by Wedding Phase</h2>
+              <Link href="/dashboard/checklist">
+                <Button variant="ghost" size="sm" className="text-burgundy text-xs">Checklist →</Button>
+              </Link>
+            </div>
+            <div className="space-y-3">
+              {phases.map((phase, i) => {
+                const total = phase.spent + phase.allocated;
+                const spentPct = total > 0 ? (phase.spent / total) * 100 : 0;
+                const allocPct = total > 0 ? (phase.allocated / total) * 100 : 0;
+                return (
+                  <div key={i}>
+                    <div className="flex items-center gap-3 mb-1.5">
+                      <span className="text-xs font-medium px-2 py-0.5 rounded-full flex-shrink-0 bg-burgundy/10 text-burgundy">
+                        {phase.name}
+                      </span>
+                      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden flex">
+                        <div className="h-full bg-burgundy transition-all duration-500" style={{ width: `${spentPct}%` }} />
+                        <div className="h-full bg-amber-300 transition-all duration-500" style={{ width: `${allocPct}%` }} />
+                      </div>
+                      <div className="flex-shrink-0 text-right">
+                        {phase.spent > 0 && <span className="text-xs font-semibold text-charcoal">RWF {fmt(phase.spent)} spent</span>}
+                        {phase.allocated > 0 && <span className="text-xs text-amber-600 ml-2">+ {fmt(phase.allocated)} planned</span>}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+              <div className="flex gap-4 pt-2 text-xs text-gray-400">
+                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-burgundy inline-block" /> Spent</span>
+                <span className="flex items-center gap-1"><span className="w-3 h-2 rounded-sm bg-amber-300 inline-block" /> Planned</span>
+              </div>
+            </div>
+          </div>
+        )}
 
         {/* ── Manual expenses ── */}
         <div className="bg-white rounded-2xl border border-gray-100 shadow-sm p-6">

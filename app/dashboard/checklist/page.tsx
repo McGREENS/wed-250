@@ -22,6 +22,9 @@ interface Task {
   notes?: string;
   category?: string;
   expectedBudget?: number | null;
+  budgetType?: 'fixed' | 'percent';
+  budgetPercent?: number | null;
+  actualSpent?: number | null;
 }
 
 interface Helper {
@@ -30,10 +33,11 @@ interface Helper {
   role: string;
 }
 
-function TaskModal({ task, category, helpers, onSave, onCancel }: { 
+function TaskModal({ task, category, helpers, totalBudget, onSave, onCancel }: { 
   task: Task | null; 
   category: string;
   helpers: Helper[];
+  totalBudget: number;
   onSave: (task: Partial<Task>) => void; 
   onCancel: () => void 
 }) {
@@ -41,9 +45,15 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
     title: task?.title || '',
     assignedHelperId: task?.assignedHelperId || '',
     priority: task?.priority || 'medium',
+    budgetType: task?.budgetType || 'fixed' as 'fixed' | 'percent',
     expectedBudget: task?.expectedBudget != null ? String(task.expectedBudget) : '',
+    budgetPercent: task?.budgetPercent != null ? String(task.budgetPercent) : '',
   });
   const [loading, setLoading] = useState(false);
+
+  const resolvedAmount = form.budgetType === 'percent' && form.budgetPercent !== '' && totalBudget > 0
+    ? (parseFloat(form.budgetPercent) / 100) * totalBudget
+    : null;
 
   const handleSubmit = async () => {
     if (!form.title) return;
@@ -52,7 +62,9 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
       ...form, 
       category,
       assignedHelperId: form.assignedHelperId || null,
-      expectedBudget: form.expectedBudget !== '' ? parseFloat(form.expectedBudget) : null,
+      budgetType: form.budgetType,
+      expectedBudget: form.budgetType === 'fixed' && form.expectedBudget !== '' ? parseFloat(form.expectedBudget) : (resolvedAmount ?? null),
+      budgetPercent: form.budgetType === 'percent' && form.budgetPercent !== '' ? parseFloat(form.budgetPercent) : null,
     });
     setLoading(false);
   };
@@ -102,14 +114,57 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
           </div>
 
           <div>
-            <Label className="text-sm font-medium mb-2">Expected Budget (RWF)</Label>
-            <Input
-              type="number"
-              value={form.expectedBudget}
-              onChange={(e) => setForm(prev => ({ ...prev, expectedBudget: e.target.value }))}
-              placeholder="e.g., 500000"
-              className="border-gray-200"
-            />
+            <Label className="text-sm font-medium mb-2">Budget Allocation</Label>
+            <div className="flex rounded-lg border border-gray-200 overflow-hidden mb-2">
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, budgetType: 'fixed' }))}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  form.budgetType === 'fixed' ? 'bg-burgundy text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                Fixed (RWF)
+              </button>
+              <button
+                type="button"
+                onClick={() => setForm(prev => ({ ...prev, budgetType: 'percent' }))}
+                className={`flex-1 py-2 text-sm font-medium transition-colors ${
+                  form.budgetType === 'percent' ? 'bg-burgundy text-white' : 'bg-white text-gray-500 hover:bg-gray-50'
+                }`}
+              >
+                % of Budget
+              </button>
+            </div>
+            {form.budgetType === 'fixed' ? (
+              <Input
+                type="number"
+                min="0"
+                value={form.expectedBudget}
+                onChange={(e) => setForm(prev => ({ ...prev, expectedBudget: e.target.value }))}
+                placeholder="e.g., 500000"
+                className="border-gray-200"
+              />
+            ) : (
+              <div className="space-y-1">
+                <Input
+                  type="number"
+                  min="0"
+                  max="100"
+                  value={form.budgetPercent}
+                  onChange={(e) => setForm(prev => ({ ...prev, budgetPercent: e.target.value }))}
+                  placeholder="e.g., 15"
+                  className="border-gray-200"
+                />
+                {resolvedAmount !== null && (
+                  <p className="text-xs text-emerald-700 font-medium">
+                    ≈ {resolvedAmount.toLocaleString()} RWF from your total budget
+                  </p>
+                )}
+                {totalBudget === 0 && (
+                  <p className="text-xs text-amber-600">Set your total budget in Wedding Settings first.</p>
+                )}
+              </div>
+            )}
           </div>
         </div>
 
@@ -142,6 +197,9 @@ export default function ChecklistPage() {
   const [showModal, setShowModal] = useState(false);
   const [editingTask, setEditingTask] = useState<Task | null>(null);
   const [expandedCategory, setExpandedCategory] = useState<string | null>('Traditional (Gusaba)');
+  const [totalBudget, setTotalBudget] = useState(0);
+  const [completingTask, setCompletingTask] = useState<Task | null>(null);
+  const [actualSpentInput, setActualSpentInput] = useState('');
 
   useEffect(() => {
     fetchData();
@@ -149,9 +207,10 @@ export default function ChecklistPage() {
 
   const fetchData = async () => {
     try {
-      const [tasksRes, helpersRes] = await Promise.all([
+      const [tasksRes, helpersRes, budgetRes] = await Promise.all([
         fetch('/api/dashboard/tasks'),
-        fetch('/api/wedding-helpers')
+        fetch('/api/wedding-helpers'),
+        fetch('/api/budget'),
       ]);
 
       if (tasksRes.ok) {
@@ -163,6 +222,11 @@ export default function ChecklistPage() {
         const helpersData = await helpersRes.json();
         setHelpers(helpersData.map((h: any) => ({ id: h.id, name: h.name, role: h.role })));
       }
+
+      if (budgetRes.ok) {
+        const budgetData = await budgetRes.json();
+        setTotalBudget(budgetData.totalBudget || 0);
+      }
     } catch (error) {
       console.error('Failed to fetch data:', error);
       toast.error('Failed to load data');
@@ -171,16 +235,31 @@ export default function ChecklistPage() {
     }
   };
 
-  const toggleTask = async (id: string, completed: boolean) => {
+  const toggleTask = async (task: Task) => {
+    // If marking as complete and task has a budget, show the spent amount modal
+    if (!task.completed && (task.expectedBudget || task.budgetPercent)) {
+      setCompletingTask(task);
+      const allocated = task.budgetType === 'percent' && task.budgetPercent && totalBudget > 0
+        ? String(Math.round((task.budgetPercent / 100) * totalBudget))
+        : String(task.expectedBudget || '');
+      setActualSpentInput(allocated);
+      return;
+    }
+    await doToggleTask(task.id, task.completed);
+  };
+
+  const doToggleTask = async (id: string, completed: boolean, actualSpent?: string) => {
     try {
+      const body: any = { id, completed: !completed };
+      if (!completed && actualSpent !== undefined) body.actualSpent = actualSpent;
       const res = await fetch('/api/dashboard/tasks', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, completed: !completed }),
+        body: JSON.stringify(body),
       });
-
       if (res.ok) {
-        setTasks(tasks.map(t => t.id === id ? { ...t, completed: !completed } : t));
+        const updated = await res.json();
+        setTasks(tasks.map(t => t.id === id ? { ...t, ...updated } : t));
         toast.success(completed ? 'Task marked as incomplete' : 'Task completed!');
       }
     } catch (error) {
@@ -196,7 +275,6 @@ export default function ChecklistPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({ id: editingTask.id, ...taskData }),
         });
-
         if (res.ok) {
           const updated = await res.json();
           setTasks(tasks.map(t => t.id === editingTask.id ? updated : t));
@@ -208,14 +286,12 @@ export default function ChecklistPage() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify(taskData),
         });
-
         if (res.ok) {
           const newTask = await res.json();
           setTasks([...tasks, newTask]);
           toast.success('Task created successfully!');
         }
       }
-
       setShowModal(false);
       setEditingTask(null);
     } catch (error) {
@@ -263,6 +339,24 @@ export default function ChecklistPage() {
   const completedCount = tasks.filter(t => t.completed).length;
   const progress = tasks.length > 0 ? Math.round((completedCount / tasks.length) * 100) : 0;
   
+  const getCategoryBudget = (category: string) => {
+    const categoryTasks = tasks.filter(t => (t.category || 'Traditional (Gusaba)') === category);
+    const allocated = categoryTasks.reduce((sum, t) => {
+      if (t.completed) return sum;
+      if (t.budgetType === 'percent' && t.budgetPercent && totalBudget > 0)
+        return sum + (t.budgetPercent / 100) * totalBudget;
+      return sum + (t.expectedBudget || 0);
+    }, 0);
+    const spent = categoryTasks.reduce((sum, t) => {
+      if (!t.completed) return sum;
+      if (t.actualSpent != null) return sum + t.actualSpent;
+      if (t.budgetType === 'percent' && t.budgetPercent && totalBudget > 0)
+        return sum + (t.budgetPercent / 100) * totalBudget;
+      return sum + (t.expectedBudget || 0);
+    }, 0);
+    return { allocated, spent };
+  };
+
   const allowedCategories = ['Traditional (Gusaba)', 'Civil Ceremony', 'Church Wedding', 'Reception', 'Gutwikurura'];
   const sortedCategories = allowedCategories;
 
@@ -362,6 +456,7 @@ export default function ChecklistPage() {
           {sortedCategories.map(category => {
             const stats = getCategoryStats(category);
             const colors = getCategoryColor(category);
+            const budget = getCategoryBudget(category);
             const isExpanded = expandedCategory === category;
 
             return (
@@ -380,7 +475,7 @@ export default function ChecklistPage() {
                     <div className={`text-sm font-bold ${colors.text} opacity-90 drop-shadow`}>{stats.percentage}%</div>
                   </div>
 
-                  <div className="mb-3">
+                  <div className="mb-2">
                     <div className="w-full bg-white/20 rounded-full h-1.5 overflow-hidden">
                       <div
                         className={`h-full ${colors.progress} transition-all duration-500`}
@@ -389,12 +484,23 @@ export default function ChecklistPage() {
                     </div>
                   </div>
 
-                  <div className="flex items-center justify-between">
+                  <div className="flex items-center justify-between mb-1">
                     <p className={`text-[10px] ${colors.subtext} drop-shadow`}>{stats.completed}/{stats.total} done</p>
                     <p className={`text-[10px] font-medium ${colors.text} opacity-80`}>
                       {isExpanded ? '▲' : '▼'}
                     </p>
                   </div>
+
+                  {(budget.allocated > 0 || budget.spent > 0) && (
+                    <div className="mt-1 pt-1 border-t border-white/20">
+                      {budget.spent > 0 && (
+                        <p className={`text-[9px] ${colors.subtext} drop-shadow`}>💸 {(budget.spent / 1000).toFixed(0)}K spent</p>
+                      )}
+                      {budget.allocated > 0 && (
+                        <p className={`text-[9px] ${colors.subtext} drop-shadow`}>📋 {(budget.allocated / 1000).toFixed(0)}K planned</p>
+                      )}
+                    </div>
+                  )}
                 </CardContent>
               </Card>
             );
@@ -435,7 +541,7 @@ export default function ChecklistPage() {
                         <input
                           type="checkbox"
                           checked={task.completed}
-                          onChange={() => toggleTask(task.id, task.completed)}
+                          onChange={() => toggleTask(task)}
                           className="w-5 h-5 text-burgundy rounded cursor-pointer mt-0.5 flex-shrink-0"
                         />
 
@@ -476,10 +582,21 @@ export default function ChecklistPage() {
                             )}
                           </div>
 
-                          {task.expectedBudget != null && (
-                            <div className="mt-2 inline-flex items-center gap-1.5 bg-gold/10 border border-gold/30 text-amber-800 text-xs font-medium px-3 py-1 rounded-full">
-                              <span>💰</span>
-                              <span>Budget: {Number(task.expectedBudget).toLocaleString()} RWF</span>
+                          {(task.expectedBudget != null || task.budgetPercent != null) && (
+                            <div className="mt-2 flex flex-wrap gap-1.5">
+                              <div className="inline-flex items-center gap-1.5 bg-gold/10 border border-gold/30 text-amber-800 text-xs font-medium px-3 py-1 rounded-full">
+                                <span>💰</span>
+                                {task.budgetType === 'percent' && task.budgetPercent != null
+                                  ? <span>{task.budgetPercent}% ≈ {totalBudget > 0 ? Math.round((task.budgetPercent / 100) * totalBudget).toLocaleString() : '?'} RWF</span>
+                                  : <span>{Number(task.expectedBudget).toLocaleString()} RWF allocated</span>
+                                }
+                              </div>
+                              {task.completed && task.actualSpent != null && (
+                                <div className="inline-flex items-center gap-1.5 bg-emerald-50 border border-emerald-200 text-emerald-800 text-xs font-medium px-3 py-1 rounded-full">
+                                  <svg className="w-3 h-3 text-emerald-600" viewBox="0 0 12 12" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><polyline points="2,6 5,9 10,3" /></svg>
+                                  <span>{Number(task.actualSpent).toLocaleString()} RWF spent</span>
+                                </div>
+                              )}
                             </div>
                           )}
                           {task.notes && (
@@ -519,9 +636,46 @@ export default function ChecklistPage() {
             task={editingTask}
             category={expandedCategory}
             helpers={helpers}
+            totalBudget={totalBudget}
             onSave={handleSaveTask}
             onCancel={() => { setShowModal(false); setEditingTask(null); }}
           />
+        )}
+
+        {completingTask && (
+          <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50 p-4">
+            <div className="bg-white rounded-xl shadow-2xl w-full max-w-sm">
+              <div className="p-6 border-b border-gray-200">
+                <h3 className="text-lg font-semibold text-charcoal">How much did you spend?</h3>
+                <p className="text-sm text-gray-500 mt-1">{completingTask.title}</p>
+              </div>
+              <div className="p-6">
+                <Label className="text-sm font-medium mb-2">Actual Amount Spent (RWF)</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  value={actualSpentInput}
+                  onChange={(e) => setActualSpentInput(e.target.value)}
+                  placeholder="e.g., 480000"
+                  className="border-gray-200 mt-2"
+                  autoFocus
+                />
+                <p className="text-xs text-gray-400 mt-2">Leave as-is to use the allocated amount.</p>
+              </div>
+              <div className="p-6 border-t border-gray-200 flex justify-end gap-3">
+                <Button variant="outline" onClick={() => setCompletingTask(null)}>Cancel</Button>
+                <Button
+                  className="bg-burgundy text-white hover:bg-burgundy/90"
+                  onClick={async () => {
+                    await doToggleTask(completingTask.id, completingTask.completed, actualSpentInput);
+                    setCompletingTask(null);
+                  }}
+                >
+                  Mark Complete
+                </Button>
+              </div>
+            </div>
+          </div>
         )}
       </div>
     </UserPageLayout>
