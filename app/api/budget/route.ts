@@ -53,13 +53,11 @@ export async function GET(request: NextRequest) {
     // Get all tasks with budget
     const userTasks = await db.select().from(tasksTable).where(eq(tasksTable.userId, userId));
 
-    // Helper: resolve a task's allocated budget amount
-    const resolveTaskBudget = (task: any): number => {
-      if (!task.expectedBudget && !task.budgetPercent) return 0;
-      if (task.budgetType === 'percent' && task.budgetPercent && totalBudget > 0) {
-        return (task.budgetPercent / 100) * totalBudget;
-      }
-      return task.expectedBudget || 0;
+    // Helper: resolve a task's total amount
+    const resolveTaskTotal = (task: any): number => {
+      const qty = task.quantity ?? 1;
+      const price = task.unitPrice ?? 0;
+      return qty * price;
     };
 
     // Build vendor-category map (bookings + manual expenses)
@@ -96,24 +94,24 @@ export async function GET(request: NextRequest) {
     WEDDING_PHASES.forEach(p => phaseMap.set(p, { name: p, allocated: 0, spent: 0, taskCount: 0 }));
     phaseMap.set('Other', { name: 'Other', allocated: 0, spent: 0, taskCount: 0 });
 
-    let totalPlanned = 0;  // allocated but not yet completed
-    let totalTaskSpent = 0; // completed tasks actual spent
+    let totalPlanned = 0;
+    let totalTaskSpent = 0;
 
     userTasks.forEach(task => {
-      const allocated = resolveTaskBudget(task);
-      if (allocated === 0) return;
+      const amount = resolveTaskTotal(task);
+      if (amount === 0) return;
 
       const phase = WEDDING_PHASES.includes(task.category || '') ? task.category! : 'Other';
       const phaseData = phaseMap.get(phase)!;
       phaseData.taskCount += 1;
 
       if (task.completed) {
-        const spent = task.actualSpent != null ? (task.actualSpent as number) : allocated;
+        const spent = task.deposit != null ? (task.deposit as number) : amount;
         phaseData.spent += spent;
         totalTaskSpent += spent;
       } else {
-        phaseData.allocated += allocated;
-        totalPlanned += allocated;
+        phaseData.allocated += amount;
+        totalPlanned += amount;
       }
     });
 

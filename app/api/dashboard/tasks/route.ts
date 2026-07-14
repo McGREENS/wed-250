@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes, expectedBudget, budgetType = 'fixed', budgetPercent } = await request.json();
+    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes, quantity, unitPrice, deposit, marketPrice } = await request.json();
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
@@ -51,9 +51,10 @@ export async function POST(request: NextRequest) {
       dueDate: dueDate ? new Date(dueDate) : null,
       priority: priority || 'medium',
       notes: notes || null,
-      expectedBudget: expectedBudget ? parseFloat(expectedBudget) : null,
-      budgetType: budgetType || 'fixed',
-      budgetPercent: budgetPercent ? parseFloat(budgetPercent) : null,
+      quantity: quantity ? parseFloat(quantity) : null,
+      unitPrice: unitPrice ? parseFloat(unitPrice) : null,
+      deposit: deposit ? parseFloat(deposit) : null,
+      marketPrice: marketPrice ? parseFloat(marketPrice) : null,
       custom: true,
     } as any).returning();
 
@@ -171,7 +172,7 @@ export async function PATCH(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, completed, actualSpent } = await request.json();
+    const { id, completed } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
@@ -180,7 +181,6 @@ export async function PATCH(request: NextRequest) {
       .set({ 
         updatedAt: new Date(), 
         completed: sql`${completed}`,
-        ...(actualSpent != null ? { actualSpent: parseFloat(actualSpent) } : {}),
       } as any)
       .where(eq(tasksTable.id, id))
       .returning();
@@ -199,7 +199,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes, expectedBudget, budgetType, budgetPercent, actualSpent } = await request.json();
+    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes, quantity, unitPrice, deposit, marketPrice } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
@@ -213,10 +213,10 @@ export async function PUT(request: NextRequest) {
         dueDate: dueDate ? new Date(dueDate) : null,
         priority: priority || 'medium',
         notes: notes || null,
-        expectedBudget: expectedBudget ? parseFloat(expectedBudget) : null,
-        budgetType: budgetType || 'fixed',
-        budgetPercent: budgetPercent ? parseFloat(budgetPercent) : null,
-        actualSpent: actualSpent != null ? parseFloat(actualSpent) : null,
+        quantity: quantity != null ? parseFloat(quantity) : null,
+        unitPrice: unitPrice != null ? parseFloat(unitPrice) : null,
+        deposit: deposit != null ? parseFloat(deposit) : null,
+        marketPrice: marketPrice != null ? parseFloat(marketPrice) : null,
         updatedAt: new Date(),
       } as any)
       .where(eq(tasksTable.id, id))

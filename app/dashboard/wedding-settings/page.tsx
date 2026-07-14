@@ -6,7 +6,7 @@ import { Button } from "@/app/components/ui/button";
 import { Input } from "@/app/components/ui/input";
 import { Label } from "@/app/components/ui/label";
 import { Textarea } from "@/app/components/ui/textarea";
-import { Calendar, Save, Heart, Users, Plus, Trash2, Edit2, X, Mail, Phone, CheckCircle2, Clock, Circle, ClipboardList, UserPlus, Link2, Unlink, Eye, EyeOff } from 'lucide-react';
+import { Calendar, Save, Heart, Users, Plus, Trash2, Edit2, X, Mail, Phone, CheckCircle2, Clock, Circle, ClipboardList, UserPlus, Link2, Unlink, Eye, EyeOff, Loader2 } from 'lucide-react';
 import { useEffect, useState } from 'react';
 import { toast } from 'sonner';
 import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
@@ -50,10 +50,18 @@ interface Comment {
 function HelperForm({ helper, tasks, onSave, onCancel }: { 
   helper: Helper | null; 
   tasks: ChecklistTask[];
-  onSave: (h: Helper) => void; 
+  onSave: (h: Helper) => Promise<void>; 
   onCancel: () => void 
 }) {
   const [form, setForm] = useState<Helper>(helper || { name: '', email: '', phone: '', role: '' });
+  const [saving, setSaving] = useState(false);
+
+  const handleSave = async () => {
+    if (!form.name) return;
+    setSaving(true);
+    await onSave(form);
+    setSaving(false);
+  };
 
   return (
     <div className="border border-burgundy/20 rounded-lg p-6 mb-6 bg-burgundy/5">
@@ -82,8 +90,10 @@ function HelperForm({ helper, tasks, onSave, onCancel }: {
         </p>
       </div>
       <div className="flex gap-2">
-        <Button onClick={() => form.name && onSave(form)} className="bg-burgundy text-white hover:bg-burgundy/90">Save</Button>
-        <Button onClick={onCancel} variant="outline">Cancel</Button>
+        <Button onClick={handleSave} disabled={saving || !form.name} className="bg-burgundy text-white hover:bg-burgundy/90">
+          {saving ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save'}
+        </Button>
+        <Button onClick={onCancel} variant="outline" disabled={saving}>Cancel</Button>
       </div>
     </div>
   );
@@ -212,7 +222,7 @@ export default function WeddingSettingsPage() {
     setWedding(prev => ({ ...prev, [field]: value }));
   };
 
-  const handleSaveHelper = async (helper: Helper) => {
+  const handleSaveHelper = async (helper: Helper): Promise<void> => {
     try {
       const method = helper.id ? 'PUT' : 'POST';
       const response = await fetch('/api/wedding-helpers', {

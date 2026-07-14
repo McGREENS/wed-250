@@ -8,14 +8,14 @@ const client = createClient({
 });
 
 async function migrate() {
-  // Add columns if they don't exist (SQLite doesn't support IF NOT EXISTS for columns, so we try/catch each)
-  const columns = [
-    `ALTER TABLE tasks ADD COLUMN budget_type TEXT DEFAULT 'fixed'`,
-    `ALTER TABLE tasks ADD COLUMN budget_percent REAL`,
-    `ALTER TABLE tasks ADD COLUMN actual_spent REAL`,
+  const addCols = [
+    `ALTER TABLE tasks ADD COLUMN quantity REAL`,
+    `ALTER TABLE tasks ADD COLUMN unit_price REAL`,
+    `ALTER TABLE tasks ADD COLUMN deposit REAL`,
+    `ALTER TABLE tasks ADD COLUMN market_price REAL`,
   ];
 
-  for (const sql of columns) {
+  for (const sql of addCols) {
     try {
       await client.execute(sql);
       console.log('OK:', sql);

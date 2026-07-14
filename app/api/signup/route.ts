@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 import { db } from "@/lib/db";
-import { users, vendors, weddings, referrals, publicReferralLinks } from "@/lib/db/schema";
+import { users, vendors, weddings, referrals, publicReferralLinks, tasks as tasksTable } from "@/lib/db/schema";
 import bcrypt from "bcryptjs";
 import { eq, and } from "drizzle-orm";
 import { sendWelcomeEmail } from "@/lib/email";
+import { DEFAULT_TASKS } from "@/lib/defaultTasks";
 import type { InferInsertModel } from "drizzle-orm";
 
 type NewUser = InferInsertModel<typeof users>;
@@ -133,6 +134,21 @@ export async function POST(req: NextRequest) {
           coupleNames: name,
           weddingDate: new Date(weddingDate),
         } as any);
+      }
+
+      // Seed default tasks for this couple
+      try {
+        await db.insert(tasksTable).values(
+          DEFAULT_TASKS.map(t => ({
+            userId: user.id,
+            title: t.title,
+            category: t.category,
+            timeline: 'Custom',
+            custom: false,
+          } as any))
+        );
+      } catch (seedError) {
+        console.error('[SIGNUP] Failed to seed default tasks:', seedError);
       }
 
       // Send welcome email
