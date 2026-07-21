@@ -35,7 +35,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes, quantity, unitPrice, deposit, marketPrice } = await request.json();
+    const { title, timeline = 'Custom', category = 'General', assignedHelperId, dueDate, priority = 'medium', notes, quantity, unitPrice, deposit, marketPrice, progress, vendorName, vendorBooked } = await request.json();
     if (!title) {
       return NextResponse.json({ error: 'Title is required' }, { status: 400 });
     }
@@ -55,6 +55,9 @@ export async function POST(request: NextRequest) {
       unitPrice: unitPrice ? parseFloat(unitPrice) : null,
       deposit: deposit ? parseFloat(deposit) : null,
       marketPrice: marketPrice ? parseFloat(marketPrice) : null,
+      progress: progress || 'not_started',
+      vendorName: vendorName || null,
+      vendorBooked: vendorBooked ?? false,
       custom: true,
     } as any).returning();
 
@@ -199,7 +202,7 @@ export async function PUT(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes, quantity, unitPrice, deposit, marketPrice } = await request.json();
+    const { id, title, timeline, category, assignedHelperId, dueDate, priority, notes, quantity, unitPrice, deposit, marketPrice, progress, vendorName, vendorBooked } = await request.json();
     if (!id) {
       return NextResponse.json({ error: 'Task ID is required' }, { status: 400 });
     }
@@ -217,6 +220,9 @@ export async function PUT(request: NextRequest) {
         unitPrice: unitPrice != null ? parseFloat(unitPrice) : null,
         deposit: deposit != null ? parseFloat(deposit) : null,
         marketPrice: marketPrice != null ? parseFloat(marketPrice) : null,
+        progress: progress || 'not_started',
+        vendorName: vendorName || null,
+        vendorBooked: vendorBooked ?? false,
         updatedAt: new Date(),
       } as any)
       .where(eq(tasksTable.id, id))

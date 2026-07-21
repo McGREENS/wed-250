@@ -49,7 +49,7 @@ export default function UserSidebar() {
       } lg:translate-x-0 ${
         collapsed ? 'lg:w-20' : 'lg:w-64'
       } w-64 rounded-2xl shadow-xl overflow-hidden`}
-        style={{ background: 'linear-gradient(160deg, #f9f0f2 0%, #f3e0e4 40%, #ede0e3 100%)' }}
+        style={{ background: 'white' }}
       >
         <div className="flex flex-col h-full">
           <div className="p-6 border-b border-burgundy/10 flex items-center justify-center relative">

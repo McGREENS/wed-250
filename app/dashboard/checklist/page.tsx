@@ -24,6 +24,10 @@ interface Task {
   unitPrice?: number | null;
   deposit?: number | null;
   marketPrice?: number | null;
+  progress?: string | null;
+  vendorName?: string | null;
+  vendorBooked?: boolean | null;
+  dueDate?: string | null;
 }
 
 interface Helper {
@@ -47,6 +51,10 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
     unitPrice: task?.unitPrice != null ? String(task.unitPrice) : '',
     deposit: task?.deposit != null ? String(task.deposit) : '',
     marketPrice: task?.marketPrice != null ? String(task.marketPrice) : '',
+    progress: task?.progress || 'not_started',
+    vendorName: task?.vendorName || '',
+    vendorBooked: task?.vendorBooked ?? false,
+    dueDate: task?.dueDate ? String(task.dueDate).slice(0, 10) : '',
   });
   const [loading, setLoading] = useState(false);
 
@@ -68,6 +76,7 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
       unitPrice: form.unitPrice !== '' ? parseFloat(form.unitPrice) : null,
       deposit: form.deposit !== '' ? parseFloat(form.deposit) : null,
       marketPrice: form.marketPrice !== '' ? parseFloat(form.marketPrice) : null,
+      dueDate: form.dueDate || null,
     });
     setLoading(false);
   };
@@ -106,20 +115,20 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
 
           {total != null && (
             <div className="bg-sand/40 rounded-lg px-4 py-2 flex items-center justify-between text-sm">
-              <span className="text-charcoal/70">Total</span>
-              <span className="font-semibold text-charcoal">{total.toLocaleString()} RWF</span>
+              <span className="text-charcoal/70">Total (auto)</span>
+              <span className="font-semibold text-charcoal">RWF {total.toLocaleString()}</span>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div>
-              <Label className="text-sm font-medium mb-2">Deposit (RWF)</Label>
+              <Label className="text-sm font-medium mb-2">Paid so far (RWF)</Label>
               <Input type="number" min="0" value={form.deposit}
                 onChange={(e) => setForm(prev => ({ ...prev, deposit: e.target.value }))}
                 placeholder="e.g., 20000" className="border-gray-200" />
             </div>
             <div>
-              <Label className="text-sm font-medium mb-2">Price on Market (RWF)</Label>
+              <Label className="text-sm font-medium mb-2">Market Price (RWF)</Label>
               <Input type="number" min="0" value={form.marketPrice}
                 onChange={(e) => setForm(prev => ({ ...prev, marketPrice: e.target.value }))}
                 placeholder="e.g., 60000" className="border-gray-200" />
@@ -128,13 +137,13 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
 
           {balance != null && (
             <div className="bg-burgundy/5 rounded-lg px-4 py-2 flex items-center justify-between text-sm">
-              <span className="text-charcoal/70">Balance</span>
-              <span className="font-semibold text-burgundy">{balance.toLocaleString()} RWF</span>
+              <span className="text-charcoal/70">Remaining</span>
+              <span className="font-semibold text-burgundy">RWF {balance.toLocaleString()}</span>
             </div>
           )}
 
           <div>
-            <Label className="text-sm font-medium mb-2">Helper</Label>
+            <Label className="text-sm font-medium mb-2">Assigned to</Label>
             <select
               value={form.assignedHelperId}
               onChange={(e) => setForm(prev => ({ ...prev, assignedHelperId: e.target.value }))}
@@ -144,6 +153,45 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
               {helpers.map(h => (
                 <option key={h.id} value={h.id}>{h.name}{h.role ? ` (${h.role})` : ''}</option>
               ))}
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-2">Progress</Label>
+            <select
+              value={form.progress}
+              onChange={(e) => setForm(prev => ({ ...prev, progress: e.target.value }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+            >
+              <option value="not_started">Not started</option>
+              <option value="in_progress">In progress</option>
+              <option value="done">Done</option>
+            </select>
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-2">Reminder date</Label>
+            <Input type="date" value={form.dueDate}
+              onChange={(e) => setForm(prev => ({ ...prev, dueDate: e.target.value }))}
+              className="border-gray-200" />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-2">Vendor name</Label>
+            <Input value={form.vendorName}
+              onChange={(e) => setForm(prev => ({ ...prev, vendorName: e.target.value }))}
+              placeholder="e.g. Saveur Catering Co." className="border-gray-200" />
+          </div>
+
+          <div>
+            <Label className="text-sm font-medium mb-2">Vendor booked?</Label>
+            <select
+              value={form.vendorBooked ? 'yes' : 'no'}
+              onChange={(e) => setForm(prev => ({ ...prev, vendorBooked: e.target.value === 'yes' }))}
+              className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm"
+            >
+              <option value="no">Not yet</option>
+              <option value="yes">Yes, booked</option>
             </select>
           </div>
 

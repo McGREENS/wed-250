@@ -215,6 +215,9 @@ export const tasks = sqliteTable("tasks", {
   unitPrice: real("unit_price"),
   deposit: real("deposit"),
   marketPrice: real("market_price"),
+  progress: text("progress").default("not_started"), // not_started | in_progress | done
+  vendorName: text("vendor_name"),
+  vendorBooked: integer("vendor_booked", { mode: "boolean" }).default(false),
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
