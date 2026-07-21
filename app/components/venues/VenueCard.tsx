@@ -14,6 +14,10 @@ export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false
   const [isLoading, setIsLoading] = useState(false);
   const [favorite, setFavorite] = useState(isFavorite);
 
+  const features: string[] = Array.isArray(venue.features)
+    ? venue.features
+    : (() => { try { return JSON.parse(venue.features || '[]'); } catch { return []; } })();
+
   const handleCardClick = () => {
     if (!session?.user) {
       toast.error('Please login to view venue details');
@@ -123,15 +127,15 @@ export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false
                       {venue.venue_type}
                     </Badge>
                   )}
-                  {venue.features?.slice(0, 3).map((feature, idx) => (
+                  {features.slice(0, 3).map((feature, idx) => (
                     <Badge key={idx} variant="outline" className="text-gray-600">
                       <CheckCircle className="w-3 h-3 mr-1" />
                       {feature}
                     </Badge>
                   ))}
-                  {venue.features?.length > 3 && (
+                  {features.length > 3 && (
                     <Badge variant="outline" className="text-gray-600">
-                      +{venue.features.length - 3} more
+                      +{features.length - 3} more
                     </Badge>
                   )}
                 </div>
@@ -219,7 +223,7 @@ export default function VenueCard({ venue, viewMode = 'grid', isFavorite = false
                 {venue.venue_type}
               </Badge>
             )}
-            {venue.features?.slice(0, 2).map((feature, idx) => (
+            {features.slice(0, 2).map((feature, idx) => (
               <Badge key={idx} variant="outline" className="text-xs text-gray-600 py-0 px-2">
                 {feature}
               </Badge>

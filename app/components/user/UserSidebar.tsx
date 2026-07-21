@@ -30,7 +30,7 @@ export default function UserSidebar() {
       {/* Mobile Menu Button */}
       <button
         onClick={() => setMobileOpen(true)}
-        className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white rounded-lg shadow-md border border-gray-200"
+        className="lg:hidden fixed top-5 left-5 z-40 p-2 bg-white/90 backdrop-blur rounded-xl shadow-md border border-burgundy/15"
       >
         <Menu className="w-6 h-6 text-charcoal" />
       </button>
@@ -44,13 +44,15 @@ export default function UserSidebar() {
       )}
 
       {/* Sidebar */}
-      <aside className={`fixed left-0 top-0 h-screen bg-white border-r border-gray-200 transition-all duration-300 z-50 ${
-        mobileOpen ? 'translate-x-0' : '-translate-x-full'
+      <aside className={`fixed left-3 top-3 h-[calc(100vh-1.5rem)] transition-all duration-300 z-50 ${
+        mobileOpen ? 'translate-x-0' : '-translate-x-[calc(100%+1rem)]'
       } lg:translate-x-0 ${
         collapsed ? 'lg:w-20' : 'lg:w-64'
-      } w-64`}>
+      } w-64 rounded-2xl shadow-xl overflow-hidden`}
+        style={{ background: 'linear-gradient(160deg, #f9f0f2 0%, #f3e0e4 40%, #ede0e3 100%)' }}
+      >
         <div className="flex flex-col h-full">
-          <div className="p-6 border-b border-gray-200 flex items-center justify-center relative">
+          <div className="p-6 border-b border-burgundy/10 flex items-center justify-center relative">
             {!collapsed ? (
               <Link href="/dashboard" className="flex items-center justify-center w-full" onClick={() => setMobileOpen(false)}>
                 <Image src="/logo-couple.png" alt="Andiza Logo" width={120} height={120} className="object-contain" priority />
@@ -76,7 +78,7 @@ export default function UserSidebar() {
             </button>
           </div>
 
-          <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <nav className="flex-1 p-4 space-y-2 overflow-y-auto scrollbar-none" style={{ scrollbarWidth: 'none' }}>
             {navItems.map((item) => {
               const Icon = item.icon;
               const isActive = pathname === item.href;
@@ -86,8 +88,8 @@ export default function UserSidebar() {
                   key={item.href}
                   href={item.href}
                   onClick={() => setMobileOpen(false)}
-                  className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-lg transition-colors relative ${
-                    isActive ? 'bg-burgundy text-white' : 'text-charcoal hover:bg-sand/30'
+                  className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-xl transition-colors relative ${
+                    isActive ? 'bg-burgundy text-white shadow-sm' : 'text-charcoal hover:bg-burgundy/10'
                   }`}
                   title={collapsed ? item.label : ''}
                 >
@@ -103,13 +105,13 @@ export default function UserSidebar() {
             })}
           </nav>
 
-          <div className="p-4 border-t border-gray-200">
+          <div className="p-4 border-t border-burgundy/10">
             <button
               onClick={() => {
                 const siteUrl = process.env.NEXT_PUBLIC_SITE_URL || window.location.origin;
                 signOut({ callbackUrl: `${siteUrl}/login` });
               }}
-              className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-lg text-red-600 hover:bg-red-50 transition-colors w-full`}
+              className={`flex items-center ${collapsed ? 'lg:justify-center' : 'gap-3'} gap-3 px-4 py-3 rounded-xl text-red-600 hover:bg-red-100/60 transition-colors w-full`}
               title={collapsed ? 'Logout' : ''}
             >
               <LogOut className="w-5 h-5 flex-shrink-0" />

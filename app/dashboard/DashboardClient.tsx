@@ -4,7 +4,7 @@ import UserPageLayout from '@/app/components/user/UserPageLayout';
 import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Progress } from "@/app/components/ui/progress";
-import { Calendar, Heart, DollarSign, CheckCircle, TrendingUp, Plus, MapPin, Star, Users, X, ClipboardList } from 'lucide-react';
+import { Calendar, Heart, DollarSign, CheckCircle, TrendingUp, Plus, MapPin, Star, Users, X, ClipboardList, AlertTriangle } from 'lucide-react';
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
 import { useSession } from 'next-auth/react';
@@ -41,10 +41,18 @@ interface Task {
   custom: boolean;
 }
 
+interface RiskAlert {
+  level: 'high' | 'medium' | 'low';
+  message: string;
+  action: string;
+  href: string;
+}
+
 export default function DashboardClient() {
   const [stats, setStats] = useState<DashboardStats | null>(null);
   const [recentBookings, setRecentBookings] = useState<RecentBooking[]>([]);
   const [upcomingTasks, setUpcomingTasks] = useState<Task[]>([]);
+  const [riskAlerts, setRiskAlerts] = useState<RiskAlert[]>([]);
   const [loading, setLoading] = useState(true);
   const [showWelcomePopup, setShowWelcomePopup] = useState(false);
   const { data: session } = useSession();
@@ -61,10 +69,11 @@ export default function DashboardClient() {
   useEffect(() => {
     const fetchDashboardData = async () => {
       try {
-        const [statsRes, bookingsRes, tasksRes] = await Promise.all([
+        const [statsRes, bookingsRes, tasksRes, alertsRes] = await Promise.all([
           fetch('/api/dashboard/stats'),
           fetch('/api/dashboard/recent-bookings'),
-          fetch('/api/dashboard/tasks')
+          fetch('/api/dashboard/tasks'),
+          fetch('/api/dashboard/risk-alerts'),
         ]);
 
         if (statsRes.ok) {
@@ -79,9 +88,13 @@ export default function DashboardClient() {
 
         if (tasksRes.ok) {
           const tasksData = await tasksRes.json();
-          // Get only incomplete tasks, limit to 4
           const incompleteTasks = tasksData.filter((task: Task) => !task.completed).slice(0, 4);
           setUpcomingTasks(incompleteTasks);
+        }
+
+        if (alertsRes.ok) {
+          const alertsData = await alertsRes.json();
+          setRiskAlerts(alertsData.alerts || []);
         }
       } catch (error) {
         console.error('Failed to fetch dashboard data:', error);
@@ -361,7 +374,74 @@ export default function DashboardClient() {
           </Card>
         </div>
 
-        <div className="grid lg:grid-cols-2 gap-4 sm:gap-6">
+        <div className="grid lg:grid-cols-3 gap-4 sm:gap-6">
+          {/* Risk Alerts */}
+          <Card className="shadow-sm overflow-hidden border-0" style={{ background: 'linear-gradient(135deg, #f9f0f2 0%, #f3e0e4 50%, #ede0e3 100%)' }}>
+            <CardContent className="p-4 sm:p-6">
+              {/* Header */}
+              <div className="flex items-center justify-between mb-5">
+                <div className="flex items-center gap-2.5">
+                  <div className="w-8 h-8 rounded-lg bg-white/10 flex items-center justify-center">
+                    <AlertTriangle className="w-4 h-4 text-amber-400" />
+                  </div>
+                  <div>
+                    <h3 className="text-sm font-bold text-charcoal">Risk Alerts</h3>
+                    <p className="text-[10px] text-charcoal/40">{riskAlerts.length} issue{riskAlerts.length !== 1 ? 's' : ''} detected</p>
+                  </div>
+                </div>
+                <span className={`text-[10px] font-bold px-2 py-1 rounded-full ${
+                  riskAlerts.some(a => a.level === 'high') ? 'bg-red-100 text-red-700' :
+                  riskAlerts.some(a => a.level === 'medium') ? 'bg-amber-100 text-amber-700' :
+                  riskAlerts.length === 0 ? 'bg-emerald-100 text-emerald-700' :
+                  'bg-blue-100 text-blue-700'
+                }`}>
+                  {riskAlerts.some(a => a.level === 'high') ? 'ACTION NEEDED' :
+                   riskAlerts.some(a => a.level === 'medium') ? 'ATTENTION' :
+                   riskAlerts.length === 0 ? 'ALL CLEAR' : 'INFO'}
+                </span>
+              </div>
+
+              {riskAlerts.length === 0 ? (
+                <div className="flex flex-col items-center justify-center py-8 text-center">
+                  <div className="w-14 h-14 rounded-full bg-emerald-100 border border-emerald-300 flex items-center justify-center mb-3">
+                    <CheckCircle className="w-7 h-7 text-emerald-600" />
+                  </div>
+                  <p className="text-sm font-semibold text-charcoal">You're all set!</p>
+                  <p className="text-xs text-charcoal/50 mt-1">No risks detected right now</p>
+                </div>
+              ) : (
+                <div className="space-y-2.5">
+                  {riskAlerts.map((alert, i) => {
+                    const cfg = {
+                      high:   { dot: 'bg-red-500',    ring: 'border-red-400/40',   bg: 'bg-red-50',      label: 'text-red-600',   msg: 'text-red-900/80',   btnBg: 'bg-red-100 hover:bg-red-200 text-red-700' },
+                      medium: { dot: 'bg-amber-500',  ring: 'border-amber-400/40', bg: 'bg-amber-50',    label: 'text-amber-700', msg: 'text-amber-900/80', btnBg: 'bg-amber-100 hover:bg-amber-200 text-amber-800' },
+                      low:    { dot: 'bg-blue-500',   ring: 'border-blue-400/40',  bg: 'bg-blue-50',     label: 'text-blue-700',  msg: 'text-blue-900/80',  btnBg: 'bg-blue-100 hover:bg-blue-200 text-blue-700' },
+                    }[alert.level];
+                    return (
+                      <div key={i} className={`rounded-xl border ${cfg.ring} ${cfg.bg} p-3`}>
+                        <div className="flex items-start gap-2.5">
+                          <div className={`w-2 h-2 rounded-full mt-1.5 flex-shrink-0 ${cfg.dot} shadow-lg`}
+                            style={{ boxShadow: `0 0 6px 1px ${alert.level === 'high' ? 'rgba(239,68,68,0.6)' : alert.level === 'medium' ? 'rgba(251,191,36,0.6)' : 'rgba(96,165,250,0.6)'}` }}
+                          />
+                          <div className="flex-1 min-w-0">
+                            <p className={`text-[10px] font-bold uppercase tracking-wider mb-0.5 ${cfg.label}`}>{alert.level}</p>
+                            <p className={`text-xs leading-relaxed ${cfg.msg}`}>{alert.message}</p>
+                          </div>
+                        </div>
+                        <div className="mt-2.5 flex justify-end">
+                          <Link href={alert.href}>
+                            <button className={`text-[11px] font-semibold px-3 py-1 rounded-lg transition-colors ${cfg.btnBg}`}>
+                              {alert.action} →
+                            </button>
+                          </Link>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </CardContent>
+          </Card>
           <Card className="border-sand shadow-sm bg-gradient-to-br from-cream via-sand/25 to-cream overflow-hidden">
             <CardContent className="p-4 sm:p-6">
               <div className="flex items-center justify-between mb-4">
