@@ -38,6 +38,13 @@ function useImageUpload(updateFormData: (f: string, v: any) => void) {
     };
 }
 
+// Shared name validation
+function validateName(value: string): string {
+    if (!value || value.trim().length === 0) return 'This field is required.';
+    if (value.trim().length < 3) return 'Must be at least 3 characters.';
+    return '';
+}
+
 // Shared wizard shell
 function WizardShell({ title, badgeLabel, badgeCls = "bg-burgundy/10 text-burgundy", steps, currentStep, children, onBack, onNext, onSubmit, isSubmitting, isLastStep, submitLabel = "Create Service" }: {
     title: string; badgeLabel?: string; badgeCls?: string;
@@ -100,7 +107,7 @@ function WizardShell({ title, badgeLabel, badgeCls = "bg-burgundy/10 text-burgun
 }
 
 // Shared field wrappers
-function Field({ label, required, hint, children }: { label: string; required?: boolean; hint?: string; children: React.ReactNode }) {
+function Field({ label, required, hint, error, children }: { label: string; required?: boolean; hint?: string; error?: string; children: React.ReactNode }) {
     return (
         <div>
             <label className="block text-sm font-medium text-charcoal mb-1.5">
@@ -108,6 +115,7 @@ function Field({ label, required, hint, children }: { label: string; required?: 
                 {hint && <span className="text-gray-400 font-normal ml-1 text-xs">({hint})</span>}
             </label>
             {children}
+            {error && <p className="text-red-500 text-xs mt-1">{error}</p>}
         </div>
     );
 }
@@ -303,7 +311,19 @@ export default function ServiceCreationWizard({ onComplete, onCancel, editMode =
 
 // GeneralServiceForm - dispatches to the right wizard per service type
 function GeneralServiceForm({ serviceType, currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
-    const props = { currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode };
+    const [nameError, setNameError] = useState('');
+
+    const guardedNext = () => {
+        if (currentStep === 1) {
+            const err = validateName(formData.name);
+            setNameError(err);
+            if (err) return;
+        }
+        setNameError('');
+        onNext();
+    };
+
+    const props = { currentStep, formData, updateFormData, onBack, onNext: guardedNext, onSubmit, isSubmitting, editMode, nameError, clearNameError: () => setNameError('') };
     if (serviceType === "Photography" || serviceType === "Videography") return <PhotographyVideographyForm serviceType={serviceType} {...props} />;
     if (serviceType === "Catering") return <CateringForm {...props} />;
     if (serviceType === "Music") return <MusicForm {...props} />;
@@ -341,7 +361,7 @@ function GeneralServiceForm({ serviceType, currentStep, formData, updateFormData
 }
 
 // Photography & Videography wizard
-function PhotographyVideographyForm({ serviceType, currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function PhotographyVideographyForm({ serviceType, currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const isPhoto = serviceType === "Photography";
     const steps = ["Basic Info", "Shoot Details", "Equipment & Style", "Pricing & Delivery"];
     const handleImage = useImageUpload(updateFormData);
@@ -363,8 +383,8 @@ function PhotographyVideographyForm({ serviceType, currentStep, formData, update
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required>
-                        <Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)}
+                    <Field label="Package Name" required error={nameError}>
+                        <Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }}
                             placeholder={isPhoto ? "e.g., Premium Wedding Photography" : "e.g., Cinematic Wedding Film"} />
                     </Field>
                     <Field label="Package Description" required>
@@ -594,7 +614,7 @@ function PhotographyVideographyForm({ serviceType, currentStep, formData, update
         </WizardShell>
     );
 }
-function CateringForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function CateringForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Menu & Service", "Logistics", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -604,7 +624,7 @@ function CateringForm({ currentStep, formData, updateFormData, onBack, onNext, o
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Premium Wedding Buffet" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Premium Wedding Buffet" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your catering style, cuisine specialties..." /></Field>
                     <Field label="Cuisine Type" required>
                         <Sel value={formData.cuisineType || ""} onChange={(v) => updateFormData("cuisineType", v)}>
@@ -709,7 +729,7 @@ function CateringForm({ currentStep, formData, updateFormData, onBack, onNext, o
     );
 }
 
-function MusicForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function MusicForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Performance Details", "Equipment", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -719,7 +739,7 @@ function MusicForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Premium DJ & MC Package" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Premium DJ & MC Package" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your performance style, experience, and what you offer..." /></Field>
                     <Field label="Entertainment Type" required>
                         <Sel value={formData.entertainmentType || ""} onChange={(v) => updateFormData("entertainmentType", v)}>
@@ -812,7 +832,7 @@ function MusicForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
     );
 }
 
-function TransportForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function TransportForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Fleet & Coverage", "Extras", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -822,7 +842,7 @@ function TransportForm({ currentStep, formData, updateFormData, onBack, onNext, 
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Bridal Car & Guest Shuttle Package" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Bridal Car & Guest Shuttle Package" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your fleet, service quality, and what you offer..." /></Field>
                     <Field label="Service Type" required>
                         <Sel value={formData.transportType || ""} onChange={(v) => updateFormData("transportType", v)}>
@@ -907,7 +927,7 @@ function TransportForm({ currentStep, formData, updateFormData, onBack, onNext, 
     );
 }
 
-function AttireForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function AttireForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Attire Options", "Fittings & Alterations", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -917,7 +937,7 @@ function AttireForm({ currentStep, formData, updateFormData, onBack, onNext, onS
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Bridal Gown & Suit Package" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Bridal Gown & Suit Package" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your collection, design style, and what you offer..." /></Field>
                     <Field label="Attire Category" required>
                         <Sel value={formData.attireCategory || ""} onChange={(v) => updateFormData("attireCategory", v)}>
@@ -1019,7 +1039,7 @@ function AttireForm({ currentStep, formData, updateFormData, onBack, onNext, onS
     );
 }
 
-function DecorationForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function DecorationForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Decor Services", "Style & Setup", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -1029,7 +1049,7 @@ function DecorationForm({ currentStep, formData, updateFormData, onBack, onNext,
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Luxury Floral & Decor Package" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Luxury Floral & Decor Package" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your decoration style, specialties, and what makes your work unique..." /></Field>
                     <Field label="Service Type" required>
                         <Sel value={formData.decorType || ""} onChange={(v) => updateFormData("decorType", v)}>
@@ -1135,7 +1155,7 @@ function DecorationForm({ currentStep, formData, updateFormData, onBack, onNext,
     );
 }
 
-function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Services & Coverage", "Products & Team", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -1145,7 +1165,7 @@ function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onS
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Bridal Glam Package" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Bridal Glam Package" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your style, experience, and what makes your work unique..." /></Field>
                     <Field label="Service Type" required>
                         <Sel value={formData.makeupType || ""} onChange={(v) => updateFormData("makeupType", v)}>
@@ -1238,7 +1258,7 @@ function MakeupForm({ currentStep, formData, updateFormData, onBack, onNext, onS
     );
 }
 
-function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Details", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
 
@@ -1259,8 +1279,8 @@ function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNex
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Service Type" required>
-                        <Input value={formData.serviceType || ""} onChange={(e) => updateFormData("serviceType", e.target.value)} placeholder="e.g., Florist, Invitations, Honeymoon Planning" />
+                    <Field label="Service Type" required error={nameError}>
+                        <Input value={formData.serviceType || ""} onChange={(e) => { updateFormData("serviceType", e.target.value); clearNameError?.(); }} placeholder="e.g., Florist, Invitations, Honeymoon Planning" />
                     </Field>
                     <Field label="Package Name" required>
                         <Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Premium Floral Arrangement" />
@@ -1322,7 +1342,7 @@ function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNex
     );
 }
 
-function PlanningForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode }: any) {
+function PlanningForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting, editMode, nameError, clearNameError }: any) {
     const steps = ["Basic Info", "Services Offered", "Experience", "Pricing"];
     const handleImage = useImageUpload(updateFormData);
     return (
@@ -1332,7 +1352,7 @@ function PlanningForm({ currentStep, formData, updateFormData, onBack, onNext, o
             {currentStep === 1 && (
                 <div className="space-y-5">
                     <h3 className="font-semibold text-lg text-charcoal">Basic Information</h3>
-                    <Field label="Package Name" required><Input value={formData.name || ""} onChange={(e) => updateFormData("name", e.target.value)} placeholder="e.g., Full Wedding Planning Package" /></Field>
+                    <Field label="Package Name" required error={nameError}><Input value={formData.name || ""} onChange={(e) => { updateFormData("name", e.target.value); clearNameError?.(); }} placeholder="e.g., Full Wedding Planning Package" /></Field>
                     <Field label="Description" required><Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your planning approach and what makes you stand out..." /></Field>
                     <Field label="Planning Type" required>
                         <Sel value={formData.planningType || ""} onChange={(v) => updateFormData("planningType", v)}>
@@ -1424,6 +1444,21 @@ function PlanningForm({ currentStep, formData, updateFormData, onBack, onNext, o
 
 function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSubmit, isSubmitting }: any) {
     const steps = ["Basic Info", "Capacity & Facilities", "Services & Amenities", "Pricing & Policies"];
+    const [nameError, setNameError] = useState('');
+    const [locationError, setLocationError] = useState('');
+
+    const guardedNext = () => {
+        if (currentStep === 1) {
+            const nErr = validateName(formData.name);
+            const lErr = validateName(formData.location);
+            setNameError(nErr);
+            setLocationError(lErr);
+            if (nErr || lErr) return;
+        }
+        setNameError('');
+        setLocationError('');
+        onNext();
+    };
 
     const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const file = e.target.files?.[0];
@@ -1466,10 +1501,10 @@ function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                             <label className="block text-sm font-medium text-charcoal mb-2">Venue Name *</label>
                             <Input 
                                 value={formData.name || ""} 
-                                onChange={(e) => updateFormData("name", e.target.value)} 
+                                onChange={(e) => { updateFormData("name", e.target.value); setNameError(''); }} 
                                 placeholder="e.g., Grand Ballroom at Serena Hotel" 
-                                required 
                             />
+                            {nameError && <p className="text-red-500 text-xs mt-1">{nameError}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-charcoal mb-2">Venue Description *</label>
@@ -1505,10 +1540,10 @@ function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                             <label className="block text-sm font-medium text-charcoal mb-2">Location/Address *</label>
                             <Input 
                                 value={formData.location || ""} 
-                                onChange={(e) => updateFormData("location", e.target.value)} 
+                                onChange={(e) => { updateFormData("location", e.target.value); setLocationError(''); }} 
                                 placeholder="e.g., KN 3 Ave, Kigali" 
-                                required 
                             />
+                            {locationError && <p className="text-red-500 text-xs mt-1">{locationError}</p>}
                         </div>
                         <div>
                             <label className="block text-sm font-medium text-charcoal mb-2">Venue Image</label>
@@ -1786,7 +1821,7 @@ function VenueForm({ currentStep, formData, updateFormData, onBack, onNext, onSu
                         Back
                     </Button>
                     {currentStep < steps.length ? (
-                        <Button onClick={onNext} className="bg-burgundy hover:bg-burgundy-light text-white">
+                        <Button onClick={guardedNext} className="bg-burgundy hover:bg-burgundy-light text-white">
                             Next
                             <ArrowRight className="w-4 h-4 ml-2" />
                         </Button>

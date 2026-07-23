@@ -5,7 +5,7 @@ import { Card, CardContent } from "@/app/components/ui/card";
 import { Button } from "@/app/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/app/components/ui/tabs";
 import { Badge } from "@/app/components/ui/badge";
-import { Calendar, MapPin, Phone, Mail, Clock, CheckCircle, AlertCircle, Heart, Eye, ChevronDown, ChevronUp } from 'lucide-react';
+import { Calendar, MapPin, Phone, Mail, Clock, CheckCircle, AlertCircle, Heart, Eye, ChevronDown, ChevronUp, XCircle } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
 import LoadingSpinner from '@/app/components/common/LoadingSpinner';
@@ -13,6 +13,7 @@ import PaymentPanel from '@/app/components/dashboard/PaymentPanel';
 import PaymentHistory from '@/app/components/dashboard/PaymentHistory';
 import PaymentProgress from '@/app/components/dashboard/PaymentProgress';
 import DiscoverBanner from '@/app/components/dashboard/DiscoverBanner';
+import { toast } from 'sonner';
 
 export default function BookingsPage() {
     const router = useRouter();
@@ -177,6 +178,31 @@ export default function BookingsPage() {
         const [paymentStatus, setPaymentStatus] = useState<string>(booking.paymentStatus || 'UNPAID');
         const [refreshTrigger, setRefreshTrigger] = useState(0);
         const [showPayments, setShowPayments] = useState(false);
+        const [bookingStatus, setBookingStatus] = useState<string>(booking.status);
+        const [cancelling, setCancelling] = useState(false);
+        const [confirmCancel, setConfirmCancel] = useState(false);
+
+        const handleCancelBooking = async () => {
+            setCancelling(true);
+            try {
+                const res = await fetch('/api/bookings', {
+                    method: 'PATCH',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify({ id: booking.id }),
+                });
+                if (res.ok) {
+                    setBookingStatus('cancelled');
+                    toast.success('Booking cancelled successfully');
+                } else {
+                    toast.error('Failed to cancel booking');
+                }
+            } catch {
+                toast.error('Failed to cancel booking');
+            } finally {
+                setCancelling(false);
+                setConfirmCancel(false);
+            }
+        };
 
         const handlePaymentAdded = (newTotalPaid: number, newStatus: string) => {
             setTotalPaid(newTotalPaid);
@@ -319,10 +345,43 @@ export default function BookingsPage() {
                         >
                             View Vendor
                         </Button>
-                        {booking.status === 'pending' && (
-                            <Button variant="outline" className="flex-1 border-burgundy-light text-burgundy-light hover:bg-burgundy-light hover:text-white">
-                                Cancel Booking
-                            </Button>
+                        {(bookingStatus === 'pending' || bookingStatus === 'confirmed') && (
+                            confirmCancel ? (
+                                <div className="flex gap-2 flex-1">
+                                    <Button
+                                        variant="outline"
+                                        size="sm"
+                                        className="flex-1 border-gray-300 text-charcoal/70 hover:bg-gray-100"
+                                        onClick={() => setConfirmCancel(false)}
+                                        disabled={cancelling}
+                                    >
+                                        Keep
+                                    </Button>
+                                    <Button
+                                        size="sm"
+                                        className="flex-1 bg-red-600 hover:bg-red-700 text-white"
+                                        onClick={handleCancelBooking}
+                                        disabled={cancelling}
+                                    >
+                                        {cancelling ? 'Cancelling...' : 'Yes, Cancel'}
+                                    </Button>
+                                </div>
+                            ) : (
+                                <Button
+                                    variant="outline"
+                                    className="flex-1 border-red-300 text-red-600 hover:bg-red-50"
+                                    onClick={() => setConfirmCancel(true)}
+                                >
+                                    <XCircle className="w-4 h-4 mr-1.5" />
+                                    Cancel Booking
+                                </Button>
+                            )
+                        )}
+                        {bookingStatus === 'cancelled' && (
+                            <div className="flex-1 flex items-center justify-center gap-1.5 px-3 py-2 rounded-lg bg-gray-100 text-charcoal/50 text-sm">
+                                <XCircle className="w-4 h-4" />
+                                Cancelled
+                            </div>
                         )}
                     </div>
                 </CardContent>
