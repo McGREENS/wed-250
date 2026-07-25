@@ -1,9 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
+import { createClient } from '@libsql/client';
 import { bookings, vendors, users } from '@/lib/db/schema';
 import { eq, and } from 'drizzle-orm';
 import { resolveOwnerUserId } from '@/lib/resolveOwner';
+
+const rawClient = createClient({
+  url: process.env.TURSO_DATABASE_URL!,
+  authToken: process.env.TURSO_AUTH_TOKEN!,
+});
 
 export async function GET(req: NextRequest) {
   try {
@@ -59,13 +65,12 @@ export async function PATCH(req: NextRequest) {
     const { id } = await req.json();
     if (!id) return NextResponse.json({ error: 'Booking ID required' }, { status: 400 });
 
-    const updated = await db
-      .update(bookings)
-      .set({ status: 'cancelled', updatedAt: new Date() })
-      .where(and(eq(bookings.id, id), eq(bookings.userId, userId)))
-      .returning();
+    const result = await rawClient.execute({
+      sql: `UPDATE bookings SET status = 'cancelled', updated_at = ? WHERE id = ? AND user_id = ?`,
+      args: [Math.floor(Date.now() / 1000), id, userId],
+    });
 
-    if (!updated.length) {
+    if (result.rowsAffected === 0) {
       return NextResponse.json({ error: 'Booking not found' }, { status: 404 });
     }
 
