@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 **Procedure Version**: 1.0  
 **Effective Date**: January 2025  
@@ -111,7 +111,7 @@ A breach of security leading to accidental or unlawful:
 
 **Data Protection Officer (Lead)**:
 - INYANGE Larissa
-- Email: dpo@andiza.co.rw
+- Email: dpo@andiza.rw
 - Phone: [DPO Phone]
 - Role: Overall coordination and decision-making
 
@@ -123,7 +123,7 @@ A breach of security leading to accidental or unlawful:
 
 **Legal Counsel**:
 - [Name]
-- Email: legal@andiza.co.rw
+- Email: legal@andiza.rw
 - Phone: [Phone]
 - Role: Legal advice and regulatory liaison
 
@@ -187,7 +187,7 @@ A breach of security leading to accidental or unlawful:
 ### 6.2 Reporting Channels
 
 **Internal Reporting**:
-- Email: security@andiza.co.rw
+- Email: security@andiza.rw
 - Phone: [Security Hotline]
 - Incident reporting form: [Internal URL]
 - Direct contact to DPO or IT Security
@@ -709,13 +709,13 @@ Upon notification from processor:
 ## 17. Contact Information
 
 **Data Protection Officer**: INYANGE Larissa  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Phone]  
 **Mobile**: [DPO Mobile]
 
-**Security Team**: security@andiza.co.rw  
-**Legal Team**: legal@andiza.co.rw  
-**General Privacy**: privacy@andiza.co.rw
+**Security Team**: security@andiza.rw  
+**Legal Team**: legal@andiza.rw  
+**General Privacy**: privacy@andiza.rw
 
 **24/7 Emergency Hotline**: [Number]
 

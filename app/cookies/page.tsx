@@ -286,13 +286,13 @@ export default function CookiePolicyPage() {
                 <div>
                   <h3 className="font-semibold text-charcoal mb-2">General Inquiries</h3>
                   <p className="text-sm text-gray-600">
-                    Email: <a href="mailto:privacy@andiza.co.rw" className="text-burgundy hover:underline">privacy@andiza.co.rw</a>
+                    Email: <a href="mailto:privacy@andiza.rw" className="text-burgundy hover:underline">privacy@andiza.rw</a>
                   </p>
                 </div>
                 <div>
                   <h3 className="font-semibold text-charcoal mb-2">Data Protection Officer</h3>
                   <p className="text-sm text-gray-600">
-                    Email: <a href="mailto:dpo@andiza.co.rw" className="text-burgundy hover:underline">dpo@andiza.co.rw</a>
+                    Email: <a href="mailto:dpo@andiza.rw" className="text-burgundy hover:underline">dpo@andiza.rw</a>
                   </p>
                 </div>
               </div>

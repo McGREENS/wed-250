@@ -32,8 +32,8 @@ export function ConsentFormModal() {
               <p><strong>Company:</strong> Andiza Co. Limited</p>
               <p><strong>Registration No:</strong> 156009534</p>
               <p><strong>Address:</strong> Nyarugenge, Kigali, Rwanda</p>
-              <p><strong>Email:</strong> privacy@andiza.co.rw</p>
-              <p><strong>DPO:</strong> INYANGE Larissa (dpo@andiza.co.rw)</p>
+              <p><strong>Email:</strong> privacy@andiza.rw</p>
+              <p><strong>DPO:</strong> INYANGE Larissa (dpo@andiza.rw)</p>
             </div>
           </div>
 
@@ -132,7 +132,7 @@ export function ConsentFormModal() {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold text-charcoal mb-2">Questions or Concerns?</h3>
             <p className="text-sm text-gray-600">
-              If you have any questions about this consent form or how we process your data, please contact our Data Protection Officer at <a href="mailto:dpo@andiza.co.rw" className="text-burgundy hover:underline">dpo@andiza.co.rw</a>
+              If you have any questions about this consent form or how we process your data, please contact our Data Protection Officer at <a href="mailto:dpo@andiza.rw" className="text-burgundy hover:underline">dpo@andiza.rw</a>
             </p>
           </div>
 

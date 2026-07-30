@@ -9,7 +9,7 @@ const transporter = nodemailer.createTransport({
   greetingTimeout: 10000,
   socketTimeout: 10000,
   auth: {
-    user: process.env.SMTP_USER || 'noreply@andiza.co.rw',
+    user: process.env.SMTP_USER || 'noreply@andiza.rw',
     pass: process.env.SMTP_PASSWORD || '',
   },
 });
@@ -32,7 +32,7 @@ export async function sendWelcomeEmail(email: string, name: string, role: "COUPL
           <li>Track your guest list and RSVPs</li>
           <li>Save your favorite vendors and venues</li>
         </ul>
-        <p>Ready to start planning? <a href="https://andiza.co.rw/dashboard" style="color: #8B3A3A;">Visit your dashboard</a></p>
+        <p>Ready to start planning? <a href="https://andiza.rw/dashboard" style="color: #8B3A3A;">Visit your dashboard</a></p>
         <p>Best wishes,<br/>The Andiza Team<br/>Norrsken House Kigali</p>
       </div>
     `
@@ -46,13 +46,13 @@ export async function sendWelcomeEmail(email: string, name: string, role: "COUPL
           <li>Build your portfolio and collect reviews</li>
           <li>Connect with couples planning their special day</li>
         </ul>
-        <p>Get started now: <a href="https://andiza.co.rw/login" style="color: #8B3A3A;">Visit your vendor dashboard</a></p>
+        <p>Get started now: <a href="https://andiza.rw/login" style="color: #8B3A3A;">Visit your vendor dashboard</a></p>
         <p>Best regards,<br/>The Andiza Team<br/>Norrsken House Kigali</p>
       </div>
     `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: email,
     subject,
     html,
@@ -97,7 +97,7 @@ export async function sendTourConfirmationEmail({
         </div>
         <p style="font-size: 15px; color: #555;">Please make sure to arrive on time. If you need to reschedule or have any questions, contact the venue directly.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${process.env.NEXTAUTH_URL || "https://andiza.co.rw"}/dashboard/bookings"
+          <a href="${process.env.NEXTAUTH_URL || "https://andiza.rw"}/dashboard/bookings"
              style="background-color: #8B3A3A; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: bold;">
             View in Dashboard
           </a>
@@ -108,7 +108,7 @@ export async function sendTourConfirmationEmail({
   `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: email,
     subject: `✅ Venue Visit Confirmed – ${venueName} on ${formattedDate}`,
     html,
@@ -238,7 +238,7 @@ export async function sendQuoteRequestEmail({
   `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: vendorEmail,
     replyTo: clientEmail,
     subject: `💌 New Quote Request for ${venueName} — ${eventDate}`,
@@ -312,7 +312,7 @@ export async function sendQuoteAcceptedEmail({
     </body></html>
   `;
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: clientEmail,
     subject: `✅ Booking Confirmed — ${venueName} on ${eventDate}`,
     html,
@@ -349,7 +349,7 @@ export async function sendQuoteDeclinedEmail({
                 <p style="margin:0 0 28px;font-size:14px;color:#555;line-height:1.6;">Don't worry — there are many other great venues available on Andiza. Browse alternatives and find your perfect match.</p>
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr><td align="center" style="padding:8px 0 28px;">
-                    <a href="${process.env.NEXTAUTH_URL || 'https://andiza.co.rw'}/venues" style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;">Browse More Venues</a>
+                    <a href="${process.env.NEXTAUTH_URL || 'https://andiza.rw'}/venues" style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;">Browse More Venues</a>
                   </td></tr>
                 </table>
                 <p style="margin:0;font-size:13px;color:#999;border-top:1px solid #f0f0f0;padding-top:20px;">We're sorry this didn't work out. The Andiza team is here to help you find the right venue.</p>
@@ -366,7 +366,7 @@ export async function sendQuoteDeclinedEmail({
     </body></html>
   `;
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: clientEmail,
     subject: `Quote Update — ${venueName}`,
     html,
@@ -408,7 +408,7 @@ export async function sendTourDeclinedEmail({
         </div>
         <p style="font-size: 15px; color: #555;">Don't worry — there are many other great venues available. Browse more options and schedule another visit.</p>
         <div style="text-align: center; margin: 32px 0;">
-          <a href="${process.env.NEXTAUTH_URL || "https://andiza.co.rw"}/venues"
+          <a href="${process.env.NEXTAUTH_URL || "https://andiza.rw"}/venues"
              style="background-color: #8B3A3A; color: #fff; padding: 12px 28px; border-radius: 6px; text-decoration: none; font-size: 15px; font-weight: bold;">
             Browse More Venues
           </a>
@@ -419,7 +419,7 @@ export async function sendTourDeclinedEmail({
   `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: email,
     subject: `Venue Visit Request Update – ${venueName}`,
     html,
@@ -530,7 +530,7 @@ export async function sendServiceBookingClientEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: clientEmail,
     subject: `📋 Booking Request Received — ${serviceName} on ${eventDate}`,
     html,
@@ -636,7 +636,7 @@ export async function sendServiceBookingVendorEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: vendorEmail,
     replyTo: clientEmail,
     subject: `🎊 New Booking Request — ${serviceName} for ${eventDate}`,
@@ -715,7 +715,7 @@ export async function sendAdminOnboardingEmail({
                 <!-- CTA -->
                 <table width="100%" cellpadding="0" cellspacing="0">
                   <tr><td align="center" style="padding:8px 0 28px;">
-                    <a href="${process.env.NEXTAUTH_URL || 'https://andiza.co.rw'}/login"
+                    <a href="${process.env.NEXTAUTH_URL || 'https://andiza.rw'}/login"
                        style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;letter-spacing:0.3px;">
                       Login to Admin Dashboard
                     </a>
@@ -743,7 +743,7 @@ export async function sendAdminOnboardingEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: email,
     subject: '🎉 Welcome to Andiza - Your Admin Account',
     html,
@@ -826,7 +826,7 @@ export async function sendVendorOTPEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: email,
     subject: '🔐 Verify Your Email - Andiza Vendor Registration',
     html,
@@ -858,7 +858,7 @@ export async function sendBookingStatusEmail({
     : `Hi ${clientName},\n\nYour booking with ${vendorName} has been cancelled.\n\nService: ${servicePackage}\nEvent Date: ${eventDate}\nStatus: Cancelled\n\nIf you have questions, please contact the vendor directly or reach out to us.\n\nBest wishes,\nThe Andiza Team\nNorrsken House Kigali`;
 
   return transporter.sendMail({
-    from: '"Andiza" <noreply@andiza.co.rw>',
+    from: '"Andiza" <noreply@andiza.rw>',
     to: clientEmail,
     subject,
     text,

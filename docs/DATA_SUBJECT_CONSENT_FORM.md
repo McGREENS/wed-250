@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 ---
 
@@ -103,10 +103,10 @@ I hereby confirm that:
 
 1. Download and complete this form
 2. Sign and date the form
-3. Email to: privacy@andiza.co.rw
+3. Email to: privacy@andiza.rw
 4. Subject line: "Data Subject Consent Form"
 
-Or submit online at: https://andiza.co.rw/privacy
+Or submit online at: https://andiza.rw/privacy
 
 ---
 

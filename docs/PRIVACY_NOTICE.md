@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 **Effective Date**: January 2025  
 **Last Updated**: January 2025
@@ -12,7 +12,7 @@ DPO: INYANGE Larissa (dpo@andiza.co.rw)
 
 ## 1. Introduction
 
-This Privacy Notice explains how Andiza Co. Limited ("we", "us", "our") collects, uses, discloses, and protects your personal data when you use our wedding planning platform at https://andiza.co.rw.
+This Privacy Notice explains how Andiza Co. Limited ("we", "us", "our") collects, uses, discloses, and protects your personal data when you use our wedding planning platform at https://andiza.rw.
 
 This notice is provided in compliance with Article 42 of Rwanda Law No 058/2021 on the Protection of Personal Data and Privacy.
 
@@ -23,11 +23,11 @@ This notice is provided in compliance with Article 42 of Rwanda Law No 058/2021 
 **Company Name**: Andiza Co. Limited  
 **Registration Number**: 156009534  
 **Physical Address**: [Company Address]  
-**Email**: privacy@andiza.co.rw  
+**Email**: privacy@andiza.rw  
 **Phone**: [Contact Number]
 
 **Data Protection Officer**: INYANGE Larissa  
-**DPO Email**: dpo@andiza.co.rw  
+**DPO Email**: dpo@andiza.rw  
 **DPO Phone**: [DPO Contact Number]
 
 ---
@@ -204,8 +204,8 @@ Withdraw consent at any time without affecting prior processing.
 File a complaint with the National Cyber Security Authority.
 
 **How to Exercise Your Rights:**
-- Email: privacy@andiza.co.rw or dpo@andiza.co.rw
-- Online forms: https://andiza.co.rw/privacy
+- Email: privacy@andiza.rw or dpo@andiza.rw
+- Online forms: https://andiza.rw/privacy
 - Response time: Within 30 days
 
 ---
@@ -249,13 +249,13 @@ In accordance with Articles 43-45 of Rwanda Law No 058/2021:
 
 Our platform is not intended for persons under 18 years of age. We require parental consent for processing minors' data in compliance with Rwanda Law No 058/2021.
 
-If you are a parent/guardian and believe your child has provided data without consent, contact us immediately at privacy@andiza.co.rw.
+If you are a parent/guardian and believe your child has provided data without consent, contact us immediately at privacy@andiza.rw.
 
 ---
 
 ## 13. Cookies and Tracking
 
-We use cookies and similar technologies. See our Cookie Policy at https://andiza.co.rw/cookies for details.
+We use cookies and similar technologies. See our Cookie Policy at https://andiza.rw/cookies for details.
 
 **Cookie Categories:**
 - Essential cookies (required for platform functionality)
@@ -297,16 +297,16 @@ We may update this Privacy Notice periodically. Changes will be posted on this p
 For questions, concerns, or to exercise your rights:
 
 **General Privacy Inquiries:**  
-Email: privacy@andiza.co.rw  
+Email: privacy@andiza.rw  
 Phone: [Contact Number]
 
 **Data Protection Officer:**  
 Name: INYANGE Larissa  
-Email: dpo@andiza.co.rw  
+Email: dpo@andiza.rw  
 Phone: [DPO Contact Number]
 
 **Legal Matters:**  
-Email: legal@andiza.co.rw
+Email: legal@andiza.rw
 
 **Mailing Address:**  
 Andiza Co. Limited  

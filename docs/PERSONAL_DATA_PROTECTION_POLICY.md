@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 **Policy Version**: 1.0  
 **Effective Date**: January 2025  
@@ -102,7 +102,7 @@ In accordance with Rwanda Law No 058/2021, we adhere to the following principles
 
 ### 4.2 Data Protection Officer (DPO)
 **Name**: INYANGE Larissa  
-**Email**: dpo@andiza.co.rw
+**Email**: dpo@andiza.rw
 
 **Responsibilities**:
 - Monitor compliance with Rwanda Law No 058/2021
@@ -578,11 +578,11 @@ See separate Data Retention Policy & Schedule document.
 ## 19. Contact Information
 
 **Data Protection Officer**: INYANGE Larissa  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Contact Number]
 
-**Privacy Team**: privacy@andiza.co.rw  
-**Legal Team**: legal@andiza.co.rw
+**Privacy Team**: privacy@andiza.rw  
+**Legal Team**: legal@andiza.rw
 
 **Mailing Address**:  
 Andiza Co. Limited  

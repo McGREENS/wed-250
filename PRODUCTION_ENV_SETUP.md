@@ -1,7 +1,7 @@
 # Production Environment Variables Setup
 
 ## Issue
-Logout and email links are redirecting to `localhost:3000` instead of `andiza.co.rw` in production.
+Logout and email links are redirecting to `localhost:3000` instead of `andiza.rw` in production.
 
 ## Root Cause
 The `NEXTAUTH_URL` environment variable is not set correctly in your production hosting platform.
@@ -28,12 +28,12 @@ The `NEXTAUTH_URL` environment variable is not set correctly in your production 
 Add or update the following environment variable:
 
 ```
-NEXTAUTH_URL=https://andiza.co.rw
+NEXTAUTH_URL=https://andiza.rw
 ```
 
 **Important**: Make sure there are NO trailing slashes!
-- ✅ Correct: `https://andiza.co.rw`
-- ❌ Wrong: `https://andiza.co.rw/`
+- ✅ Correct: `https://andiza.rw`
+- ❌ Wrong: `https://andiza.rw/`
 
 ### Step 3: Verify All Required Environment Variables
 
@@ -43,7 +43,7 @@ Ensure these are all set in production:
 TURSO_DATABASE_URL=libsql://andiza-laurier.aws-us-east-1.turso.io
 TURSO_AUTH_TOKEN=eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...
 NEXTAUTH_SECRET=+n19EyrKgTsGXstzRuqi0VtVZR9YulkWkAzTsrTkW+0=
-NEXTAUTH_URL=https://andiza.co.rw
+NEXTAUTH_URL=https://andiza.rw
 RESEND_API_KEY=re_VakzLr3M_FuVQwk74CkmNk8uGrfVGDzBZ
 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=EGQYTV8YDQ45dmz2sMK0KJdWMrdFREQEvarm9Vumi2g
 NEXT_PUBLIC_YANDEX_VERIFICATION=48e46663851b9fe0
@@ -62,11 +62,11 @@ After deployment, test the following:
 1. **Logout Test**:
    - Login to your site
    - Click logout
-   - Should redirect to `https://andiza.co.rw` (not localhost)
+   - Should redirect to `https://andiza.rw` (not localhost)
 
 2. **Email Links Test**:
    - Trigger a test email (e.g., signup, booking confirmation)
-   - Check that all links in the email point to `https://andiza.co.rw`
+   - Check that all links in the email point to `https://andiza.rw`
 
 3. **Chat Functionality Test**:
    - Go to a venue or service page
@@ -89,7 +89,7 @@ If this variable is not set in production, NextAuth may:
 
 All email templates in `lib/email.ts` use:
 ```javascript
-process.env.NEXTAUTH_URL || 'https://andiza.co.rw'
+process.env.NEXTAUTH_URL || 'https://andiza.rw'
 ```
 
 This means they have a fallback, but it's better to set the environment variable explicitly.

@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 **Policy Version**: 1.0  
 **Effective Date**: January 2025  
@@ -499,11 +499,11 @@ Retention records retained for 7 years.
 ## 15. Contact Information
 
 **Data Protection Officer**: INYANGE Larissa  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Contact Number]
 
-**Retention Inquiries**: privacy@andiza.co.rw  
-**Legal Hold Inquiries**: legal@andiza.co.rw
+**Retention Inquiries**: privacy@andiza.rw  
+**Legal Hold Inquiries**: legal@andiza.rw
 
 ---
 

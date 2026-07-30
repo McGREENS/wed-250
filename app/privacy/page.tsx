@@ -69,11 +69,11 @@ export default function PrivacyPolicyPage() {
               </div>
               <div>
                 <p className="font-semibold text-charcoal mb-1">Website</p>
-                <p className="text-gray-600">www.andiza.co.rw</p>
+                <p className="text-gray-600">www.andiza.rw</p>
               </div>
               <div>
                 <p className="font-semibold text-charcoal mb-1">Contact Email</p>
-                <p className="text-gray-600">privacy@andiza.co.rw</p>
+                <p className="text-gray-600">privacy@andiza.rw</p>
               </div>
             </div>
             
@@ -86,7 +86,7 @@ export default function PrivacyPolicyPage() {
                 </div>
                 <div>
                   <p className="font-semibold text-charcoal mb-1">Contact</p>
-                  <p className="text-gray-600">dpo@andiza.co.rw</p>
+                  <p className="text-gray-600">dpo@andiza.rw</p>
                 </div>
               </div>
               <p className="text-sm text-gray-600 mt-4">
@@ -415,7 +415,7 @@ export default function PrivacyPolicyPage() {
 
             <div className="bg-burgundy/10 border border-burgundy/30 rounded-lg p-4">
               <p className="text-sm text-charcoal">
-                <strong>How to Exercise Your Rights:</strong> To exercise any of these rights, please contact our Data Protection Officer at dpo@andiza.co.rw or use our <Link href="#forms" className="text-burgundy underline">Data Subject Rights Request Forms</Link> below. We will respond to your request within 30 days.
+                <strong>How to Exercise Your Rights:</strong> To exercise any of these rights, please contact our Data Protection Officer at dpo@andiza.rw or use our <Link href="#forms" className="text-burgundy underline">Data Subject Rights Request Forms</Link> below. We will respond to your request within 30 days.
               </p>
             </div>
           </CardContent>
@@ -606,7 +606,7 @@ export default function PrivacyPolicyPage() {
                 <li>Use the unsubscribe link in marketing emails</li>
                 <li>Update your preferences in account settings</li>
                 <li>Submit a Consent Withdrawal Form</li>
-                <li>Contact our DPO at dpo@andiza.co.rw</li>
+                <li>Contact our DPO at dpo@andiza.rw</li>
               </ul>
               <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                 <p className="text-sm font-medium text-charcoal mb-2">Download Forms:</p>
@@ -834,13 +834,13 @@ export default function PrivacyPolicyPage() {
               <div className="grid md:grid-cols-2 gap-4">
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <p className="font-medium text-charcoal text-sm mb-2">General Inquiries</p>
-                  <p className="text-xs text-gray-600 mb-1">Email: privacy@andiza.co.rw</p>
-                  <p className="text-xs text-gray-600">Website: www.andiza.co.rw</p>
+                  <p className="text-xs text-gray-600 mb-1">Email: privacy@andiza.rw</p>
+                  <p className="text-xs text-gray-600">Website: www.andiza.rw</p>
                 </div>
                 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
                   <p className="font-medium text-charcoal text-sm mb-2">Data Protection Officer</p>
                   <p className="text-xs text-gray-600 mb-1">Name: INYANGE Larissa</p>
-                  <p className="text-xs text-gray-600">Email: dpo@andiza.co.rw</p>
+                  <p className="text-xs text-gray-600">Email: dpo@andiza.rw</p>
                 </div>
               </div>
             </div>

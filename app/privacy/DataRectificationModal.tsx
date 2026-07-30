@@ -32,8 +32,8 @@ export function DataRectificationModal() {
               <p><strong>Company:</strong> Andiza Co. Limited</p>
               <p><strong>Registration No:</strong> 156009534</p>
               <p><strong>Address:</strong> Nyarugenge, Kigali, Rwanda</p>
-              <p><strong>Email:</strong> privacy@andiza.co.rw</p>
-              <p><strong>DPO:</strong> INYANGE Larissa (dpo@andiza.co.rw)</p>
+              <p><strong>Email:</strong> privacy@andiza.rw</p>
+              <p><strong>DPO:</strong> INYANGE Larissa (dpo@andiza.rw)</p>
             </div>
           </div>
 
@@ -215,7 +215,7 @@ export function DataRectificationModal() {
               Submit this completed form along with supporting documents to:
             </p>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
-              <li><strong>Email:</strong> dpo@andiza.co.rw</li>
+              <li><strong>Email:</strong> dpo@andiza.rw</li>
               <li><strong>Mail:</strong> Andiza Co. Limited, Nyarugenge, Kigali, Rwanda</li>
             </ul>
           </div>
@@ -224,7 +224,7 @@ export function DataRectificationModal() {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold text-charcoal mb-2">Questions or Assistance?</h3>
             <p className="text-sm text-gray-600">
-              Contact our Data Protection Officer at <a href="mailto:dpo@andiza.co.rw" className="text-burgundy hover:underline">dpo@andiza.co.rw</a>
+              Contact our Data Protection Officer at <a href="mailto:dpo@andiza.rw" className="text-burgundy hover:underline">dpo@andiza.rw</a>
             </p>
           </div>
         </div>

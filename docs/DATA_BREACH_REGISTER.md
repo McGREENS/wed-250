@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 **Register Version**: 1.0  
 **Last Updated**: January 2025  
@@ -497,11 +497,11 @@ Document near-miss incidents (potential breaches that were prevented) to identif
 ## 11. Contact Information
 
 **Data Protection Officer**: INYANGE Larissa  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Phone]
 
-**Breach Reporting**: security@andiza.co.rw  
-**Privacy Team**: privacy@andiza.co.rw
+**Breach Reporting**: security@andiza.rw  
+**Privacy Team**: privacy@andiza.rw
 
 **National Cyber Security Authority**:  
 Email: [Authority Email]  

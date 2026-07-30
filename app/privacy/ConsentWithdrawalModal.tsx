@@ -32,8 +32,8 @@ export function ConsentWithdrawalModal() {
               <p><strong>Company:</strong> Andiza Co. Limited</p>
               <p><strong>Registration No:</strong> 156009534</p>
               <p><strong>Address:</strong> Nyarugenge, Kigali, Rwanda</p>
-              <p><strong>Email:</strong> privacy@andiza.co.rw</p>
-              <p><strong>DPO:</strong> INYANGE Larissa (dpo@andiza.co.rw)</p>
+              <p><strong>Email:</strong> privacy@andiza.rw</p>
+              <p><strong>DPO:</strong> INYANGE Larissa (dpo@andiza.rw)</p>
             </div>
           </div>
 
@@ -171,7 +171,7 @@ export function ConsentWithdrawalModal() {
               You can submit this consent withdrawal form through any of the following methods:
             </p>
             <ul className="list-disc list-inside text-sm text-gray-600 space-y-1 ml-4">
-              <li><strong>Email:</strong> Send completed form to dpo@andiza.co.rw</li>
+              <li><strong>Email:</strong> Send completed form to dpo@andiza.rw</li>
               <li><strong>Online:</strong> Update preferences in your account settings</li>
               <li><strong>Marketing Emails:</strong> Use the unsubscribe link in any marketing email</li>
               <li><strong>Mail:</strong> Send to Andiza Co. Limited, Nyarugenge, Kigali, Rwanda</li>
@@ -182,7 +182,7 @@ export function ConsentWithdrawalModal() {
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h3 className="font-semibold text-charcoal mb-2">Questions or Assistance?</h3>
             <p className="text-sm text-gray-600">
-              If you need help completing this form or have questions about withdrawing consent, please contact our Data Protection Officer at <a href="mailto:dpo@andiza.co.rw" className="text-burgundy hover:underline">dpo@andiza.co.rw</a>
+              If you need help completing this form or have questions about withdrawing consent, please contact our Data Protection Officer at <a href="mailto:dpo@andiza.rw" className="text-burgundy hover:underline">dpo@andiza.rw</a>
             </p>
           </div>
         </div>

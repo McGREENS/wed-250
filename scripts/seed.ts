@@ -20,7 +20,7 @@ async function seed() {
     const adminPassword = await bcrypt.hash("admin123", 10);
     const [admin] = await db.insert(schema.users).values({
       name: "Admin User",
-      email: "admin@andiza.co.rw",
+      email: "admin@andiza.rw",
       password: adminPassword,
       role: "ADMIN",
       phone: "+250788000001",
@@ -143,7 +143,7 @@ async function seed() {
     console.log("\n🔑 Test Credentials:");
     console.log("═══════════════════════════════════════");
     console.log("Admin:");
-    console.log("  Email: admin@andiza.co.rw");
+    console.log("  Email: admin@andiza.rw");
     console.log("  Password: admin123");
     console.log("\nCouple Users:");
     console.log("  Email: couple1@test.com | Password: couple123");

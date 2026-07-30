@@ -31,14 +31,14 @@ Rwanda
 
 **Contact Information**:  
 **Phone**: [Company Phone]  
-**Email**: legal@andiza.co.rw  
-**Website**: https://andiza.co.rw
+**Email**: legal@andiza.rw  
+**Website**: https://andiza.rw
 
 ### 1.2 Data Protection Officer
 
 **Name**: INYANGE Larissa  
 **Title**: Data Protection Officer  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Phone]  
 **Mobile**: [DPO Mobile]
 
@@ -800,7 +800,7 @@ Date: [Date]
 
 **Name**: INYANGE Larissa  
 **Title**: Data Protection Officer  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Phone]  
 **Mobile**: [DPO Mobile]  
 **Available**: [24/7 / Business hours]
@@ -818,8 +818,8 @@ Date: [Date]
 **Organization**: Andiza Co. Limited  
 **Address**: [Physical Address]  
 **Phone**: [Company Phone]  
-**Email**: legal@andiza.co.rw  
-**Website**: https://andiza.co.rw
+**Email**: legal@andiza.rw  
+**Website**: https://andiza.rw
 
 ---
 

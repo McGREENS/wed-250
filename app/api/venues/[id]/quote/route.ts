@@ -56,7 +56,7 @@ export async function POST(req: NextRequest, { params }: { params: Promise<{ id:
     } as any).returning();
 
     // Send email notification to vendor (non-blocking — don't fail the request if email fails)
-    const dashboardUrl = `${process.env.NEXTAUTH_URL || 'https://www.andiza.co.rw'}/vendor/bookings`;
+    const dashboardUrl = `${process.env.NEXTAUTH_URL || 'https://www.andiza.rw'}/vendor/bookings`;
     try {
       console.log('Sending quote email to vendor:', vendorUser.email);
       const emailResult = await sendQuoteRequestEmail({

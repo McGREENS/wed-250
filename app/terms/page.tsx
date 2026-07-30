@@ -40,7 +40,7 @@ export default function TermsOfServicePage() {
           </CardHeader>
           <CardContent>
             <p className="text-sm text-gray-600 mb-4">
-              These Terms of Service ("Terms") constitute a legally binding agreement between you and Andiza Co. Limited ("Andiza", "we", "us", or "our") regarding your access to and use of the Andiza platform, including our website (www.andiza.co.rw), mobile applications, and related services (collectively, the "Platform").
+              These Terms of Service ("Terms") constitute a legally binding agreement between you and Andiza Co. Limited ("Andiza", "we", "us", or "our") regarding your access to and use of the Andiza platform, including our website (www.andiza.rw), mobile applications, and related services (collectively, the "Platform").
             </p>
             <p className="text-sm text-gray-600 mb-4">
               By accessing or using the Platform, you acknowledge that you have read, understood, and agree to be bound by these Terms and our Privacy Policy. If you do not agree to these Terms, you must not access or use the Platform.
@@ -441,10 +441,10 @@ export default function TermsOfServicePage() {
                 <div>
                   <h3 className="font-semibold text-charcoal mb-2">Contact Details</h3>
                   <p className="text-sm text-gray-600 mb-1">
-                    Email: <a href="mailto:legal@andiza.co.rw" className="text-burgundy hover:underline">legal@andiza.co.rw</a>
+                    Email: <a href="mailto:legal@andiza.rw" className="text-burgundy hover:underline">legal@andiza.rw</a>
                   </p>
                   <p className="text-sm text-gray-600">
-                    Website: <a href="https://www.andiza.co.rw" className="text-burgundy hover:underline">www.andiza.co.rw</a>
+                    Website: <a href="https://www.andiza.rw" className="text-burgundy hover:underline">www.andiza.rw</a>
                   </p>
                 </div>
               </div>

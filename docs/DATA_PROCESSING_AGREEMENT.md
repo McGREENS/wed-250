@@ -6,7 +6,7 @@
 Andiza Co. Limited  
 Registration No: 156009534  
 Address: [Company Address]  
-Email: legal@andiza.co.rw  
+Email: legal@andiza.rw  
 ("Controller")
 
 **AND**
@@ -390,7 +390,7 @@ All notices shall be sent to:
 
 **Controller**:  
 Andiza Co. Limited  
-Email: legal@andiza.co.rw  
+Email: legal@andiza.rw  
 Address: [Company Address]
 
 **Processor**:  

@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 **Notification Date**: [Date]  
 **Breach Reference**: BREACH-[YEAR]-[NUMBER]
@@ -114,7 +114,7 @@ We recommend you take the following steps to protect yourself:
 ### Immediate Actions (Do This Now)
 
 **1. Change Your Password**
-- Log in to your Andiza account at https://andiza.co.rw
+- Log in to your Andiza account at https://andiza.rw
 - Go to Settings > Security
 - Change your password to a strong, unique password
 - Do not reuse passwords from other websites
@@ -183,12 +183,12 @@ We are committed to supporting you through this incident.
 **Support Resources**:
 
 **Dedicated Helpline**:
-- Email: breach-support@andiza.co.rw
+- Email: breach-support@andiza.rw
 - Phone: [Dedicated phone number]
 - Hours: [Hours of operation]
 
 **Frequently Asked Questions**:
-- Visit: https://andiza.co.rw/breach-faq
+- Visit: https://andiza.rw/breach-faq
 - Updated regularly with new information
 
 **One-on-One Support**:
@@ -197,7 +197,7 @@ We are committed to supporting you through this incident.
 
 **Regular Updates**:
 - We will provide updates as we learn more
-- Check: https://andiza.co.rw/security-update
+- Check: https://andiza.rw/security-update
 - Or email us to request updates
 
 ---
@@ -212,7 +212,7 @@ Under Rwanda Law No 058/2021 on the Protection of Personal Data and Privacy, you
 
 **Right to Access**:
 - You can request a copy of your personal data we hold
-- Email: privacy@andiza.co.rw
+- Email: privacy@andiza.rw
 
 **Right to Rectification**:
 - You can request correction of any inaccurate data
@@ -220,7 +220,7 @@ Under Rwanda Law No 058/2021 on the Protection of Personal Data and Privacy, you
 
 **Right to Erasure**:
 - You can request deletion of your account and data
-- Email: privacy@andiza.co.rw with "Account Deletion Request"
+- Email: privacy@andiza.rw with "Account Deletion Request"
 
 **Right to Complain**:
 - You can file a complaint with the National Cyber Security Authority
@@ -268,16 +268,16 @@ We deeply regret that this incident occurred. The security and privacy of your p
 If you have any questions or concerns about this incident, please contact us:
 
 **Data Protection Officer**: INYANGE Larissa  
-**Email**: dpo@andiza.co.rw  
+**Email**: dpo@andiza.rw  
 **Phone**: [DPO Phone]
 
 **Breach Support Team**:  
-**Email**: breach-support@andiza.co.rw  
+**Email**: breach-support@andiza.rw  
 **Phone**: [Support Phone]  
 **Hours**: [Hours]
 
 **General Privacy Inquiries**:  
-**Email**: privacy@andiza.co.rw
+**Email**: privacy@andiza.rw
 
 **Mailing Address**:  
 Andiza Co. Limited  
@@ -375,9 +375,9 @@ This is optional but helps us ensure you received this important information.
 
 ## 17. Stay Informed
 
-**Security Updates Page**: https://andiza.co.rw/security-update  
-**FAQ Page**: https://andiza.co.rw/breach-faq  
-**Support Email**: breach-support@andiza.co.rw
+**Security Updates Page**: https://andiza.rw/security-update  
+**FAQ Page**: https://andiza.rw/breach-faq  
+**Support Email**: breach-support@andiza.rw
 
 We will update these resources regularly as we learn more.
 

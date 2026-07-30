@@ -29,10 +29,10 @@
 - Improved error messages with details
 
 ### 3. Localhost to Production Domain
-**Issue**: Logout and email links redirecting to localhost instead of andiza.co.rw
+**Issue**: Logout and email links redirecting to localhost instead of andiza.rw
 
 **Files Modified**:
-- `.env` - Changed `NEXTAUTH_URL` from `http://localhost:3000` to `https://andiza.co.rw`
+- `.env` - Changed `NEXTAUTH_URL` from `http://localhost:3000` to `https://andiza.rw`
 
 **Files Created**:
 - `.env.local.example` - Template for local development environment variables
@@ -40,7 +40,7 @@
 **Email Templates Already Using Fallback**:
 All email templates in `lib/email.ts` already use:
 ```javascript
-process.env.NEXTAUTH_URL || 'https://andiza.co.rw'
+process.env.NEXTAUTH_URL || 'https://andiza.rw'
 ```
 This means they will work correctly with the updated .env file.
 
@@ -64,12 +64,12 @@ This means they will work correctly with the updated .env file.
 1. Go to your hosting platform's environment variables settings
 2. Set the following environment variable:
    ```
-   NEXTAUTH_URL=https://andiza.co.rw
+   NEXTAUTH_URL=https://andiza.rw
    ```
 3. Ensure all other environment variables are set (see `.env.example`)
 4. Redeploy the application
-5. Test logout functionality - should redirect to https://andiza.co.rw
-6. Test email links - should point to https://andiza.co.rw
+5. Test logout functionality - should redirect to https://andiza.rw
+6. Test email links - should point to https://andiza.rw
 7. Test chat functionality - couples can now chat with vendors without bookings
 
 ### For Local Development:
@@ -82,7 +82,7 @@ This means they will work correctly with the updated .env file.
 - `TURSO_DATABASE_URL` - Your Turso database URL
 - `TURSO_AUTH_TOKEN` - Your Turso authentication token
 - `NEXTAUTH_SECRET` - Your NextAuth secret key
-- `NEXTAUTH_URL` - **MUST be https://andiza.co.rw** (this fixes the logout issue)
+- `NEXTAUTH_URL` - **MUST be https://andiza.rw** (this fixes the logout issue)
 - `RESEND_API_KEY` - Your Resend API key for emails
 - `SMTP_HOST`, `SMTP_PORT`, `SMTP_USER`, `SMTP_PASSWORD` - SMTP configuration
 - `NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION` - Google site verification
@@ -90,8 +90,8 @@ This means they will work correctly with the updated .env file.
 
 ## Testing Checklist
 
-- [ ] Logout redirects to https://andiza.co.rw (not localhost)
-- [ ] Email links point to https://andiza.co.rw
+- [ ] Logout redirects to https://andiza.rw (not localhost)
+- [ ] Email links point to https://andiza.rw
 - [ ] "Chat with Vendor" button works on venue pages
 - [ ] "Chat with Vendor" button works on service pages
 - [ ] Messages page auto-selects conversation from vendorId parameter

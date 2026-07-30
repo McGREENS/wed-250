@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Email: privacy@andiza.co.rw  
-DPO: INYANGE Larissa (dpo@andiza.co.rw)
+Email: privacy@andiza.rw  
+DPO: INYANGE Larissa (dpo@andiza.rw)
 
 ---
 
@@ -139,10 +139,10 @@ Please attach copies of the following documents:
 1. Download and complete this form
 2. Attach required verification documents
 3. Sign and date the form
-4. Email to: privacy@andiza.co.rw
+4. Email to: privacy@andiza.rw
 5. Subject line: "Parental Consent Form - [Minor's Name]"
 
-Or submit online at: https://andiza.co.rw/privacy
+Or submit online at: https://andiza.rw/privacy
 
 **Processing Time**: Your request will be processed within 5 business days of receipt.
 

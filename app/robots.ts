@@ -9,6 +9,6 @@ export default function robots(): MetadataRoute.Robots {
         disallow: ['/api/', '/dashboard/', '/vendor/', '/admin/'],
       },
     ],
-    sitemap: 'https://andiza.co.rw/sitemap.xml',
+    sitemap: 'https://andiza.rw/sitemap.xml',
   }
 }

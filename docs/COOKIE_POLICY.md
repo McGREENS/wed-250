@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Website: https://andiza.co.rw  
-Email: privacy@andiza.co.rw
+Website: https://andiza.rw  
+Email: privacy@andiza.rw
 
 **Effective Date**: January 2025  
 **Last Updated**: January 2025
@@ -12,7 +12,7 @@ Email: privacy@andiza.co.rw
 
 ## 1. Introduction
 
-This Cookie Policy explains how Andiza Co. Limited ("we", "us", "our") uses cookies and similar technologies on our website at https://andiza.co.rw.
+This Cookie Policy explains how Andiza Co. Limited ("we", "us", "our") uses cookies and similar technologies on our website at https://andiza.rw.
 
 By using our website, you consent to the use of cookies in accordance with this policy and your preferences.
 
@@ -271,7 +271,7 @@ Under Rwanda Law No 058/2021, you have the right to:
 - **Erasure**: Delete cookies through browser settings
 
 **Exercise Your Rights**:
-- Email: privacy@andiza.co.rw
+- Email: privacy@andiza.rw
 - Cookie settings: Website footer
 - Browser settings: See Section 6
 
@@ -284,7 +284,7 @@ We do not knowingly use cookies to collect data from children under 18 without p
 Parents can:
 - Review cookie settings
 - Disable cookies in browser
-- Contact us with concerns: privacy@andiza.co.rw
+- Contact us with concerns: privacy@andiza.rw
 
 ---
 
@@ -328,16 +328,16 @@ We conduct regular cookie audits to:
 ## 16. Contact Us
 
 **General Cookie Inquiries:**  
-Email: privacy@andiza.co.rw  
+Email: privacy@andiza.rw  
 Phone: [Contact Number]
 
 **Data Protection Officer:**  
 Name: INYANGE Larissa  
-Email: dpo@andiza.co.rw  
+Email: dpo@andiza.rw  
 Phone: [DPO Contact Number]
 
 **Technical Support:**  
-Email: support@andiza.co.rw
+Email: support@andiza.rw
 
 **Mailing Address:**  
 Andiza Co. Limited  
@@ -350,8 +350,8 @@ Kigali, Rwanda
 
 If you have concerns about our use of cookies:
 
-1. Contact us: privacy@andiza.co.rw
-2. Contact our DPO: dpo@andiza.co.rw
+1. Contact us: privacy@andiza.rw
+2. Contact our DPO: dpo@andiza.rw
 3. File a complaint with:
 
 **National Cyber Security Authority**  
@@ -363,9 +363,9 @@ Phone: [Authority Phone]
 
 ## 18. Additional Resources
 
-- **Privacy Notice**: https://andiza.co.rw/privacy
-- **Website Privacy Policy**: https://andiza.co.rw/privacy
-- **Terms of Service**: https://andiza.co.rw/terms
+- **Privacy Notice**: https://andiza.rw/privacy
+- **Website Privacy Policy**: https://andiza.rw/privacy
+- **Terms of Service**: https://andiza.rw/terms
 - **Cookie Settings**: Website footer
 
 ---

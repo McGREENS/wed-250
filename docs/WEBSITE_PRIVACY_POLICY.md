@@ -2,8 +2,8 @@
 
 **Andiza Co. Limited**  
 Registration No: 156009534  
-Website: https://andiza.co.rw  
-Email: privacy@andiza.co.rw
+Website: https://andiza.rw  
+Email: privacy@andiza.rw
 
 **Effective Date**: January 2025  
 **Last Updated**: January 2025
@@ -12,7 +12,7 @@ Email: privacy@andiza.co.rw
 
 ## 1. Introduction
 
-This Website Privacy Policy describes how Andiza Co. Limited ("Andiza", "we", "us", "our") collects, uses, and protects information when you visit our website at https://andiza.co.rw.
+This Website Privacy Policy describes how Andiza Co. Limited ("Andiza", "we", "us", "our") collects, uses, and protects information when you visit our website at https://andiza.rw.
 
 This policy applies specifically to website visitors and complements our general Privacy Notice.
 
@@ -24,7 +24,7 @@ This policy covers:
 - Public website pages (homepage, about, vendors, venues)
 - User account areas (dashboards, settings)
 - Administrative areas (admin panel)
-- All subdomains of andiza.co.rw
+- All subdomains of andiza.rw
 
 ---
 
@@ -100,7 +100,7 @@ We use the following types of cookies:
 **Managing Cookies:**
 - Use our cookie consent banner
 - Adjust browser settings
-- Visit https://andiza.co.rw/cookies for details
+- Visit https://andiza.rw/cookies for details
 
 ---
 
@@ -209,7 +209,7 @@ Object to processing for marketing or legitimate interests.
 Withdraw consent for cookies and marketing at any time.
 
 **Exercise Your Rights:**
-- Email: privacy@andiza.co.rw
+- Email: privacy@andiza.rw
 - Cookie settings: Use our cookie banner
 - Newsletter: Click unsubscribe link
 
@@ -228,7 +228,7 @@ Our website is accessible globally. By using our website, you consent to:
 
 Our website is not directed to children under 18. We do not knowingly collect data from children without parental consent.
 
-If you believe a child has provided data without consent, contact us at privacy@andiza.co.rw.
+If you believe a child has provided data without consent, contact us at privacy@andiza.rw.
 
 ---
 
@@ -256,7 +256,7 @@ We may update our website and this policy. Changes will be reflected with a new 
 
 ## 16. Accessibility
 
-We are committed to making our website accessible to all users. If you experience accessibility issues, contact us at privacy@andiza.co.rw.
+We are committed to making our website accessible to all users. If you experience accessibility issues, contact us at privacy@andiza.rw.
 
 ---
 
@@ -269,15 +269,15 @@ This policy applies to our website. If we launch mobile applications, separate p
 ## 18. Contact Information
 
 **General Inquiries:**  
-Email: privacy@andiza.co.rw  
+Email: privacy@andiza.rw  
 Phone: [Contact Number]
 
 **Data Protection Officer:**  
 Name: INYANGE Larissa  
-Email: dpo@andiza.co.rw
+Email: dpo@andiza.rw
 
 **Technical Support:**  
-Email: support@andiza.co.rw
+Email: support@andiza.rw
 
 **Mailing Address:**  
 Andiza Co. Limited  
@@ -290,7 +290,7 @@ Kigali, Rwanda
 
 If you have concerns about our privacy practices:
 
-1. Contact our DPO: dpo@andiza.co.rw
+1. Contact our DPO: dpo@andiza.rw
 2. File a complaint with:
 
 **National Cyber Security Authority**  
@@ -329,10 +329,10 @@ By using our website, you consent to:
 
 ## 23. Additional Resources
 
-- **Full Privacy Notice**: https://andiza.co.rw/privacy
-- **Cookie Policy**: https://andiza.co.rw/cookies
-- **Terms of Service**: https://andiza.co.rw/terms
-- **Data Subject Rights Forms**: https://andiza.co.rw/privacy
+- **Full Privacy Notice**: https://andiza.rw/privacy
+- **Cookie Policy**: https://andiza.rw/cookies
+- **Terms of Service**: https://andiza.rw/terms
+- **Data Subject Rights Forms**: https://andiza.rw/privacy
 
 ---
 
