@@ -2,15 +2,15 @@ import nodemailer from 'nodemailer';
 
 const smtpPort = parseInt(process.env.SMTP_PORT || '465');
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'mail.cylacon.com',
+  host: process.env.SMTP_HOST || 'whm-market06.aos.rw',
   port: smtpPort,
   secure: smtpPort === 465,
   connectionTimeout: 10000,
   greetingTimeout: 10000,
   socketTimeout: 10000,
   auth: {
-    user: process.env.SMTP_USER || 'andiza@cylacon.com',
-    pass: process.env.SMTP_PASSWORD || '3fGapSreQA7BhVLJemFs',
+    user: process.env.SMTP_USER || 'noreply@andiza.co.rw',
+    pass: process.env.SMTP_PASSWORD || '',
   },
 });
 
@@ -52,7 +52,7 @@ export async function sendWelcomeEmail(email: string, name: string, role: "COUPL
     `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject,
     html,
@@ -108,7 +108,7 @@ export async function sendTourConfirmationEmail({
   `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: `✅ Venue Visit Confirmed – ${venueName} on ${formattedDate}`,
     html,
@@ -238,7 +238,7 @@ export async function sendQuoteRequestEmail({
   `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: vendorEmail,
     replyTo: clientEmail,
     subject: `💌 New Quote Request for ${venueName} — ${eventDate}`,
@@ -312,7 +312,7 @@ export async function sendQuoteAcceptedEmail({
     </body></html>
   `;
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject: `✅ Booking Confirmed — ${venueName} on ${eventDate}`,
     html,
@@ -366,7 +366,7 @@ export async function sendQuoteDeclinedEmail({
     </body></html>
   `;
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject: `Quote Update — ${venueName}`,
     html,
@@ -419,7 +419,7 @@ export async function sendTourDeclinedEmail({
   `;
 
   const result = await transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: `Venue Visit Request Update – ${venueName}`,
     html,
@@ -530,7 +530,7 @@ export async function sendServiceBookingClientEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject: `📋 Booking Request Received — ${serviceName} on ${eventDate}`,
     html,
@@ -636,7 +636,7 @@ export async function sendServiceBookingVendorEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: vendorEmail,
     replyTo: clientEmail,
     subject: `🎊 New Booking Request — ${serviceName} for ${eventDate}`,
@@ -743,7 +743,7 @@ export async function sendAdminOnboardingEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: '🎉 Welcome to Andiza - Your Admin Account',
     html,
@@ -826,7 +826,7 @@ export async function sendVendorOTPEmail({
   `;
 
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: '🔐 Verify Your Email - Andiza Vendor Registration',
     html,
@@ -858,7 +858,7 @@ export async function sendBookingStatusEmail({
     : `Hi ${clientName},\n\nYour booking with ${vendorName} has been cancelled.\n\nService: ${servicePackage}\nEvent Date: ${eventDate}\nStatus: Cancelled\n\nIf you have questions, please contact the vendor directly or reach out to us.\n\nBest wishes,\nThe Andiza Team\nNorrsken House Kigali`;
 
   return transporter.sendMail({
-    from: '"Andiza" <andiza@cylacon.com>',
+    from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject,
     text,

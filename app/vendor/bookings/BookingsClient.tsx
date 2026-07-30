@@ -758,6 +758,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
                   <input
                     type="text"
                     required
+                    minLength={3}
                     value={formData.clientName}
                     onChange={(e) => setFormData({ ...formData, clientName: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B3A3A] focus:border-transparent"
@@ -894,6 +895,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
                   <label className="block text-sm font-medium text-gray-700 mb-1">Total Amount (RWF)</label>
                   <input
                     type="number"
+                    min="0"
                     value={formData.totalAmount}
                     onChange={(e) => setFormData({ ...formData, totalAmount: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B3A3A] focus:border-transparent"
@@ -903,6 +905,7 @@ export default function BookingsClient({ initialBookings, initialTours, initialQ
                   <label className="block text-sm font-medium text-gray-700 mb-1">Deposit Amount (RWF)</label>
                   <input
                     type="number"
+                    min="0"
                     value={formData.depositAmount}
                     onChange={(e) => setFormData({ ...formData, depositAmount: e.target.value })}
                     className="w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#8B3A3A] focus:border-transparent"

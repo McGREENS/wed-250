@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useState, useEffect, useMemo, useDeferredValue } from 'react';
 import { Search, Filter, ChevronDown, ChevronUp, Grid, List, X } from 'lucide-react';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/app/components/ui/select";
 import ServiceCard from '@/app/components/vendors/VendorCard';
@@ -38,6 +38,11 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
   const [currentPage, setCurrentPage] = useState(1);
   const [expandedSections, setExpandedSections] = useState({ type: true, price: true });
 
+  // Deferred values — UI (checkboxes/radios) updates instantly, filtering runs in background
+  const deferredTypes = useDeferredValue(selectedTypes);
+  const deferredPrice = useDeferredValue(selectedPriceRange);
+  const deferredSearch = useDeferredValue(searchQuery);
+
   useEffect(() => {
     if (!session?.user) return;
     
@@ -63,15 +68,25 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
     setCurrentPage(1);
   };
 
-  const priceRange = PRICE_RANGES.find((r) => r.id === selectedPriceRange);
+  const setPriceRange = (val: string) => {
+    setSelectedPriceRange(val);
+    setCurrentPage(1);
+  };
+
+  const setSearch = (val: string) => {
+    setSearchQuery(val);
+    setCurrentPage(1);
+  };
+
+  const priceRange = PRICE_RANGES.find((r) => r.id === deferredPrice);
 
   const filtered = useMemo(() => {
     let list = services.filter((s) => {
       const matchSearch =
-        s.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.description?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-        s.vendorName?.toLowerCase().includes(searchQuery.toLowerCase());
-      const matchType = selectedTypes.length === 0 || selectedTypes.includes(s.serviceType);
+        s.name.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        s.description?.toLowerCase().includes(deferredSearch.toLowerCase()) ||
+        s.vendorName?.toLowerCase().includes(deferredSearch.toLowerCase());
+      const matchType = deferredTypes.length === 0 || deferredTypes.includes(s.serviceType);
       const matchPrice = !priceRange || (s.price >= priceRange.min && s.price <= priceRange.max);
       return matchSearch && matchType && matchPrice;
     });
@@ -82,7 +97,7 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
     else if (sortBy === 'featured') list = [...list].sort((a, b) => (b.vendorFeatured ? 1 : 0) - (a.vendorFeatured ? 1 : 0));
 
     return list;
-  }, [services, searchQuery, selectedTypes, priceRange, sortBy]);
+  }, [services, deferredSearch, deferredTypes, priceRange, sortBy]);
 
   const PER_PAGE = 12;
   const totalPages = Math.ceil(filtered.length / PER_PAGE);
@@ -132,7 +147,7 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
               type="text"
               placeholder="Search services, vendors, descriptions..."
               value={searchQuery}
-              onChange={(e) => { setSearchQuery(e.target.value); setCurrentPage(1); }}
+              onChange={(e) => setSearch(e.target.value)}
               className="flex-grow border-none focus:ring-0 px-3 py-2 text-gray-700 rounded-full bg-transparent outline-none"
             />
             <button className="bg-burgundy text-white px-6 py-3 rounded-full font-semibold shadow-md hover:bg-burgundy-light transition-colors">
@@ -141,7 +156,7 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
           </div>
         </div>
 
-        <div className="mt-8 flex flex-wrap justify-center gap-2">
+        <div className="mt-8 flex flex-wrap justify-center gap-2 lg:hidden">
           {SERVICE_TYPES.map((type) => (
             <button
               key={type}
@@ -159,44 +174,94 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
       </section>
 
       <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 py-12">
-        {/* Mobile Filter Button */}
+        {/* Mobile Filter Button - fixed floating */}
         <button
           onClick={() => setShowMobileFilters(true)}
-          className="lg:hidden fixed bottom-6 right-6 z-40 bg-burgundy text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 font-semibold"
+          className="lg:hidden fixed bottom-6 right-6 z-30 bg-burgundy text-white px-6 py-3 rounded-full shadow-lg flex items-center gap-2 font-semibold"
         >
           <Filter className="w-5 h-5" />
           Filters
+          {(selectedTypes.length > 0 || selectedPriceRange !== 'all') && (
+            <span className="bg-white text-burgundy text-xs font-bold rounded-full w-5 h-5 flex items-center justify-center">
+              {selectedTypes.length + (selectedPriceRange !== 'all' ? 1 : 0)}
+            </span>
+          )}
         </button>
 
-        {/* Mobile Filter Backdrop */}
+        {/* Mobile Filter Drawer - rendered outside grid to avoid stacking context issues */}
         {showMobileFilters && (
-          <div
-            className="lg:hidden fixed inset-0 bg-black/50 z-40"
-            onClick={() => setShowMobileFilters(false)}
-          />
+          <>
+            <div className="lg:hidden fixed inset-0 bg-black/50 z-40" onClick={() => setShowMobileFilters(false)} />
+            <div className="lg:hidden fixed inset-y-0 left-0 z-50 w-80 bg-white shadow-2xl overflow-y-auto">
+              <div className="p-6">
+                <div className="flex items-center justify-between mb-6">
+                  <div className="flex items-center gap-2">
+                    <Filter className="w-5 h-5 text-burgundy" />
+                    <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
+                  </div>
+                  <button onClick={() => setShowMobileFilters(false)} className="text-gray-500 hover:text-gray-700 p-1">
+                    <X className="w-5 h-5" />
+                  </button>
+                </div>
+                <div className="space-y-4">
+                  <div className="border-b border-gray-100 pb-4">
+                    <button onClick={() => toggle('type')} className="flex items-center justify-between w-full text-left font-medium text-charcoal mb-3">
+                      Service Type
+                      {expandedSections.type ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    {expandedSections.type && (
+                      <div className="space-y-2">
+                        {SERVICE_TYPES.map((type) => (
+                          <label key={type} className="flex items-center gap-2 cursor-pointer">
+                            <input type="checkbox" checked={selectedTypes.includes(type)} onChange={() => toggleType(type)}
+                              className="rounded border-gray-300 text-burgundy focus:ring-burgundy" />
+                            <span className="text-sm text-gray-700">{type}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <div className="border-b border-gray-100 pb-4">
+                    <button onClick={() => toggle('price')} className="flex items-center justify-between w-full text-left font-medium text-charcoal mb-3">
+                      Price Range (RWF)
+                      {expandedSections.price ? <ChevronUp className="w-4 h-4" /> : <ChevronDown className="w-4 h-4" />}
+                    </button>
+                    {expandedSections.price && (
+                      <div className="space-y-2">
+                        <label className="flex items-center gap-2 cursor-pointer">
+                          <input type="radio" name="mobile-price" checked={selectedPriceRange === 'all'} onChange={() => setPriceRange('all')} className="text-burgundy focus:ring-burgundy" />
+                          <span className="text-sm text-gray-700">Any price</span>
+                        </label>
+                        {PRICE_RANGES.map((r) => (
+                          <label key={r.id} className="flex items-center gap-2 cursor-pointer">
+                            <input type="radio" name="mobile-price" checked={selectedPriceRange === r.id} onChange={() => setPriceRange(r.id)} className="text-burgundy focus:ring-burgundy" />
+                            <span className="text-sm text-gray-700">{r.label}</span>
+                          </label>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+                  <button onClick={clearFilters} className="w-full text-sm text-burgundy font-medium py-2 border border-burgundy rounded-lg hover:bg-burgundy hover:text-white transition-colors">
+                    Clear All Filters
+                  </button>
+                  <button onClick={() => setShowMobileFilters(false)} className="w-full bg-burgundy text-white py-2 rounded-lg font-medium">
+                    Apply Filters
+                  </button>
+                </div>
+              </div>
+            </div>
+          </>
         )}
 
         <div className="grid lg:grid-cols-4 gap-8">
-          {/* Sidebar Filters */}
-          <div className={`lg:col-span-1 ${
-            showMobileFilters ? 'fixed inset-y-0 left-0 z-50 w-80 transform translate-x-0' : 'hidden lg:block'
-          }`}>
-            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 lg:sticky lg:top-24 h-full lg:h-auto overflow-y-auto">
-              <div className="flex items-center justify-between mb-6">
-                <div className="flex items-center gap-2">
-                  <Filter className="w-5 h-5 text-burgundy" />
-                  <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
-                </div>
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="lg:hidden text-gray-500 hover:text-gray-700"
-                >
-                  <X className="w-5 h-5" />
-                </button>
+          {/* Desktop Sidebar Filters - only visible on lg+ */}
+          <div className="hidden lg:block lg:col-span-1">
+            <div className="bg-white rounded-2xl p-6 shadow-sm border border-gray-100 sticky top-24">
+              <div className="flex items-center gap-2 mb-6">
+                <Filter className="w-5 h-5 text-burgundy" />
+                <h2 className="text-lg font-semibold text-charcoal">Filters</h2>
               </div>
-
               <div className="space-y-4">
-                {/* Service Type */}
                 <div className="border-b border-gray-100 pb-4">
                   <button onClick={() => toggle('type')} className="flex items-center justify-between w-full text-left font-medium text-charcoal mb-3">
                     Service Type
@@ -206,20 +271,14 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
                     <div className="space-y-2">
                       {SERVICE_TYPES.map((type) => (
                         <label key={type} className="flex items-center gap-2 cursor-pointer">
-                          <input
-                            type="checkbox"
-                            checked={selectedTypes.includes(type)}
-                            onChange={() => toggleType(type)}
-                            className="rounded border-gray-300 text-burgundy focus:ring-burgundy"
-                          />
+                          <input type="checkbox" checked={selectedTypes.includes(type)} onChange={() => toggleType(type)}
+                            className="rounded border-gray-300 text-burgundy focus:ring-burgundy" />
                           <span className="text-sm text-gray-700">{type}</span>
                         </label>
                       ))}
                     </div>
                   )}
                 </div>
-
-                {/* Price Range */}
                 <div className="border-b border-gray-100 pb-4">
                   <button onClick={() => toggle('price')} className="flex items-center justify-between w-full text-left font-medium text-charcoal mb-3">
                     Price Range (RWF)
@@ -228,29 +287,20 @@ export default function VendorsClient({ initialServices }: VendorsClientProps) {
                   {expandedSections.price && (
                     <div className="space-y-2">
                       <label className="flex items-center gap-2 cursor-pointer">
-                        <input type="radio" name="price" checked={selectedPriceRange === 'all'} onChange={() => { setSelectedPriceRange('all'); setCurrentPage(1); }} className="text-burgundy focus:ring-burgundy" />
+                        <input type="radio" name="desktop-price" checked={selectedPriceRange === 'all'} onChange={() => setPriceRange('all')} className="text-burgundy focus:ring-burgundy" />
                         <span className="text-sm text-gray-700">Any price</span>
                       </label>
                       {PRICE_RANGES.map((r) => (
                         <label key={r.id} className="flex items-center gap-2 cursor-pointer">
-                          <input type="radio" name="price" checked={selectedPriceRange === r.id} onChange={() => { setSelectedPriceRange(r.id); setCurrentPage(1); }} className="text-burgundy focus:ring-burgundy" />
+                          <input type="radio" name="desktop-price" checked={selectedPriceRange === r.id} onChange={() => setPriceRange(r.id)} className="text-burgundy focus:ring-burgundy" />
                           <span className="text-sm text-gray-700">{r.label}</span>
                         </label>
                       ))}
                     </div>
                   )}
                 </div>
-
                 <button onClick={clearFilters} className="w-full text-sm text-burgundy font-medium py-2 border border-burgundy rounded-lg hover:bg-burgundy hover:text-white transition-colors">
                   Clear All Filters
-                </button>
-                
-                {/* Apply button for mobile */}
-                <button
-                  onClick={() => setShowMobileFilters(false)}
-                  className="lg:hidden w-full mt-2 bg-burgundy text-white py-2 rounded-lg font-medium"
-                >
-                  Apply Filters
                 </button>
               </div>
             </div>

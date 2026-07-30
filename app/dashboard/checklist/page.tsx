@@ -57,6 +57,7 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
     dueDate: task?.dueDate ? String(task.dueDate).slice(0, 10) : '',
   });
   const [loading, setLoading] = useState(false);
+  const [titleError, setTitleError] = useState('');
 
   const total = form.quantity !== '' && form.unitPrice !== ''
     ? parseFloat(form.quantity) * parseFloat(form.unitPrice)
@@ -66,7 +67,10 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
     : total;
 
   const handleSubmit = async () => {
-    if (!form.title) return;
+    const trimmed = form.title.trim();
+    if (!trimmed) { setTitleError('Task title is required.'); return; }
+    if (trimmed.length < 3) { setTitleError('Task title must be at least 3 characters.'); return; }
+    setTitleError('');
     setLoading(true);
     await onSave({
       ...form,
@@ -89,13 +93,14 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
         </div>
         <div className="p-6 space-y-4 overflow-y-auto flex-1">
           <div>
-            <Label className="text-sm font-medium mb-2">Task Title</Label>
+            <Label className="text-sm font-medium mb-2">Task Title <span className="text-red-500">*</span></Label>
             <Input
               value={form.title}
-              onChange={(e) => setForm(prev => ({ ...prev, title: e.target.value }))}
+              onChange={(e) => { setForm(prev => ({ ...prev, title: e.target.value })); setTitleError(''); }}
               placeholder="e.g., Book photographer"
-              className="border-gray-200"
+              className={`border-gray-200 ${titleError ? 'border-red-400 focus-visible:ring-red-300' : ''}`}
             />
+            {titleError && <p className="text-red-500 text-xs mt-1">{titleError}</p>}
           </div>
 
           <div className="grid grid-cols-2 gap-3">
@@ -213,7 +218,7 @@ function TaskModal({ task, category, helpers, onSave, onCancel }: {
           <Button onClick={onCancel} variant="outline" disabled={loading}>Cancel</Button>
           <Button
             onClick={handleSubmit}
-            disabled={!form.title || loading}
+            disabled={loading}
             className="bg-burgundy text-white hover:bg-burgundy/90"
           >
             {loading ? <><Loader2 className="w-4 h-4 mr-2 animate-spin" />Saving...</> : 'Save Task'}
