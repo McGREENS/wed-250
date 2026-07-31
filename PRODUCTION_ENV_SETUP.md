@@ -44,7 +44,15 @@ TURSO_DATABASE_URL=libsql://andiza-laurier.aws-us-east-1.turso.io
 TURSO_AUTH_TOKEN=eyJhbGciOiJFZERTQSIsInR5cCI6IkpXVCJ9...
 NEXTAUTH_SECRET=+n19EyrKgTsGXstzRuqi0VtVZR9YulkWkAzTsrTkW+0=
 NEXTAUTH_URL=https://andiza.rw
+NEXT_PUBLIC_SITE_URL=https://andiza.rw
 RESEND_API_KEY=re_VakzLr3M_FuVQwk74CkmNk8uGrfVGDzBZ
+
+# SMTP — REQUIRED for OTP emails and all transactional emails
+SMTP_HOST=whm-market06.aos.rw
+SMTP_PORT=465
+SMTP_USER=noreply@andiza.co.rw
+SMTP_PASSWORD=3fGapSreQA7BhVLJemFs
+
 NEXT_PUBLIC_GOOGLE_SITE_VERIFICATION=EGQYTV8YDQ45dmz2sMK0KJdWMrdFREQEvarm9Vumi2g
 NEXT_PUBLIC_YANDEX_VERIFICATION=48e46663851b9fe0
 ```

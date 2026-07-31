@@ -1,18 +1,35 @@
 import nodemailer from 'nodemailer';
 
-const smtpPort = parseInt(process.env.SMTP_PORT || '465');
-const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'whm-market06.aos.rw',
-  port: smtpPort,
-  secure: smtpPort === 465,
-  connectionTimeout: 10000,
-  greetingTimeout: 10000,
-  socketTimeout: 10000,
-  auth: {
-    user: process.env.SMTP_USER || 'noreply@andiza.co.rw',
-    pass: process.env.SMTP_PASSWORD || '',
-  },
-});
+function createTransporter() {
+  const smtpPort = parseInt(process.env.SMTP_PORT || '465');
+  const host = process.env.SMTP_HOST || 'whm-market06.aos.rw';
+  const user = process.env.SMTP_USER || 'noreply@andiza.co.rw';
+  const pass = process.env.SMTP_PASSWORD || '';
+
+  console.log(`[EMAIL] SMTP config — host: ${host}, port: ${smtpPort}, user: ${user}, pass set: ${!!pass}`);
+
+  return nodemailer.createTransport({
+    host,
+    port: smtpPort,
+    secure: smtpPort === 465,
+    connectionTimeout: 15000,
+    greetingTimeout: 15000,
+    socketTimeout: 15000,
+    auth: { user, pass },
+    tls: { rejectUnauthorized: false },
+  });
+}
+
+async function sendMail(options: nodemailer.SendMailOptions) {
+  const transporter = createTransporter();
+  try {
+    await transporter.verify();
+  } catch (err: any) {
+    console.error('[EMAIL] SMTP verify failed:', err.message);
+    throw new Error(`SMTP connection failed: ${err.message}`);
+  }
+  return transporter.sendMail(options);
+}
 
 export async function sendWelcomeEmail(email: string, name: string, role: "COUPLE" | "VENDOR") {
   const subject =
@@ -51,7 +68,7 @@ export async function sendWelcomeEmail(email: string, name: string, role: "COUPL
       </div>
     `;
 
-  const result = await transporter.sendMail({
+  const result = await sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject,
@@ -107,7 +124,7 @@ export async function sendTourConfirmationEmail({
     </div>
   `;
 
-  const result = await transporter.sendMail({
+  const result = await sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: `✅ Venue Visit Confirmed – ${venueName} on ${formattedDate}`,
@@ -237,7 +254,7 @@ export async function sendQuoteRequestEmail({
     </html>
   `;
 
-  const result = await transporter.sendMail({
+  const result = await sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: vendorEmail,
     replyTo: clientEmail,
@@ -311,7 +328,7 @@ export async function sendQuoteAcceptedEmail({
       </table>
     </body></html>
   `;
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject: `✅ Booking Confirmed — ${venueName} on ${eventDate}`,
@@ -365,7 +382,7 @@ export async function sendQuoteDeclinedEmail({
       </table>
     </body></html>
   `;
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject: `Quote Update — ${venueName}`,
@@ -418,7 +435,7 @@ export async function sendTourDeclinedEmail({
     </div>
   `;
 
-  const result = await transporter.sendMail({
+  const result = await sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: `Venue Visit Request Update – ${venueName}`,
@@ -529,7 +546,7 @@ export async function sendServiceBookingClientEmail({
     </body></html>
   `;
 
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject: `📋 Booking Request Received — ${serviceName} on ${eventDate}`,
@@ -635,7 +652,7 @@ export async function sendServiceBookingVendorEmail({
     </body></html>
   `;
 
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: vendorEmail,
     replyTo: clientEmail,
@@ -742,7 +759,7 @@ export async function sendAdminOnboardingEmail({
     </html>
   `;
 
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: '🎉 Welcome to Andiza - Your Admin Account',
@@ -825,7 +842,7 @@ export async function sendVendorOTPEmail({
     </html>
   `;
 
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: email,
     subject: '🔐 Verify Your Email - Andiza Vendor Registration',
@@ -857,10 +874,11 @@ export async function sendBookingStatusEmail({
     ? `Hi ${clientName},\n\nYour booking with ${vendorName} has been confirmed!\n\nService: ${servicePackage}\nEvent Date: ${eventDate}\nStatus: Confirmed\n\nThe vendor will contact you soon to finalize the details.\n\nBest wishes,\nThe Andiza Team\nNorrsken House Kigali`
     : `Hi ${clientName},\n\nYour booking with ${vendorName} has been cancelled.\n\nService: ${servicePackage}\nEvent Date: ${eventDate}\nStatus: Cancelled\n\nIf you have questions, please contact the vendor directly or reach out to us.\n\nBest wishes,\nThe Andiza Team\nNorrsken House Kigali`;
 
-  return transporter.sendMail({
+  return sendMail({
     from: '"Andiza" <noreply@andiza.co.rw>',
     to: clientEmail,
     subject,
     text,
   });
 }
+
