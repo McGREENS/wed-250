@@ -69,7 +69,8 @@ export default function SignupPage() {
     const [activeTab, setActiveTab] = useState("couple");
     const [showOTPModal, setShowOTPModal] = useState(false);
     const [otp, setOtp] = useState('');
-    const [vendorEmail, setVendorEmail] = useState('');
+    const [otpEmail, setOtpEmail] = useState('');
+    const [otpType, setOtpType] = useState<'couple' | 'vendor'>('vendor');
     const [verifyingOTP, setVerifyingOTP] = useState(false);
     const [referralCode, setReferralCode] = useState<string | null>(null);
     const [referralInfo, setReferralInfo] = useState<any>(null);
@@ -138,31 +139,20 @@ export default function SignupPage() {
         setError(null);
         startTransition(async () => {
             try {
-                const res = await fetch("/api/signup", {
+                const res = await fetch("/api/couple/send-otp", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ type: "couple", ...values, referralCode }),
+                    body: JSON.stringify({ ...values, referralCode }),
                 });
                 const data = await res.json();
                 if (!res.ok) {
-                    setError(data.error || "Failed to create account");
+                    setError(data.error || "Failed to send OTP");
                     return;
                 }
-                toast.success("Account created successfully!");
-                
-                // Auto-login after signup
-                const loginRes = await signIn("credentials", {
-                    email: values.email,
-                    password: values.password,
-                    redirect: false,
-                });
-                
-                if (loginRes?.ok) {
-                    router.push("/dashboard");
-                    router.refresh();
-                } else {
-                    router.push("/login");
-                }
+                toast.success("OTP sent to your email!");
+                setOtpEmail(values.email);
+                setOtpType('couple');
+                setShowOTPModal(true);
             } catch (err) {
                 setError("Something went wrong");
             }
@@ -184,7 +174,8 @@ export default function SignupPage() {
                     return;
                 }
                 toast.success("OTP sent to your email!");
-                setVendorEmail(values.email);
+                setOtpEmail(values.email);
+                setOtpType('vendor');
                 setShowOTPModal(true);
             } catch (err) {
                 setError("Something went wrong");
@@ -200,10 +191,11 @@ export default function SignupPage() {
         
         setVerifyingOTP(true);
         try {
-            const res = await fetch("/api/vendor/verify-otp", {
+            const verifyEndpoint = otpType === 'couple' ? '/api/couple/verify-otp' : '/api/vendor/verify-otp';
+            const res = await fetch(verifyEndpoint, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ email: vendorEmail, otp }),
+                body: JSON.stringify({ email: otpEmail, otp }),
             });
             const data = await res.json();
             if (!res.ok) {
@@ -214,15 +206,15 @@ export default function SignupPage() {
             setShowOTPModal(false);
             
             // Auto-login after verification
-            const vendorFormData = vendorForm.getValues();
+            const formData = otpType === 'couple' ? coupleForm.getValues() : vendorForm.getValues();
             const loginRes = await signIn("credentials", {
-                email: vendorFormData.email,
-                password: vendorFormData.password,
+                email: formData.email,
+                password: formData.password,
                 redirect: false,
             });
             
             if (loginRes?.ok) {
-                router.push("/vendor/dashboard");
+                router.push(otpType === 'couple' ? "/dashboard" : "/vendor/dashboard");
                 router.refresh();
             } else {
                 router.push("/login");
@@ -298,7 +290,7 @@ export default function SignupPage() {
                                 </div>
 
                                 <Button type="submit" className="w-full bg-burgundy hover:bg-burgundy-light text-white" disabled={isPending}>
-                                    {isPending ? "Creating Account..." : "Create Couple Account"}
+                                    {isPending ? "Sending OTP..." : "Create Couple Account"}
                                 </Button>
                             </form>
                         </TabsContent>
@@ -422,7 +414,7 @@ export default function SignupPage() {
                         </CardHeader>
                         <CardContent className="p-6 bg-white">
                             <p className="text-sm text-gray-600 mb-4">
-                                We've sent a 6-digit OTP to <strong>{vendorEmail}</strong>. Please enter it below to complete your registration.
+                                We've sent a 6-digit OTP to <strong>{otpEmail}</strong>. Please enter it below to complete your registration.
                             </p>
                             <div className="space-y-4">
                                 <Input
@@ -457,7 +449,11 @@ export default function SignupPage() {
                                         onClick={() => {
                                             setShowOTPModal(false);
                                             setOtp('');
-                                            vendorForm.handleSubmit(onVendorSubmit)();
+                                            if (otpType === 'couple') {
+                                                coupleForm.handleSubmit(onCoupleSubmit)();
+                                            } else {
+                                                vendorForm.handleSubmit(onVendorSubmit)();
+                                            }
                                         }}
                                         disabled={verifyingOTP}
                                         className="text-burgundy hover:underline font-medium"

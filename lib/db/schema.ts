@@ -260,6 +260,19 @@ export const pendingVendorSignups = sqliteTable("pending_vendor_signups", {
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });
 
+// Pending Couple Signups table (for OTP verification)
+export const pendingCoupleSignups = sqliteTable("pending_couple_signups", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  password: text("password").notNull(), // hashed
+  weddingDate: text("wedding_date"), // ISO string, optional
+  otp: text("otp").notNull(),
+  expiresAt: integer("expires_at", { mode: "timestamp" }).notNull(),
+  metadata: text("metadata"), // JSON for referral code
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
 // Conversations table (chat threads between vendor and couple)
 export const conversations = sqliteTable("conversations", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),

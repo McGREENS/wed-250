@@ -1,15 +1,26 @@
 /** @type {import('next').NextConfig} */
 const nextConfig = {
-  // Disable all caching
   experimental: {
     staleTimes: {
       dynamic: 30,
-      static: 30,
+      static: 180,
     },
   },
-  // Force no-cache headers on all responses
+  images: {
+    remotePatterns: [
+      {
+        protocol: 'https',
+        hostname: 'images.unsplash.com',
+      },
+      {
+        protocol: 'https',
+        hostname: 'www.transparenttextures.com',
+      },
+    ],
+  },
   async headers() {
     return [
+      // API routes: never cache
       {
         source: '/api/:path*',
         headers: [
@@ -18,11 +29,25 @@ const nextConfig = {
           { key: 'Expires', value: '0' },
         ],
       },
+      // Static assets: cache aggressively (Next.js hashes filenames)
       {
-        source: '/:path*',
+        source: '/_next/static/:path*',
         headers: [
-          { key: 'Cache-Control', value: 'no-store, must-revalidate' },
+          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
         ],
+      },
+      // Images in /public: cache for 1 day
+      {
+        source: '/:path*.jpg',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
+      {
+        source: '/:path*.png',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
+      },
+      {
+        source: '/:path*.webp',
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=86400, stale-while-revalidate=604800' }],
       },
     ];
   },

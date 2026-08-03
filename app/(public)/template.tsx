@@ -1,4 +1,3 @@
-import { auth } from "@/auth";
 import PublicLayout from '@/app/components/layout/PublicLayout';
 
 export default async function Template({
@@ -6,7 +5,7 @@ export default async function Template({
 }: {
   children: React.ReactNode;
 }) {
-  const session = await auth();
-
-  return <PublicLayout session={session}>{children}</PublicLayout>;
+  // Session is read client-side via useSession() in PublicLayout,
+  // avoiding a duplicate auth() server round-trip on every public page.
+  return <PublicLayout>{children}</PublicLayout>;
 }

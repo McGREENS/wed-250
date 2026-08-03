@@ -15,6 +15,13 @@
       "when": 1781773927004,
       "tag": "0001_yummy_mongoose",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "6",
+      "when": 1785791495789,
+      "tag": "0002_wise_sabra",
+      "breakpoints": true
     }
   ]
 }

@@ -1,24 +1,20 @@
 "use client";
 
-import React, { useEffect } from "react";
+import React, { useEffect, lazy, Suspense } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSearchParams } from "next/navigation";
 import { toast } from "sonner";
 import { createPageUrl } from "../utils";
-import { motion } from "framer-motion";
 import {
     Heart,
-    Search,
-    Calendar,
-    Users,
-    Sparkles,
     ArrowRight,
     CheckCircle,
-    Star,
     LayoutDashboard
 } from "lucide-react";
 
-import { ExploreIcon, PlanIcon, MatchIcon, ManageIcon } from "./animated-icons";
+// Lazy-load animated icons (framer-motion is heavy — defer until after LCP)
+const AnimatedIcons = lazy(() => import("./animated-icons-section"));
 
 export default function HomePage() {
     const searchParams = useSearchParams();
@@ -90,24 +86,33 @@ export default function HomePage() {
                             </div>
                         </div>
 
-                        {/* Static Image Composition */}
+                        {/* Hero Image Composition — hidden on mobile so not the LCP candidate there.
+                            priority ensures preload on desktop. */}
                         <div className="order-1 lg:order-2 relative h-[600px] w-full hidden md:block">
                             <div className="absolute right-0 top-10 w-[70%] z-20">
                                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-[8px] border-white">
-                                    <img
+                                    <Image
                                         src="https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=1000&fit=crop"
                                         alt="Wedding Couple"
+                                        width={800}
+                                        height={1000}
+                                        priority
                                         className="w-full h-auto object-cover"
+                                        sizes="(max-width: 1024px) 0px, 40vw"
                                     />
                                 </div>
                             </div>
 
                             <div className="absolute left-0 bottom-20 w-[55%] z-30">
                                 <div className="relative rounded-2xl overflow-hidden shadow-2xl border-[8px] border-white">
-                                    <img
+                                    <Image
                                         src="https://images.unsplash.com/photo-1515934751635-c81c6bc9a2d8?w=600&h=800&fit=crop"
                                         alt="Wedding Details"
+                                        width={600}
+                                        height={800}
+                                        priority
                                         className="w-full h-auto object-cover"
+                                        sizes="(max-width: 1024px) 0px, 30vw"
                                     />
                                 </div>
                             </div>
@@ -116,9 +121,9 @@ export default function HomePage() {
                 </div>
             </section>
 
-            {/* How It Works Section */}
+            {/* How It Works Section — animated icons lazy-loaded */}
             <section className="py-32 bg-white relative z-10">
-                <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30"></div>
+                <div className="absolute inset-0 bg-[radial-gradient(#e5e7eb_1px,transparent_1px)] [background-size:16px_16px] opacity-30" aria-hidden="true"></div>
 
                 <div className="max-w-[1600px] mx-auto px-4 sm:px-8 lg:px-12 relative">
                     <div className="text-center mb-24">
@@ -133,73 +138,19 @@ export default function HomePage() {
                         </p>
                     </div>
 
-                    <div className="grid md:grid-cols-4 gap-8 lg:gap-12 relative">
-                        {/* Connecting Line (Desktop) */}
-                        <div className="hidden md:block absolute top-[60px] left-0 w-full h-[2px] bg-gray-100 -z-10" />
-
-                        {[
-                            {
-                                Icon: ExploreIcon,
-                                title: "Explore",
-                                desc: "Discover Rwanda's finest venues and elite vendors.",
-                                color: "text-blue-600",
-                                bg: "bg-blue-50"
-                            },
-                            {
-                                Icon: PlanIcon,
-                                title: "Build Plan",
-                                desc: "Set your budget, dates, and guest list in minutes.",
-                                color: "text-purple-600",
-                                bg: "bg-purple-50"
-                            },
-                            {
-                                Icon: MatchIcon,
-                                title: "Get Matched",
-                                desc: "AI-powered recommendations tailored to your style.",
-                                color: "text-amber-600",
-                                bg: "bg-amber-50"
-                            },
-                            {
-                                Icon: ManageIcon,
-                                title: "Manage",
-                                desc: "Track tasks, payments, and bookings in one dashboard.",
-                                color: "text-emerald-600",
-                                bg: "bg-emerald-50"
-                            }
-                        ].map((step, idx) => {
-                            const { Icon } = step;
-                            return (
-                                <div
-                                    key={idx}
-                                    className="group relative bg-white p-8 rounded-2xl border border-gray-200 shadow-lg hover:shadow-2xl hover:-translate-y-3 transition-all duration-300"
-                                >
-                                    {/* Hover Gradient Border Effect */}
-                                    <div className="absolute inset-0 rounded-2xl bg-gradient-to-br from-burgundy/0 to-gold/0 group-hover:from-burgundy/5 group-hover:to-gold/5 transition-all duration-500 pointer-events-none" />
-
-                                    {/* Step Number Badge */}
-                                    <div className="absolute top-4 right-4 text-6xl font-serif text-gray-50 opacity-0 group-hover:opacity-100 group-hover:text-gray-100 transition-all duration-500 select-none pointer-events-none translate-y-4 group-hover:translate-y-0">
-                                        0{idx + 1}
-                                    </div>
-
-                                    <div className={`w-20 h-20 ${step.bg} rounded-2xl flex items-center justify-center mb-8 mx-auto relative overflow-hidden group-hover:rotate-3 transition-transform duration-500`}>
-                                        <div className={`absolute inset-0 opacity-0 group-hover:opacity-20 transition-opacity duration-500 bg-current ${step.color}`} />
-                                        <Icon className={`w-12 h-12 ${step.color} relative z-10 transition-transform duration-500 group-hover:scale-110`} />
-                                    </div>
-
-                                    <div className="text-center relative z-10">
-                                        <h3 className="text-2xl font-serif text-charcoal mb-4 group-hover:text-burgundy transition-colors duration-300">
-                                            {step.title}
-                                        </h3>
-                                        <p className="text-gray-500 font-light leading-relaxed group-hover:text-gray-600">
-                                            {step.desc}
-                                        </p>
-                                    </div>
-
-                                    {/* Bottom color bar */}
+                    <Suspense fallback={
+                        <div className="grid md:grid-cols-4 gap-8 lg:gap-12">
+                            {[0,1,2,3].map(i => (
+                                <div key={i} className="bg-white p-8 rounded-2xl border border-gray-200 shadow-lg animate-pulse">
+                                    <div className="w-20 h-20 bg-gray-100 rounded-2xl mx-auto mb-8" />
+                                    <div className="h-6 bg-gray-100 rounded mx-auto w-24 mb-4" />
+                                    <div className="h-4 bg-gray-50 rounded mx-auto w-40" />
                                 </div>
-                            );
-                        })}
-                    </div>
+                            ))}
+                        </div>
+                    }>
+                        <AnimatedIcons />
+                    </Suspense>
                 </div>
             </section>
 
@@ -240,10 +191,13 @@ export default function HomePage() {
                         ].map((cat, idx) => (
                             <Link key={idx} href={createPageUrl(cat.name === 'Venues' ? 'VenueMarketplace' : 'Vendors')}>
                                 <div className="group relative overflow-hidden rounded-xl aspect-square shadow-sm hover:shadow-xl hover:-translate-y-1 transition-all duration-300">
-                                    <img
+                                    <Image
                                         src={cat.img}
                                         alt={cat.name}
-                                        className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
+                                        fill
+                                        loading="lazy"
+                                        className="object-cover transition-transform duration-700 group-hover:scale-110"
+                                        sizes="(max-width: 768px) 50vw, 25vw"
                                     />
                                     <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/20 to-transparent" />
                                     <div className="absolute bottom-4 left-4 text-white">
@@ -262,16 +216,26 @@ export default function HomePage() {
                     <div className="grid lg:grid-cols-2 gap-16 items-center">
                         <div className="relative order-2 lg:order-1">
                             <div className="grid grid-cols-2 gap-4">
-                                <img
-                                    src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=1000&fit=crop"
-                                    alt="Interior"
-                                    className="rounded-lg object-cover h-96 w-full -mt-8 shadow-lg"
-                                />
-                                <img
-                                    src="/wediing.jpg"
-                                    alt="Attire"
-                                    className="rounded-lg object-cover h-96 w-full mt-8 shadow-lg"
-                                />
+                                <div className="relative h-96 w-full -mt-8 rounded-lg overflow-hidden shadow-lg">
+                                    <Image
+                                        src="https://images.unsplash.com/photo-1511795409834-ef04bbd61622?w=800&h=1000&fit=crop"
+                                        alt="Wedding interior"
+                                        fill
+                                        loading="lazy"
+                                        className="object-cover"
+                                        sizes="(max-width: 1024px) 0px, 20vw"
+                                    />
+                                </div>
+                                <div className="relative h-96 w-full mt-8 rounded-lg overflow-hidden shadow-lg">
+                                    <Image
+                                        src="/wediing.jpg"
+                                        alt="Wedding attire"
+                                        fill
+                                        loading="lazy"
+                                        className="object-cover"
+                                        sizes="(max-width: 1024px) 0px, 20vw"
+                                    />
+                                </div>
                             </div>
                         </div>
 
@@ -310,8 +274,7 @@ export default function HomePage() {
 
             {/* CTA Section */}
             <section className="py-32 bg-burgundy relative overflow-hidden">
-                <div className="absolute inset-0 opacity-10 bg-[url('https://www.transparenttextures.com/patterns/cubes.png')] bg-repeat" />
-                <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full opacity-10 blur-3xl mix-blend-overlay" />
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white rounded-full opacity-10 blur-3xl mix-blend-overlay" aria-hidden="true" />
 
                 <div className="max-w-3xl mx-auto px-4 text-center relative z-10">
                     <h2 className="text-4xl md:text-5xl font-serif text-white mb-6">

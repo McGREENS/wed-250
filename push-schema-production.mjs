@@ -234,6 +234,19 @@ const schemas = [
     created_at INTEGER
   )`,
 
+  // Pending Couple Signups table
+  `CREATE TABLE IF NOT EXISTS pending_couple_signups (
+    id TEXT PRIMARY KEY,
+    name TEXT NOT NULL,
+    email TEXT NOT NULL,
+    password TEXT NOT NULL,
+    wedding_date TEXT,
+    otp TEXT NOT NULL,
+    expires_at INTEGER NOT NULL,
+    metadata TEXT,
+    created_at INTEGER
+  )`,
+
   // Conversations table
   `CREATE TABLE IF NOT EXISTS conversations (
     id TEXT PRIMARY KEY,

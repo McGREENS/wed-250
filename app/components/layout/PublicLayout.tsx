@@ -4,17 +4,17 @@ import { Menu, X } from 'lucide-react';
 import Link from 'next/link';
 import { useState } from 'react';
 import Image from 'next/image';
+import { useSession } from 'next-auth/react';
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
 import { CookieConsent } from '@/app/components/CookieConsent';
 
 export default function PublicLayout({
   children,
-  session,
 }: {
   children: React.ReactNode;
-  session: any;
 }) {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const { data: session } = useSession();
 
   return (
     <>
