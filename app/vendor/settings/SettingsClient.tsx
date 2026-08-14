@@ -11,6 +11,7 @@ import {
   Building2, Phone, Mail, Tag, BadgeDollarSign,
 } from "lucide-react";
 import { toast } from "sonner";
+import CapacitySettings from "./CapacitySettings";
 
 const PRICE_LABELS: Record<string, string> = {
   budget: "Budget (RWF 100K – 500K)",
@@ -141,7 +142,7 @@ export default function VendorSettingsClient({ initialData }: any) {
   let initCategory = "";
   try { initCategory = JSON.parse(v?.categories || "[]")[0] || ""; } catch {}
 
-  const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
+  const [activeTab, setActiveTab] = useState<"profile" | "capacity" | "security">("profile");
 
   const [profile, setProfile] = useState({
     businessName: v?.businessName || "",
@@ -229,9 +230,10 @@ export default function VendorSettingsClient({ initialData }: any) {
     <div className="space-y-6">
 
       {/* ── Tab Bar ── */}
-      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit">
+      <div className="flex gap-1 p-1 bg-gray-100 rounded-xl w-fit overflow-x-auto">
         {([
           { key: "profile", label: "Profile", Icon: User },
+          { key: "capacity", label: "Booking Capacity", Icon: AlertCircle },
           { key: "security", label: "Security", Icon: Shield },
         ] as const).map(({ key, label, Icon }) => (
           <button
@@ -382,6 +384,15 @@ export default function VendorSettingsClient({ initialData }: any) {
 
             </CardContent>
           </Card>
+        </div>
+      )}
+
+      {/* ══════════════════════════════════════════════════════════════════
+          CAPACITY TAB
+      ══════════════════════════════════════════════════════════════════ */}
+      {activeTab === "capacity" && (
+        <div className="space-y-5">
+          <CapacitySettings />
         </div>
       )}
 

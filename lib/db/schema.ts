@@ -65,6 +65,7 @@ export const vendors = sqliteTable("vendors", {
   services: text("services"), // JSON array - DEPRECATED, use servicePackages table
   availability: text("availability"), // JSON object
   calendarPublished: integer("calendar_published", { mode: "boolean" }).default(false),
+  maxBookingsPerDay: integer("max_bookings_per_day").default(1), // New field: max bookings allowed per day (default 1)
   createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
   updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
 });

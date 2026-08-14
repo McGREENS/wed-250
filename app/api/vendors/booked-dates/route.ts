@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { db } from '@/lib/db';
-import { bookings } from '@/lib/db/schema';
+import { bookings, vendors } from '@/lib/db/schema';
 import { eq } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
@@ -12,6 +12,19 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ error: 'Vendor ID required' }, { status: 400 });
     }
 
+    // Fetch vendor to get max bookings per day
+    const [vendor] = await db.select({
+      maxBookingsPerDay: vendors.maxBookingsPerDay,
+    })
+    .from(vendors)
+    .where(eq(vendors.id, vendorId));
+
+    if (!vendor) {
+      return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
+    }
+
+    const maxBookingsPerDay = vendor.maxBookingsPerDay || 1;
+
     // Fetch all bookings for this vendor
     const vendorBookings = await db.select({
       eventDate: bookings.eventDate,
@@ -20,18 +33,37 @@ export async function GET(req: NextRequest) {
     .from(bookings)
     .where(eq(bookings.vendorId, vendorId));
 
-    // Filter out cancelled bookings and format dates
-    const bookedDates = vendorBookings
+    // Group bookings by date and count them
+    const dateBookingMap: { [key: string]: number } = {};
+    
+    vendorBookings
       .filter(b => b.status !== 'cancelled' && b.eventDate)
-      .map(b => {
+      .forEach(b => {
         const date = new Date(b.eventDate!);
         const year = date.getFullYear();
         const month = String(date.getMonth() + 1).padStart(2, '0');
         const day = String(date.getDate()).padStart(2, '0');
-        return `${year}-${month}-${day}`;
+        const dateStr = `${year}-${month}-${day}`;
+        
+        dateBookingMap[dateStr] = (dateBookingMap[dateStr] || 0) + 1;
       });
 
-    return NextResponse.json({ bookedDates });
+    // Return both array of fully-booked dates and detailed map with counts
+    const bookedDates = Object.keys(dateBookingMap).filter(date => dateBookingMap[date] >= maxBookingsPerDay);
+    
+    return NextResponse.json({ 
+      bookedDates,
+      dateBookingMap,
+      maxBookingsPerDay,
+      capacityInfo: Object.keys(dateBookingMap).reduce((acc, date) => {
+        acc[date] = {
+          bookings: dateBookingMap[date],
+          max: maxBookingsPerDay,
+          available: dateBookingMap[date] < maxBookingsPerDay
+        };
+        return acc;
+      }, {} as { [key: string]: { bookings: number; max: number; available: boolean } })
+    });
   } catch (error) {
     console.error('Error fetching booked dates:', error);
     return NextResponse.json({ error: 'Failed to fetch booked dates' }, { status: 500 });

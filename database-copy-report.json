@@ -1,0 +1,37 @@
+{
+  "timestamp": "2026-08-14T06:00:58.153Z",
+  "source": {
+    "type": "turso",
+    "url": "libsql://andiza-laurier.aws-us-east-1.turso.io"
+  },
+  "destination": {
+    "type": "turso",
+    "url": "libsql://andiza-dbase1-cylacon.aws-ap-northeast-1.turso.io"
+  },
+  "tablesCount": 21,
+  "tablesList": [
+    "booking_payments",
+    "bookings",
+    "contact_messages",
+    "conversations",
+    "favorites",
+    "helper_task_progress",
+    "invoices",
+    "manual_expenses",
+    "messages",
+    "pending_couple_signups",
+    "pending_vendor_signups",
+    "public_referral_links",
+    "referrals",
+    "reviews",
+    "service_packages",
+    "tasks",
+    "users",
+    "vendors",
+    "venue_tours",
+    "wedding_helpers",
+    "weddings"
+  ],
+  "duration": "285.95s",
+  "verified": false
+}

@@ -22,6 +22,7 @@ export async function POST(req: NextRequest) {
         businessName: vendors.businessName,
         location: vendors.location,
         userId: vendors.userId,
+        maxBookingsPerDay: vendors.maxBookingsPerDay,
       }).from(vendors).where(eq(vendors.id, vendorId)).limit(1),
     ]);
 
@@ -30,6 +31,28 @@ export async function POST(req: NextRequest) {
 
     const service = serviceRow[0];
     const vendor = vendorRow[0];
+    const maxBookingsPerDay = vendor.maxBookingsPerDay || 1;
+
+    // ✅ NEW: Validate booking capacity for the selected date
+    const [year, month, day] = eventDate.split('-').map(Number);
+    const eventDateObj = new Date(year, month - 1, day, 0, 0, 0, 0);
+    
+    // Count existing non-cancelled bookings for this date
+    const existingBookings = await db.select().from(bookings)
+      .where(eq(bookings.vendorId, vendorId));
+    
+    const bookingsOnDate = existingBookings.filter(b => {
+      if (b.status === 'cancelled' || !b.eventDate) return false;
+      const bDate = new Date(b.eventDate);
+      return bDate.toDateString() === eventDateObj.toDateString();
+    });
+
+    // Check if booking limit reached
+    if (bookingsOnDate.length >= maxBookingsPerDay) {
+      return NextResponse.json({ 
+        error: `Sorry, this vendor can only accept ${maxBookingsPerDay} booking(s) per day. This date is at full capacity.` 
+      }, { status: 409 });
+    }
 
     // Get vendor's login email
     const [vendorUser] = await db.select({ email: users.email, name: users.name })
@@ -39,11 +62,6 @@ export async function POST(req: NextRequest) {
     const formattedDate = new Date(eventDate).toLocaleDateString('en-US', {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
-
-    // Parse the date string and create a date object at local midnight
-    // The date input gives us YYYY-MM-DD, we need to treat it as a local date
-    const [year, month, day] = eventDate.split('-').map(Number);
-    const eventDateObj = new Date(year, month - 1, day, 0, 0, 0, 0);
     
     await db.insert(bookings).values({
       id: bookingId,

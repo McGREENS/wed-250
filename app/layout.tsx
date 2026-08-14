@@ -5,7 +5,8 @@ import Link from 'next/link';
 import Providers from '@/app/components/providers';
 import { auth } from "@/auth";
 import NavbarLinks from '@/app/components/layout/NavbarLinks';
-import { generateSEOMetadata, generateOrganizationSchema, generateWebsiteSchema, generateLocalBusinessSchema } from '@/lib/seo';
+import SchemaScript from '@/app/components/layout/SchemaScript';
+import { generateSEOMetadata } from '@/lib/seo';
 import GoogleAnalytics from '@/app/components/GoogleAnalytics';
 
 const playfair = Playfair_Display({
@@ -39,19 +40,10 @@ export default async function RootLayout({
         {process.env.NEXT_PUBLIC_BING_VERIFICATION && (
           <meta name="msvalidate.01" content={process.env.NEXT_PUBLIC_BING_VERIFICATION} />
         )}
-        <script
-          type="application/ld+json"
-          dangerouslySetInnerHTML={{
-            __html: JSON.stringify([
-              generateOrganizationSchema(),
-              generateWebsiteSchema(),
-              generateLocalBusinessSchema(),
-            ]),
-          }}
-        />
       </head>
       <body className={`min-h-screen bg-cream ${playfair.variable} ${lato.variable} font-sans antialiased`}>
         <GoogleAnalytics />
+        <SchemaScript />
         <Providers>
           {children}
         </Providers>
