@@ -229,6 +229,7 @@ export async function POST(req: NextRequest) {
     // Determine the conversation participants
     let finalVendorId = vendorId;
     let finalCoupleId = coupleId;
+    let isVendorToVendor = false;
 
     if (session.user.role === 'VENDOR') {
       // Vendor is sending message
@@ -237,9 +238,24 @@ export async function POST(req: NextRequest) {
         console.error('[Messages POST] Vendor not found for userId:', session.user.id);
         return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
       }
-      finalVendorId = vendor.id;
-      if (!finalCoupleId) {
-        return NextResponse.json({ error: 'Couple ID is required' }, { status: 400 });
+      
+      // Check if messaging another vendor
+      if (vendorId && !coupleId) {
+        // Vendor-to-Vendor conversation
+        isVendorToVendor = true;
+        const [targetVendor] = await db.select().from(vendors).where(eq(vendors.id, vendorId)).limit(1);
+        if (!targetVendor) {
+          console.error('[Messages POST] Target vendor not found:', vendorId);
+          return NextResponse.json({ error: 'Vendor not found' }, { status: 404 });
+        }
+        // Use target vendor's userId as coupleId (to satisfy foreign key constraint)
+        finalVendorId = vendor.id; // sender vendor
+        finalCoupleId = targetVendor.userId; // target vendor's user ID
+      } else if (finalCoupleId) {
+        // Vendor-to-Couple conversation
+        finalVendorId = vendor.id;
+      } else {
+        return NextResponse.json({ error: 'Couple ID or Vendor ID is required' }, { status: 400 });
       }
     } else {
       // Couple is sending message
@@ -256,7 +272,7 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    console.log('[Messages POST] Final participants:', { finalVendorId, finalCoupleId });
+    console.log('[Messages POST] Final participants:', { finalVendorId, finalCoupleId, isVendorToVendor });
 
     // Check if conversation already exists
     const [existingConversation] = await db

@@ -231,7 +231,7 @@ export default function ServiceDetailPage() {
     const items: string[] = features.items || [];
     const colorCls = TYPE_COLORS[service.serviceType] || 'bg-gray-100 text-gray-600';
     const Icon = TYPE_ICONS[service.serviceType] || Package;
-    const heroImage = service.image || FALLBACK_IMAGES[service.serviceType] || FALLBACK_IMAGES.Photography;
+    const heroImage = service.image;
 
     // Portfolio images scoped to this service
     const galleryImages: string[] = [
@@ -281,20 +281,28 @@ export default function ServiceDetailPage() {
 
             {/* ── HERO ── */}
             <div className="relative h-[420px] md:h-[520px]">
-                <img src={heroImage} alt={service.name} className="absolute inset-0 w-full h-full object-cover" />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                {heroImage ? (
+                    <>
+                        <img src={heroImage} alt={service.name} className="absolute inset-0 w-full h-full object-cover" />
+                        <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-black/10" />
+                    </>
+                ) : (
+                    <div className="absolute inset-0 bg-gradient-to-br from-gray-100 to-gray-200 flex items-center justify-center">
+                        <span className="text-gray-400 text-lg">No Image Available</span>
+                    </div>
+                )}
 
                 {/* top bar */}
                 <div className="absolute top-0 left-0 right-0 px-6 md:px-12 pt-6 flex items-center justify-between">
-                    <Link href={`/vendors/${vendorId}`} className="inline-flex items-center gap-2 text-white/90 hover:text-white bg-black/20 backdrop-blur px-4 py-2 rounded-full text-sm font-medium transition-colors">
+                    <Link href={`/vendors/${vendorId}`} className={`inline-flex items-center gap-2 hover:text-burgundy backdrop-blur px-4 py-2 rounded-full text-sm font-medium transition-colors ${heroImage ? 'text-white/90 hover:text-white bg-black/20' : 'text-charcoal bg-white/80'}`}>
                         <ArrowLeft className="w-4 h-4" /> {vendor.businessName}
                     </Link>
                     <div className="flex items-center gap-2">
-                        <button onClick={handleShare} className="w-9 h-9 bg-black/20 backdrop-blur rounded-full flex items-center justify-center text-white hover:bg-black/40 transition-colors">
+                        <button onClick={handleShare} className={`w-9 h-9 backdrop-blur rounded-full flex items-center justify-center transition-colors ${heroImage ? 'bg-black/20 text-white hover:bg-black/40' : 'bg-white/80 text-charcoal hover:bg-white'}`}>
                             <Share2 className="w-4 h-4" />
                         </button>
                         <button onClick={handleFavorite} disabled={favLoading}
-                            className={`w-9 h-9 backdrop-blur rounded-full flex items-center justify-center transition-colors ${isFavorite ? 'bg-burgundy text-white' : 'bg-black/20 text-white hover:bg-black/40'}`}>
+                            className={`w-9 h-9 backdrop-blur rounded-full flex items-center justify-center transition-colors ${isFavorite ? 'bg-burgundy text-white' : heroImage ? 'bg-black/20 text-white hover:bg-black/40' : 'bg-white/80 text-charcoal hover:bg-white'}`}>
                             <Heart className={`w-4 h-4 ${isFavorite ? 'fill-current' : ''}`} />
                         </button>
                     </div>
@@ -313,9 +321,9 @@ export default function ServiceDetailPage() {
                                 </span>
                             )}
                         </div>
-                        <h1 className="text-3xl md:text-5xl font-bold text-white mb-3 drop-shadow">{service.name}</h1>
-                        <div className="flex flex-wrap items-center gap-5 text-white/90 text-sm">
-                            <Link href={`/vendors/${vendorId}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+                        <h1 className={`text-3xl md:text-5xl font-bold mb-3 drop-shadow ${heroImage ? 'text-white' : 'text-charcoal'}`}>{service.name}</h1>
+                        <div className={`flex flex-wrap items-center gap-5 text-sm ${heroImage ? 'text-white/90' : 'text-gray-700'}`}>
+                            <Link href={`/vendors/${vendorId}`} className={`flex items-center gap-1.5 transition-colors ${heroImage ? 'hover:text-white' : 'hover:text-burgundy'}`}>
                                 <Icon className="w-4 h-4 shrink-0" /> {vendor.businessName}
                             </Link>
                             {vendor.location && (
@@ -327,10 +335,10 @@ export default function ServiceDetailPage() {
                                 <span className="flex items-center gap-1.5">
                                     <Star className="w-4 h-4 fill-yellow-400 text-yellow-400 shrink-0" />
                                     <span className="font-semibold">{vendor.rating}</span>
-                                    {vendor.reviewCount > 0 && <span className="text-white/70">({vendor.reviewCount} reviews)</span>}
+                                    {vendor.reviewCount > 0 && <span className={heroImage ? 'text-white/70' : 'text-gray-500'}>({vendor.reviewCount} reviews)</span>}
                                 </span>
                             )}
-                            <span className="text-xl font-bold text-white">
+                            <span className={`text-xl font-bold ${heroImage ? 'text-white' : 'text-burgundy'}`}>
                                 {Number(service.price).toLocaleString()} RWF
                             </span>
                         </div>
@@ -517,14 +525,13 @@ export default function ServiceDetailPage() {
                                 <Button
                                     onClick={() => {
                                         if (!session?.user) {
-                                            toast.error('Please login to chat with vendors');
+                                            toast.error('Please login to chat');
                                             return;
                                         }
-                                        if (session.user.role === 'VENDOR') {
-                                            toast.error('Vendors cannot chat with other vendors');
-                                            return;
-                                        }
-                                        window.location.href = `/dashboard/messages?vendorId=${vendorId}`;
+                                        const messagesUrl = session.user.role === 'VENDOR' 
+                                            ? `/vendor/messages?vendorId=${vendorId}`
+                                            : `/dashboard/messages?vendorId=${vendorId}`;
+                                        window.location.href = messagesUrl;
                                     }}
                                     variant="outline"
                                     className="w-full rounded-xl h-11 border-burgundy text-burgundy hover:bg-burgundy hover:text-white text-sm"

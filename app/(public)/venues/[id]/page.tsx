@@ -811,18 +811,10 @@ export default function VenueDetailPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-5 pt-4 border-t border-gray-100 space-y-2">
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Venue Rental Fee</span>
-                                        <span className="font-medium text-charcoal">{rentalFormatted}</span>
-                                    </div>
-                                    <div className="flex justify-between text-sm">
-                                        <span className="text-gray-500">Service Tax (5%)</span>
-                                        <span className="font-medium text-charcoal">{serviceTaxFormatted}</span>
-                                    </div>
-                                    <div className="flex justify-between items-baseline pt-2 border-t border-gray-100">
-                                        <span className="font-semibold text-charcoal text-sm">Estimated Total</span>
-                                        <span className="text-xl font-bold text-burgundy">{totalFormatted}</span>
+                                <div className="mt-5 pt-4 border-t border-gray-100">
+                                    <div className="flex justify-between items-baseline">
+                                        <span className="font-semibold text-charcoal text-sm">Venue Rental Fee</span>
+                                        <span className="text-xl font-bold text-burgundy">{rentalFormatted}</span>
                                     </div>
                                 </div>
 
@@ -862,14 +854,13 @@ export default function VenueDetailPage() {
                                 <Button 
                                     onClick={() => {
                                         if (!session?.user) {
-                                            toast.error('Please login to chat with vendors');
+                                            toast.error('Please login to chat');
                                             return;
                                         }
-                                        if (session.user.role === 'VENDOR') {
-                                            toast.error('Vendors cannot chat with other vendors');
-                                            return;
-                                        }
-                                        window.location.href = `/dashboard/messages?vendorId=${vendorId}`;
+                                        const messagesUrl = session.user.role === 'VENDOR' 
+                                            ? `/vendor/messages?vendorId=${vendorId}`
+                                            : `/dashboard/messages?vendorId=${vendorId}`;
+                                        window.location.href = messagesUrl;
                                     }}
                                     className="w-full mt-3 bg-burgundy hover:bg-burgundy/90 text-white"
                                 >

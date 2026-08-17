@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from "react";
 import { useSession } from "next-auth/react";
+import { useSearchParams } from "next/navigation";
 import { Input } from "@/app/components/ui/input";
 import { Textarea } from "@/app/components/ui/textarea";
 import { Badge } from "@/app/components/ui/badge";
@@ -13,6 +14,8 @@ import { useRealtimeMessaging } from "@/app/contexts/RealtimeMessagingContext";
 
 export default function VendorMessagesClient() {
     const { data: session } = useSession();
+    const searchParams = useSearchParams();
+    const vendorIdParam = searchParams.get('vendorId');
     const refreshUnreadMessages = useRefreshUnreadMessages();
     const { subscribeToConversation, unsubscribeFromConversation, messages: realtimeMessages } = useRealtimeMessaging();
     
@@ -33,10 +36,44 @@ export default function VendorMessagesClient() {
 
     useEffect(() => {
         fetchConversations();
-        // Poll every 5 seconds for new conversations/messages
-        const interval = setInterval(fetchConversations, 5000);
-        return () => clearInterval(interval);
     }, []);
+
+    // Auto-select conversation when vendorId parameter is present
+    useEffect(() => {
+        if (!vendorIdParam || loading) return;
+        
+        const conversation = conversations.find(c => c.vendorId === vendorIdParam);
+        if (conversation) {
+            setSelectedConversation(conversation.id);
+            return;
+        }
+        
+        const virtualId = `virtual-${vendorIdParam}`;
+        if (conversations.find(c => c.id === virtualId)) {
+            setSelectedConversation(virtualId);
+            return;
+        }
+        
+        fetch(`/api/vendors/${vendorIdParam}`)
+            .then(r => r.ok ? r.json() : null)
+            .then(data => {
+                if (!data?.vendor) return;
+                const virtualConv = {
+                    id: virtualId,
+                    vendorId: vendorIdParam,
+                    coupleId: null,
+                    vendorName: data.vendor.businessName,
+                    vendorBusinessName: data.vendor.businessName,
+                    lastMessageAt: null,
+                    unreadCount: 0,
+                    messages: [],
+                    isVirtual: true,
+                };
+                setConversations(prev => [virtualConv, ...prev]);
+                setSelectedConversation(virtualId);
+            })
+            .catch(() => {});
+    }, [vendorIdParam, loading]);
 
     // Subscribe to real-time updates when conversation is selected
     useEffect(() => {
@@ -81,10 +118,6 @@ export default function VendorMessagesClient() {
             if (res.ok) {
                 const data = await res.json();
                 setConversations(data.conversations || []);
-                // Only auto-select first conversation on initial load
-                if (data.conversations?.length > 0 && !selectedConversation) {
-                    setSelectedConversation(data.conversations[0].id);
-                }
                 await refreshUnreadMessages();
             }
         } catch (error) {
@@ -95,11 +128,16 @@ export default function VendorMessagesClient() {
     };
 
     const handleSendMessage = async () => {
-        if (!replyText.trim() || !selectedConversation) return;
+        if (!replyText.trim() || !selectedConversation || sending) return;
 
         setSending(true);
         try {
             const conversation = conversations.find(c => c.id === selectedConversation);
+            if (!conversation) {
+                toast.error('Conversation not found');
+                return;
+            }
+
             const res = await fetch('/api/messages', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -111,11 +149,19 @@ export default function VendorMessagesClient() {
             });
 
             if (res.ok) {
+                const data = await res.json();
                 setReplyText("");
                 setShouldAutoScroll(true);
-                await fetchConversations();
+                // If this was a virtual conversation, replace it with the real one
+                if (conversation.isVirtual) {
+                    await fetchConversations();
+                    setSelectedConversation(data.conversationId);
+                } else {
+                    await fetchConversations();
+                }
             } else {
-                toast.error('Failed to send message');
+                const data = await res.json();
+                toast.error(data.error || 'Failed to send message');
             }
         } catch (error) {
             console.error('Error sending message:', error);

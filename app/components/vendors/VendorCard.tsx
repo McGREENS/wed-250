@@ -19,18 +19,6 @@ const TYPE_COLORS: Record<string, string> = {
   Transport:    "bg-slate-100 text-slate-700",
 };
 
-const FALLBACK_IMAGES: Record<string, string> = {
-  Photography:  "https://images.unsplash.com/photo-1606216794074-735e91aa2c92?w=800&h=600&fit=crop",
-  Videography:  "https://images.unsplash.com/photo-1492691527719-9d1e07e534b4?w=800&h=600&fit=crop",
-  Catering:     "https://images.unsplash.com/photo-1555244162-803834f70033?w=800&h=600&fit=crop",
-  Decoration:   "https://images.unsplash.com/photo-1478146896981-b80fe463b330?w=800&h=600&fit=crop",
-  Music:        "https://images.unsplash.com/photo-1470229722913-7c0e2dbbafd3?w=800&h=600&fit=crop",
-  Planning:     "https://images.unsplash.com/photo-1464366400600-7168b8af9bc3?w=800&h=600&fit=crop",
-  Makeup:       "https://images.unsplash.com/photo-1487412947147-5cebf100ffc2?w=800&h=600&fit=crop",
-  Attire:       "https://images.unsplash.com/photo-1519741497674-611481863552?w=800&h=600&fit=crop",
-  Transport:    "https://images.unsplash.com/photo-1519167758481-83f29da8c525?w=800&h=600&fit=crop",
-};
-
 export default function ServiceCard({ service, viewMode = 'grid', isFavorite = false, onFavoriteToggle }: {
   service: any; viewMode?: string; isFavorite?: boolean; onFavoriteToggle?: () => void;
 }) {
@@ -39,7 +27,7 @@ export default function ServiceCard({ service, viewMode = 'grid', isFavorite = f
   const [favorite, setFavorite] = useState(isFavorite);
   const [isLoading, setIsLoading] = useState(false);
 
-  const image = service.image || FALLBACK_IMAGES[service.serviceType] || FALLBACK_IMAGES.Photography;
+  const image = service.image;
   const typeCls = TYPE_COLORS[service.serviceType] || "bg-gray-100 text-gray-700";
   const rating = service.vendorRating || 0;
 
@@ -85,7 +73,13 @@ export default function ServiceCard({ service, viewMode = 'grid', isFavorite = f
         <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all p-3 sm:p-5">
           <div className="flex gap-3 sm:gap-5">
             <div className="relative w-20 h-20 sm:w-28 sm:h-28 flex-shrink-0">
-              <img src={image} alt={service.name} className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" />
+              {image ? (
+                <img src={image} alt={service.name} className="w-full h-full object-cover rounded-xl group-hover:scale-105 transition-transform duration-500" />
+              ) : (
+                <div className="w-full h-full bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-gray-400 text-xs">No Image</span>
+                </div>
+              )}
             </div>
             <div className="flex-1 min-w-0">
               <div className="flex items-start justify-between mb-1 gap-2">
@@ -129,7 +123,13 @@ export default function ServiceCard({ service, viewMode = 'grid', isFavorite = f
     <div onClick={handleCardClick} className="group block cursor-pointer">
       <div className="bg-white rounded-2xl overflow-hidden shadow-sm border border-gray-100 hover:shadow-xl transition-all hover:-translate-y-1">
         <div className="relative h-40 sm:h-48 overflow-hidden">
-          <img src={image} alt={service.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+          {image ? (
+            <img src={image} alt={service.name} className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500" />
+          ) : (
+            <div className="w-full h-full bg-gray-100 flex items-center justify-center">
+              <span className="text-gray-400 text-sm">No Image</span>
+            </div>
+          )}
           <span className={`absolute top-2 left-2 sm:top-3 sm:left-3 text-xs font-semibold px-2 sm:px-2.5 py-0.5 sm:py-1 rounded-full ${typeCls}`}>{service.serviceType}</span>
           {service.vendorFeatured && (
             <Badge className="absolute top-8 left-2 sm:top-10 sm:left-3 bg-burgundy text-white border-0 text-xs py-0 px-2">
