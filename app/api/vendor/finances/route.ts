@@ -125,7 +125,7 @@ export async function POST(request: NextRequest) {
         notes: notes || null,
         createdAt: new Date(),
         updatedAt: new Date(),
-      })
+      } as any)
       .returning();
 
     return NextResponse.json({ finance: newFinance }, { status: 201 });
@@ -201,7 +201,7 @@ export async function PUT(request: NextRequest) {
         netProfit,
         notes: notes !== undefined ? notes : existing.notes,
         updatedAt: new Date(),
-      })
+      } as any)
       .where(eq(vendorFinances.id, id))
       .returning();
 
