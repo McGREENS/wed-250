@@ -7,12 +7,12 @@ import nodemailer from 'nodemailer';
 import crypto from 'crypto';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'mail.cylacon.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
+  host: process.env.SMTP_HOST || 'whm-market06.aos.rw',
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: process.env.SMTP_PORT === '465',
   auth: {
-    user: process.env.SMTP_USER || 'andiza@cylacon.com',
-    pass: process.env.SMTP_PASSWORD || '3fGapSreQA7BhVLJemFs',
+    user: process.env.SMTP_USER || 'noreply@andiza.co.rw',
+    pass: process.env.SMTP_PASSWORD,
   },
 });
 
@@ -155,7 +155,7 @@ export async function POST(req: NextRequest) {
       const referralLink = `${process.env.NEXTAUTH_URL}/signup?ref=${referralCode}`;
       
       await transporter.sendMail({
-        from: '"Andiza" <andiza@cylacon.com>',
+        from: `"Andiza" <${process.env.SMTP_USER || 'noreply@andiza.co.rw'}>`,
         to: referredEmail,
         subject: `${session.user.name} invited you to join Andiza`,
         html: `

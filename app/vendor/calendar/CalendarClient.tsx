@@ -7,6 +7,7 @@ import { Button } from "@/app/components/ui/button";
 import { Badge } from "@/app/components/ui/badge";
 import { ChevronLeft, ChevronRight, Calendar as CalendarIcon, X, Plus, Ban, Loader2, Eye, EyeOff } from "lucide-react";
 import { toast } from "sonner";
+import CapacitySettings from "@/app/vendor/settings/CapacitySettings";
 
 export default function CalendarClient({ initialData }: any) {
     const router = useRouter();
@@ -274,6 +275,8 @@ export default function CalendarClient({ initialData }: any) {
                             </div>
                         </CardContent>
                     </Card>
+
+                    <CapacitySettings />
                 </div>
             </div>
 

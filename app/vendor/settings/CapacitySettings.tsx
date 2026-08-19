@@ -70,144 +70,91 @@ export default function CapacitySettings() {
 
   if (loading) {
     return (
-      <div className="flex items-center justify-center p-8">
-        <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
-      </div>
+      <Card className="border-gray-100 shadow-sm">
+        <CardContent className="p-6 flex items-center justify-center">
+          <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
+        </CardContent>
+      </Card>
     );
   }
 
   return (
     <Card className="border-gray-100 shadow-sm">
-      <CardHeader className="border-b border-gray-100">
+      <CardHeader className="border-b border-gray-100 pb-4">
         <CardTitle className="text-lg flex items-center gap-2">
           <AlertCircle className="w-5 h-5 text-burgundy" />
-          Daily Booking Capacity
+          Daily Booking Limit
         </CardTitle>
       </CardHeader>
 
-      <CardContent className="pt-6">
-        <div className="space-y-6">
-          <div>
-            <p className="text-sm text-gray-600 mb-4">
-              Set the maximum number of bookings you can accept per day. This prevents overbooking and ensures quality service.
-            </p>
-          </div>
+      <CardContent className="p-6 space-y-4">
+        <p className="text-sm text-gray-600">
+          Control how many bookings you accept per day
+        </p>
 
-          <div className="bg-blue-50 border border-blue-200 rounded-xl p-4 flex gap-3">
-            <div className="flex-shrink-0 pt-0.5">
-              <Check className="w-5 h-5 text-blue-600" />
-            </div>
-            <div>
-              <p className="font-medium text-blue-900 text-sm">How it works</p>
-              <p className="text-sm text-blue-700 mt-1">
-                Once you reach the daily limit, customers won't be able to book additional slots for that date. They'll see "Date at capacity" error.
-              </p>
-            </div>
-          </div>
-
-          <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-3">
-              Maximum Bookings Per Day
-            </label>
-            
-            <div className="flex items-center gap-4">
-              <div className="flex-1 max-w-xs">
-                <div className="flex items-center border border-gray-200 rounded-lg overflow-hidden">
-                  <button
-                    onClick={() => {
-                      const newVal = Math.max(1, maxBookingsPerDay - 1);
-                      setMaxBookingsPerDay(newVal);
-                      setIsDirty(true);
-                    }}
-                    className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold"
-                    disabled={maxBookingsPerDay <= 1 || saving}
-                  >
-                    −
-                  </button>
-                  
-                  <input
-                    type="number"
-                    min="1"
-                    max="10"
-                    value={maxBookingsPerDay}
-                    onChange={(e) => {
-                      const val = Math.max(1, Math.min(10, parseInt(e.target.value) || 1));
-                      setMaxBookingsPerDay(val);
-                      setIsDirty(true);
-                    }}
-                    className="flex-1 text-center text-2xl font-bold text-gray-900 border-0 focus:outline-none"
-                  />
-                  
-                  <button
-                    onClick={() => {
-                      const newVal = Math.min(10, maxBookingsPerDay + 1);
-                      setMaxBookingsPerDay(newVal);
-                      setIsDirty(true);
-                    }}
-                    className="px-4 py-2.5 bg-gray-50 hover:bg-gray-100 text-gray-600 font-semibold"
-                    disabled={maxBookingsPerDay >= 10 || saving}
-                  >
-                    +
-                  </button>
-                </div>
-              </div>
-
-              <div className="flex-1">
-                <div className="space-y-2">
-                  {maxBookingsPerDay === 1 && (
-                    <p className="text-sm text-gray-600">
-                      ✓ Exclusive - One client per day
-                    </p>
-                  )}
-                  {maxBookingsPerDay === 2 && (
-                    <p className="text-sm text-gray-600">
-                      ✓ You can accept 2 clients per day
-                    </p>
-                  )}
-                  {maxBookingsPerDay > 2 && (
-                    <p className="text-sm text-gray-600">
-                      ✓ You can accept {maxBookingsPerDay} clients per day
-                    </p>
-                  )}
-                </div>
-              </div>
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <span className="text-sm font-medium text-gray-700">Max bookings/day</span>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={() => {
+                  const newVal = Math.max(1, maxBookingsPerDay - 1);
+                  setMaxBookingsPerDay(newVal);
+                  setIsDirty(true);
+                }}
+                disabled={maxBookingsPerDay <= 1 || saving}
+                className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-colors"
+              >
+                −
+              </button>
+              
+              <span className="w-12 text-center text-2xl font-bold text-burgundy">
+                {maxBookingsPerDay}
+              </span>
+              
+              <button
+                onClick={() => {
+                  const newVal = Math.min(10, maxBookingsPerDay + 1);
+                  setMaxBookingsPerDay(newVal);
+                  setIsDirty(true);
+                }}
+                disabled={maxBookingsPerDay >= 10 || saving}
+                className="w-8 h-8 rounded-lg bg-gray-100 hover:bg-gray-200 disabled:opacity-40 disabled:cursor-not-allowed flex items-center justify-center text-gray-700 font-bold transition-colors"
+              >
+                +
+              </button>
             </div>
           </div>
 
-          <div>
-            <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 flex gap-3">
-              <div className="flex-shrink-0 pt-0.5">
-                <AlertCircle className="w-5 h-5 text-amber-600" />
-              </div>
-              <div>
-                <p className="font-medium text-amber-900 text-sm">Current Bookings</p>
-                <p className="text-sm text-amber-700 mt-1">
-                  Changing this setting will only affect new bookings. Existing bookings remain unchanged.
-                </p>
-              </div>
-            </div>
-          </div>
-
-          <div className="flex gap-3 pt-4">
+          {isDirty && (
             <Button
               onClick={handleSave}
-              disabled={!isDirty || saving}
-              className="bg-burgundy hover:bg-burgundy/90 text-white gap-2"
+              disabled={saving}
+              className="w-full bg-burgundy hover:bg-burgundy/90 text-white"
+              size="sm"
             >
-              {saving && <Loader2 className="w-4 h-4 animate-spin" />}
-              {saving ? 'Saving...' : 'Save Changes'}
+              {saving ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Saving...
+                </>
+              ) : (
+                <>
+                  <Save className="w-4 h-4 mr-2" />
+                  Save Changes
+                </>
+              )}
             </Button>
-            
-            {isDirty && (
-              <Button
-                variant="outline"
-                onClick={fetchCapacitySettings}
-                className="text-gray-600"
-              >
-                Cancel
-              </Button>
-            )}
-          </div>
+          )}
+        </div>
+
+        <div className="pt-3 border-t border-gray-100">
+          <p className="text-xs text-gray-500">
+            {maxBookingsPerDay === 1 
+              ? "Exclusive service - one booking per day" 
+              : `You can accept up to ${maxBookingsPerDay} bookings per day`
+            }
+          </p>
         </div>
       </CardContent>
     </Card>

@@ -6,12 +6,12 @@ import { eq, and } from 'drizzle-orm';
 import nodemailer from 'nodemailer';
 
 const transporter = nodemailer.createTransport({
-  host: process.env.SMTP_HOST || 'mail.cylacon.com',
-  port: parseInt(process.env.SMTP_PORT || '587'),
-  secure: false,
+  host: process.env.SMTP_HOST || 'whm-market06.aos.rw',
+  port: parseInt(process.env.SMTP_PORT || '465'),
+  secure: process.env.SMTP_PORT === '465',
   auth: {
-    user: process.env.SMTP_USER || 'andiza@cylacon.com',
-    pass: process.env.SMTP_PASSWORD || '3fGapSreQA7BhVLJemFs',
+    user: process.env.SMTP_USER || 'noreply@andiza.co.rw',
+    pass: process.env.SMTP_PASSWORD,
   },
 });
 
@@ -57,7 +57,6 @@ export async function POST(req: NextRequest) {
     const items = JSON.parse(invoice.items);
     const invoiceUrl = `${process.env.NEXTAUTH_URL}/invoices/${invoice.id}`;
 
-    // Generate invoice HTML
     const itemsHtml = items.map((item: any) => {
       const itemTotal = item.quantity * item.unitPrice;
       return `
@@ -85,13 +84,13 @@ export async function POST(req: NextRequest) {
           </div>
           
           <div style="background: #ffffff; padding: 30px; border: 1px solid #e0e0e0; border-top: none;">
-            <div style="display: flex; justify-content: space-between; margin-bottom: 30px;">
-              <div>
+            <div style="margin-bottom: 30px;">
+              <div style="margin-bottom: 20px;">
                 <h2 style="margin: 0 0 10px 0; color: ${invoice.color || '#8B4513'};">From:</h2>
                 <p style="margin: 0; font-weight: 600;">${vendor.businessName}</p>
                 <p style="margin: 5px 0 0 0; color: #666;">${vendor.location || ''}</p>
               </div>
-              <div style="text-align: right;">
+              <div>
                 <h2 style="margin: 0 0 10px 0; color: ${invoice.color || '#8B4513'};">To:</h2>
                 <p style="margin: 0; font-weight: 600;">${invoice.clientName}</p>
                 <p style="margin: 5px 0 0 0; color: #666;">${invoice.clientEmail}</p>
@@ -181,7 +180,7 @@ export async function POST(req: NextRequest) {
     `;
 
     await transporter.sendMail({
-      from: '"Andiza" <andiza@cylacon.com>',
+      from: `"Andiza" <${process.env.SMTP_USER || 'noreply@andiza.co.rw'}>`,
       to: invoice.clientEmail,
       subject: `Invoice ${invoice.invoiceNumber} from ${vendor.businessName}`,
       html,
