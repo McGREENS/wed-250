@@ -360,6 +360,7 @@ export const vendorsRelations = relations(vendors, ({ one, many }) => ({
   reviews: many(reviews),
   servicePackages: many(servicePackages),
   invoices: many(invoices),
+  finances: many(vendorFinances),
 }));
 
 export const venuesRelations = relations(venues, ({ one, many }) => ({
@@ -494,4 +495,24 @@ export const invoicesRelations = relations(invoices, ({ one }) => ({
   vendor: one(vendors, { fields: [invoices.vendorId], references: [vendors.id] }),
   booking: one(bookings, { fields: [invoices.bookingId], references: [bookings.id] }),
   client: one(users, { fields: [invoices.clientId], references: [users.id] }),
+}));
+
+// Vendor Finances table (manual income tracking)
+export const vendorFinances = sqliteTable("vendor_finances", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  vendorId: text("vendor_id").notNull().references(() => vendors.id, { onDelete: "cascade" }),
+  month: integer("month").notNull(), // 1-12
+  year: integer("year").notNull(),
+  grossIncome: real("gross_income").notNull().default(0), // Manual input by vendor
+  taxRate: real("tax_rate").notNull().default(18), // Rwanda VAT is 18%
+  taxAmount: real("tax_amount").notNull().default(0), // Calculated: grossIncome * (taxRate/100)
+  labourCosts: real("labour_costs").notNull().default(0), // Manual input
+  netProfit: real("net_profit").notNull().default(0), // Calculated: grossIncome - taxAmount - labourCosts
+  notes: text("notes"),
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+export const vendorFinancesRelations = relations(vendorFinances, ({ one }) => ({
+  vendor: one(vendors, { fields: [vendorFinances.vendorId], references: [vendors.id] }),
 }));
