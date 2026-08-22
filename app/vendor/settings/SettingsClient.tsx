@@ -139,7 +139,7 @@ export default function VendorSettingsClient({ initialData }: any) {
   const v = initialData.vendor;
 
   let initCategory = "";
-  try { initCategory = JSON.parse(v?.categories || "[]")[0] || ""; } catch {}
+  try { initCategory = v?.category || ""; } catch {}
 
   const [activeTab, setActiveTab] = useState<"profile" | "security">("profile");
 

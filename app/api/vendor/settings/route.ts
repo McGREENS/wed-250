@@ -41,7 +41,7 @@ export async function PUT(req: NextRequest) {
       else if (field === 'bio') vendorFields.description = value;
       else if (field === 'location') vendorFields.location = value;
       else if (field === 'priceRange') vendorFields.priceRange = value;
-      else if (field === 'category') vendorFields.categories = JSON.stringify([value]);
+      else if (field === 'category') vendorFields.category = value;
       // Full save fallback (data object)
       else if (data) {
         userFields.name = data.businessName;
