@@ -63,6 +63,18 @@ export async function POST(req: NextRequest) {
       weekday: 'long', year: 'numeric', month: 'long', day: 'numeric',
     });
     
+    // Parse price for booking amount (extract first number from price string)
+    const extractNumericPrice = (priceString: string): number => {
+      // Extract the first number from strings like "500,000 RWF" or "400,000 - 600,000 RWF"
+      const match = priceString.match(/[\d,]+/);
+      if (match) {
+        return parseFloat(match[0].replace(/,/g, ''));
+      }
+      return 0; // Default to 0 if no number found
+    };
+
+    const numericPrice = extractNumericPrice(service.price);
+
     await db.insert(bookings).values({
       id: bookingId,
       vendorId,
@@ -76,8 +88,8 @@ export async function POST(req: NextRequest) {
       servicePackage: service.name,
       serviceType: service.serviceType,
       bookingDate: new Date(),
-      totalAmount: service.price,
-      amount: service.price,
+      totalAmount: numericPrice,
+      amount: numericPrice,
       depositAmount: null,
       paymentStatus: 'UNPAID',
       status: 'pending',
@@ -86,7 +98,7 @@ export async function POST(req: NextRequest) {
       updatedAt: new Date(),
     } as any);
 
-    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.andiza.rw';
+    const baseUrl = process.env.NEXTAUTH_URL || 'https://www.andiza.co.rw';
 
     // Send emails — never throw, just log
     await Promise.allSettled([

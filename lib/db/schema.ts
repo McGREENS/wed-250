@@ -175,7 +175,7 @@ export const servicePackages = sqliteTable("service_packages", {
   serviceType: text("service_type").notNull(), // "Photography", "Catering", "Venue", "Decoration", "Music", "Planning", etc.
   name: text("name").notNull(),
   description: text("description"),
-  price: real("price").notNull(),
+  price: text("price").notNull(), // Changed from real to text to allow price ranges
   features: text("features"), // JSON array
   metadata: text("metadata"), // JSON object for service-specific fields
   image: text("image"),
@@ -515,4 +515,30 @@ export const vendorFinances = sqliteTable("vendor_finances", {
 
 export const vendorFinancesRelations = relations(vendorFinances, ({ one }) => ({
   vendor: one(vendors, { fields: [vendorFinances.vendorId], references: [vendors.id] }),
+}));
+
+// Couple Subscriptions table (PesaPal payment-backed subscription plans)
+export const coupleSubscriptions = sqliteTable("couple_subscriptions", {
+  id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
+  userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
+  // Plan details
+  planId: text("plan_id", { enum: ["INDIVIDUAL", "COUPLE"] }).notNull(),
+  planName: text("plan_name").notNull(),
+  amount: real("amount").notNull(), // in RWF
+  currency: text("currency").default("RWF").notNull(),
+  // PesaPal payment tracking
+  pesapalOrderTrackingId: text("pesapal_order_tracking_id").unique(),
+  pesapalMerchantReference: text("pesapal_merchant_reference").unique(),
+  // Status lifecycle: PENDING → COMPLETED | FAILED | CANCELLED
+  status: text("status", { enum: ["PENDING", "COMPLETED", "FAILED", "CANCELLED"] }).default("PENDING").notNull(),
+  // Subscription validity
+  startDate: integer("start_date", { mode: "timestamp" }),
+  endDate: integer("end_date", { mode: "timestamp" }),
+  // Timestamps
+  createdAt: integer("created_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+  updatedAt: integer("updated_at", { mode: "timestamp" }).$defaultFn(() => new Date()),
+});
+
+export const coupleSubscriptionsRelations = relations(coupleSubscriptions, ({ one }) => ({
+  user: one(users, { fields: [coupleSubscriptions.userId], references: [users.id] }),
 }));

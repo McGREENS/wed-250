@@ -110,7 +110,7 @@ export async function POST(req: NextRequest) {
         </div>
         <p style="font-size:13px;color:#888;">Please change your password after your first login.</p>
         <div style="text-align:center;margin:32px 0;">
-          <a href="${process.env.NEXTAUTH_URL || 'https://andiza.rw'}/login"
+          <a href="${process.env.NEXTAUTH_URL || 'https://www.andiza.co.rw'}/login"
              style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;">Login to Your Account</a>
         </div>
       </div>

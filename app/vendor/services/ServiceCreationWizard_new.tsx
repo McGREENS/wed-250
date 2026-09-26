@@ -347,7 +347,7 @@ function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNex
                         <Textarea value={formData.description || ""} onChange={(e) => updateFormData("description", e.target.value)} rows={4} placeholder="Describe your service, what you offer, and what makes you unique..." />
                     </Field>
                     <Field label="Years of Experience">
-                        <Input type="number" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 5" />
+                        <Input type="text" value={formData.yearsExperience || ""} onChange={(e) => updateFormData("yearsExperience", e.target.value)} placeholder="e.g., 5" />
                     </Field>
                     <Field label="Package Image">
                         <Input type="file" accept="image/*" onChange={handleImage} />
@@ -382,7 +382,7 @@ function OtherServiceForm({ currentStep, formData, updateFormData, onBack, onNex
                     <h3 className="font-semibold text-lg text-charcoal">Pricing</h3>
                     <div className="grid grid-cols-2 gap-4">
                         <Field label="Package Price (RWF)" required>
-                            <Input type="number" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500000" />
+                            <Input type="text" value={formData.price || ""} onChange={(e) => updateFormData("price", e.target.value)} placeholder="e.g., 500,000 or 400,000 - 600,000" />
                         </Field>
                         <Field label="Deposit Required">
                             <Input value={formData.depositRequired || ""} onChange={(e) => updateFormData("depositRequired", e.target.value)} placeholder="e.g., 30%, 150,000 RWF" />

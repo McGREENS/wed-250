@@ -18,6 +18,7 @@ export default function NavbarLinks({ session, isMobile = false, onClose }: Navb
     { name: 'Home', href: '/' },
     { name: 'Venues', href: '/venues' },
     { name: 'Vendors', href: '/vendors' },
+    { name: 'Pricing', href: '/pricing' },
     { name: 'About', href: '/about' },
     { name: 'FAQ', href: '/faq' },
     { name: 'Contact', href: '/contact' },

@@ -70,7 +70,7 @@ export async function POST(req: NextRequest) {
                   </div>
                   <table width="100%" cellpadding="0" cellspacing="0">
                     <tr><td align="center" style="padding:8px 0 28px;">
-                      <a href="${process.env.NEXTAUTH_URL || 'https://www.andiza.rw'}/login"
+                      <a href="${process.env.NEXTAUTH_URL || 'https://www.andiza.co.rw'}/login"
                          style="display:inline-block;background:#8B3A3A;color:#fff;padding:14px 36px;border-radius:8px;text-decoration:none;font-size:15px;font-weight:700;">
                         Login to Your Account
                       </a>

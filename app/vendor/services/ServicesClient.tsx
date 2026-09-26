@@ -139,7 +139,7 @@ export default function ServicesClient({ initialServices, initialPortfolio }: an
                                         <DollarSign className="w-4 h-4 text-burgundy" />
                                         <div>
                                             <p className="text-gray-500 text-xs">Price</p>
-                                            <p className="font-semibold text-charcoal">RWF {service.price.toLocaleString()}</p>
+                                            <p className="font-semibold text-charcoal">{service.price}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2 text-sm">
