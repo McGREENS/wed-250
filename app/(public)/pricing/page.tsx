@@ -1,11 +1,11 @@
 import { Metadata } from 'next';
 import PricingClient from './PricingClient';
-import { SUBSCRIPTION_PLANS } from '@/lib/pesapal';
+import { SUBSCRIPTION_PLANS } from '@/lib/centiwise';
 
 export const metadata: Metadata = {
   title: 'Pricing — Andiza',
   description:
-    'Choose your wedding planning subscription — Individual (RWF 30,000) or Couple (RWF 55,000). Paid once a year, powered by PesaPal.',
+    'Choose your wedding planning subscription — Individual (RWF 30,000) or Couple (RWF 55,000). Paid once a year, powered by Centiwise.',
 };
 
 export default function PricingPage() {

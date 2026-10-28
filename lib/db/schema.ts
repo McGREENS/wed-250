@@ -522,7 +522,7 @@ export const coupleSubscriptions = sqliteTable("couple_subscriptions", {
   id: text("id").primaryKey().$defaultFn(() => crypto.randomUUID()),
   userId: text("user_id").notNull().references(() => users.id, { onDelete: "cascade" }),
   // Plan details
-  planId: text("plan_id", { enum: ["INDIVIDUAL", "COUPLE"] }).notNull(),
+  planId: text("plan_id", { enum: ["TEST", "INDIVIDUAL", "COUPLE"] }).notNull(),
   planName: text("plan_name").notNull(),
   amount: real("amount").notNull(), // in RWF
   currency: text("currency").default("RWF").notNull(),

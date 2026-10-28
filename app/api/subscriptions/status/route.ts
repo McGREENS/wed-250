@@ -2,8 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@/auth';
 import { db } from '@/lib/db';
 import { coupleSubscriptions } from '@/lib/db/schema';
-import { eq, and, desc } from 'drizzle-orm';
-import { getPesapalToken, getPesapalTransactionStatus } from '@/lib/pesapal';
+import { eq, desc } from 'drizzle-orm';
 
 export async function GET(req: NextRequest) {
   try {
@@ -24,50 +23,9 @@ export async function GET(req: NextRequest) {
       return NextResponse.json({ hasSubscription: false, subscription: null });
     }
 
-    // If pending and has a tracking id, do a live check to catch late IPN deliveries
-    if (
-      subscription.status === 'PENDING' &&
-      subscription.pesapalOrderTrackingId
-    ) {
-      try {
-        const { token } = await getPesapalToken();
-        const statusResult = await getPesapalTransactionStatus(
-          subscription.pesapalOrderTrackingId,
-          token
-        );
-
-        const statusCode = statusResult.status_code;
-        const desc = (statusResult.payment_status_description ?? '').toUpperCase();
-
-        if (statusCode === 1 || desc === 'COMPLETED') {
-          const now = new Date();
-          const endDate = new Date(now.getTime() + 365 * 24 * 60 * 60 * 1000);
-          await db
-            .update(coupleSubscriptions)
-            .set({
-              status: 'COMPLETED',
-              startDate: now,
-              endDate,
-              updatedAt: now,
-            } as any)
-            .where(eq(coupleSubscriptions.id, subscription.id));
-
-          subscription.status = 'COMPLETED';
-          subscription.startDate = now;
-          subscription.endDate = endDate;
-        } else if (statusCode === 2 || desc === 'FAILED') {
-          await db
-            .update(coupleSubscriptions)
-            .set({ status: 'FAILED', updatedAt: new Date() } as any)
-            .where(eq(coupleSubscriptions.id, subscription.id));
-          subscription.status = 'FAILED';
-        }
-      } catch (e) {
-        // Non-fatal — return cached status if live check fails
-        console.warn('[SUBSCRIPTIONS STATUS] Live check failed:', e);
-      }
-    }
-
+    // For Centiwise integration, we rely on webhook callbacks to update status
+    // No need for live PesaPal status checks anymore
+    
     const isActive =
       subscription.status === 'COMPLETED' &&
       subscription.endDate != null &&

@@ -72,6 +72,14 @@ export default function PricingClient({
     }
   }, [session?.user]);
 
+  // ─── Payment modal state ──────────────────────────────────────────────────
+  const [paymentModal, setPaymentModal] = useState<{
+    plan: Plan;
+    purpose: 'MTN' | 'AIRTEL' | null;
+    phone: string;
+    step: 'method' | 'phone';
+  } | null>(null);
+
   const handleSubscribe = async (plan: Plan) => {
     setError(null);
     if (!session?.user) { router.push('/login?callbackUrl=/pricing'); return; }
@@ -79,20 +87,28 @@ export default function PricingClient({
       setError('Only couple accounts can subscribe. Please sign in with a couple account.');
       return;
     }
+    // Open modal — pick method first
+    setPaymentModal({ plan, purpose: null, phone: '', step: 'method' });
+  };
+
+  const handleModalProceed = async () => {
+    if (!paymentModal?.purpose || !paymentModal?.phone) return;
+    const { plan, purpose, phone } = paymentModal;
+    setPaymentModal(null);
     setLoadingPlanId(plan.id);
     try {
-      const res = await fetch('/api/subscriptions/initiate', {
+      const res = await fetch('/api/subscriptions/centiwise/initiate', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ planId: plan.id }),
+        body: JSON.stringify({ planId: plan.id, purpose, phone }),
       });
       const data = await res.json();
       if (!res.ok) {
         if (res.status === 409) { setError(data.error ?? 'You already have an active subscription.'); return; }
         throw new Error(data.error ?? 'Failed to initiate payment');
       }
-      if (data.redirectUrl) window.location.href = data.redirectUrl;
-      else throw new Error('No redirect URL received from payment gateway');
+      if (data.paymentUrl) window.location.href = data.paymentUrl;
+      else throw new Error('No payment URL received');
     } catch (err: any) {
       setError(err?.message ?? 'Something went wrong. Please try again.');
     } finally {
@@ -104,6 +120,7 @@ export default function PricingClient({
     d ? new Date(d).toLocaleDateString('en-RW', { year: 'numeric', month: 'long', day: 'numeric' }) : '';
 
   return (
+    <>
     <div className="min-h-screen bg-cream bg-noise">
 
       {/* ─── Hero ─────────────────────────────────────────────────────────────── */}
@@ -349,7 +366,7 @@ export default function PricingClient({
         {/* ─── Trust signals ───────────────────────────────────────────────────── */}
         <div className="mt-12 grid grid-cols-1 sm:grid-cols-3 gap-5 max-w-4xl mx-auto">
           {[
-            { icon: Shield, title: 'Secure Payments', body: 'Powered by PesaPal — MTN MoMo, Airtel Money, VISA & Mastercard accepted in RWF.' },
+            { icon: Shield, title: 'Secure Payments', body: 'Powered by Centiwise — MTN MoMo & Airtel Money accepted in RWF.' },
             { icon: Zap, title: 'Instant Activation', body: 'Your plan goes live immediately after payment is confirmed.' },
             { icon: HeartHandshake, title: 'No Hidden Fees', body: 'One flat yearly price per couple. No recurring charges, no surprises.' },
           ].map((item) => {
@@ -444,5 +461,96 @@ export default function PricingClient({
         )}
       </div>
     </div>
+
+    {/* ─── Payment Modal ─────────────────────────────────────────────────────── */}
+    {paymentModal && (
+      <div className="fixed inset-0 bg-black/60 flex items-center justify-center z-50 p-4">
+        <div className="bg-white rounded-2xl max-w-sm w-full p-6 shadow-2xl">
+          <h3 className="text-xl font-bold font-serif text-charcoal mb-1">
+            Pay for {paymentModal.plan.name} Plan
+          </h3>
+          <p className="text-sm text-gray-500 mb-6">
+            RWF {paymentModal.plan.amount.toLocaleString()} / year — Mobile Money
+          </p>
+
+          {/* Step 1: choose method */}
+          {paymentModal.step === 'method' && (
+            <div className="space-y-3">
+              <p className="text-sm font-medium text-gray-700 mb-2">Choose your network</p>
+              {(['MTN', 'AIRTEL'] as const).map((m) => (
+                <button
+                  key={m}
+                  onClick={() => setPaymentModal(prev => prev ? { ...prev, purpose: m, step: 'phone' } : null)}
+                  className="w-full p-4 border-2 border-gray-200 rounded-xl hover:border-burgundy hover:bg-burgundy/5 transition-colors flex items-center justify-between group"
+                >
+                  <div className="flex items-center gap-3">
+                    <div className={`w-10 h-10 rounded-full flex items-center justify-center text-white font-bold text-sm ${m === 'MTN' ? 'bg-yellow-400 text-black' : 'bg-red-500'}`}>
+                      {m === 'MTN' ? 'M' : 'A'}
+                    </div>
+                    <div className="text-left">
+                      <p className="font-semibold text-charcoal">{m === 'MTN' ? 'MTN Mobile Money' : 'Airtel Money'}</p>
+                      <p className="text-xs text-gray-400">{m === 'MTN' ? 'Dial *182#' : 'Dial *175#'}</p>
+                    </div>
+                  </div>
+                  <span className="text-gray-300 group-hover:text-burgundy text-lg">→</span>
+                </button>
+              ))}
+              <button
+                onClick={() => setPaymentModal(null)}
+                className="w-full mt-2 p-3 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+
+          {/* Step 2: enter phone */}
+          {paymentModal.step === 'phone' && (
+            <div className="space-y-4">
+              <button
+                onClick={() => setPaymentModal(prev => prev ? { ...prev, step: 'method' } : null)}
+                className="text-sm text-burgundy hover:underline"
+              >
+                ← Back
+              </button>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">
+                  Your {paymentModal.purpose} number
+                </label>
+                <div className="flex items-center border-2 border-gray-200 rounded-xl focus-within:border-burgundy overflow-hidden">
+                  <span className="px-3 py-3 bg-gray-50 text-gray-500 text-sm border-r border-gray-200">+250</span>
+                  <input
+                    type="tel"
+                    placeholder="7XXXXXXXX"
+                    maxLength={9}
+                    value={paymentModal.phone}
+                    onChange={(e) => setPaymentModal(prev => prev ? { ...prev, phone: e.target.value.replace(/\D/g, '') } : null)}
+                    className="flex-1 px-3 py-3 text-charcoal outline-none text-sm"
+                    autoFocus
+                  />
+                </div>
+                <p className="text-xs text-gray-400 mt-1">
+                  Enter the number registered with {paymentModal.purpose === 'MTN' ? 'MTN MoMo' : 'Airtel Money'}
+                </p>
+              </div>
+              <button
+                onClick={handleModalProceed}
+                disabled={paymentModal.phone.length < 9}
+                className="w-full bg-burgundy text-white py-3.5 rounded-xl font-semibold text-sm hover:bg-burgundy/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+              >
+                Pay RWF {paymentModal.plan.amount.toLocaleString()}
+              </button>
+              <button
+                onClick={() => setPaymentModal(null)}
+                className="w-full p-2 text-sm text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                Cancel
+              </button>
+            </div>
+          )}
+        </div>
+      </div>
+    )}
+    </>
   );
 }
