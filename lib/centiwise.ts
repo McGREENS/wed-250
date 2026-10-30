@@ -97,9 +97,10 @@ export function buildControlHash(
   email: string
 ): string {
   const { controlKey, endpointId } = getConfig();
-  const amountStr = String(Math.round(amount)); // minor units, no decimals
-  const raw = endpointId + clientOrderId + amountStr + email + controlKey;
-  console.log('[CENTIWISE] Control hash input: endpointId + orderid + amount + email + <key>');
+  // Amount in minor units (×100), no decimal — 300 RWF → "30000"
+  const amountMinor = String(Math.round(amount * 100));
+  const raw = endpointId + clientOrderId + amountMinor + email + controlKey;
+  console.log('[CENTIWISE] Control hash: endpointId + orderid + amountMinor + email + <key>', { amountMinor });
   return createHash('sha1').update(raw).digest('hex');
 }
 
