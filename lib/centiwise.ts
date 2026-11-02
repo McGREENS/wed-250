@@ -198,15 +198,16 @@ export async function initiateCentiwisePayin(params: {
   if (Object.keys(data).length === 0 && text.includes('=')) {
     const params = new URLSearchParams(text);
     for (const [k, v] of params.entries()) {
-      data[k] = v;
+      data[k] = v.trim(); // trim newlines Centiwise adds
     }
   }
 
   console.log('[CENTIWISE] Parsed response:', data);
 
-  // Check for validation errors (returned as type=validation-error)
-  if (data['type'] === 'validation-error' || data['error-code'] || data['error-message']) {
-    const msg = data['error-message'] ?? data['error-code'] ?? 'Validation error';
+  // Check for validation errors
+  const responseType = String(data['type'] ?? '').trim();
+  if (responseType === 'validation-error' || data['error-code'] || data['error-message']) {
+    const msg = String(data['error-message'] ?? data['error-code'] ?? 'Validation error').trim();
     throw new Error(`Centiwise validation error: ${msg}`);
   }
 
@@ -214,12 +215,12 @@ export async function initiateCentiwisePayin(params: {
     throw new Error(`Centiwise HTTP error: ${response.status}`);
   }
 
-  // Normalise hyphenated keys to underscored for consistent access
-  // e.g. redirect-url → redirect_url, paynet-order-id → paynet_order_id
+  // Normalise hyphenated keys to underscored, trim all values
   const normalised: CentiwiseSaleFormResponse = {};
   for (const [k, v] of Object.entries(data)) {
-    normalised[k.replace(/-/g, '_')] = v;
-    normalised[k] = v; // keep original too
+    const clean = String(v).trim();
+    normalised[k.replace(/-/g, '_')] = clean;
+    normalised[k] = clean;
   }
 
   return normalised;
