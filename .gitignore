@@ -51,3 +51,6 @@ next-env.d.ts
 *august.db
 *backup.db
 *.backup
+
+# Relay — never commit the live config (contains RELAY_SECRET)
+relay/config.php

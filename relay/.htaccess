@@ -1,0 +1,40 @@
+# Centiwise Relay — Apache configuration
+# Requires mod_rewrite and mod_headers to be enabled.
+
+Options -Indexes          # Disable directory listing
+Options -MultiViews       # Disable content negotiation
+
+# ── Deny direct access to config.php ──────────────────────────────────────────
+<Files "config.php">
+    Order Allow,Deny
+    Deny from all
+</Files>
+
+# Also deny access to diag-ip.php once testing is done
+# (uncomment this after verification and before going live)
+# <Files "diag-ip.php">
+#     Order Allow,Deny
+#     Deny from all
+# </Files>
+
+# ── Rewrite all requests to index.php ────────────────────────────────────────
+RewriteEngine On
+
+# Pass the Authorization header through to PHP.
+# Apache normally strips it; this makes it available as HTTP_AUTHORIZATION.
+# We also expose it as HTTP_X_FWD_AUTH so PHP can pick it up reliably
+# regardless of CGI/FastCGI mode.
+RewriteCond %{HTTP:Authorization} .+
+RewriteRule ^ - [E=HTTP_AUTHORIZATION:%{HTTP:Authorization}]
+
+# Preserve the original path as PATH_INFO so index.php knows what was requested.
+# e.g. /paynet/api/v2/sale-form/108048 → PATH_INFO=/paynet/api/v2/sale-form/108048
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteRule ^(.*)$ index.php/$1 [L,QSA]
+
+# ── Security headers ─────────────────────────────────────────────────────────
+<IfModule mod_headers.c>
+    Header always set X-Content-Type-Options "nosniff"
+    Header always set X-Frame-Options "DENY"
+    Header always set Referrer-Policy "no-referrer"
+</IfModule>
